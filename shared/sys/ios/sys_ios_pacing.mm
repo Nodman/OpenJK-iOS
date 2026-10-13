@@ -134,6 +134,8 @@ static void Sys_IOS_ApplyInterval( void ) {
 		currentInterval = interval;
 		// SDL 2.32: preferredFramesPerSecond = maximumFramesPerSecond / interval
 		SDL_iPhoneSetAnimationCallback( GLimp_IOS_Window(), interval, Sys_IOS_Frame, NULL );
+		Com_Printf( "iOS display: max_fps=%d interval=%d link_fps=%d low_power=%d\n", Sys_IOS_MaxFramesPerSecond(), interval,
+			Sys_IOS_MaxFramesPerSecond() / interval, [NSProcessInfo processInfo].lowPowerModeEnabled ? 1 : 0 );
 	}
 }
 
