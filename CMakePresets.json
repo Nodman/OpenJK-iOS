@@ -19,7 +19,7 @@
         "BuildJK2SPGame": "OFF",
         "BuildJK2SPRdVanilla": "OFF",
         "BuildTests": "OFF",
-        "UseInternalZlib": "ON",
+        "UseInternalZlib": "OFF",
         "UseInternalPNG": "ON",
         "UseInternalJPEG": "ON",
         "UseInternalSDL2": "OFF",
