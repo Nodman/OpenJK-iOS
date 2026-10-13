@@ -199,6 +199,10 @@ set(OpenJKLibDir "${CMAKE_SOURCE_DIR}/lib")
 set(GSLIncludeDirectory "${OpenJKLibDir}/gsl-lite/include")
 
 include(InstallConfig)
+if(OPENJK_IOS)
+	include(OpenJKiOS)
+	set(SharedDefines ${SharedDefines} "OPENJK_IOS" "OPENJK_GLES")
+endif()
 
 #=============================================================================
 #

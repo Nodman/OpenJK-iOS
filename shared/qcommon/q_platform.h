@@ -88,13 +88,21 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 // MAC OS X
 #elif defined(MACOS_X) || defined(__APPLE_CC__)
+	#include <TargetConditionals.h>
+	#if TARGET_OS_IPHONE && !defined(OPENJK_IOS)
+		#define OPENJK_IOS
+	#endif
 
 	// make sure this is defined, just for sanity's sake...
 	#ifndef MACOS_X
 		#define MACOS_X
 	#endif
 
-	#define OS_STRING "macosx"
+	#ifdef OPENJK_IOS
+		#define OS_STRING "ios"
+	#else
+		#define OS_STRING "macosx"
+	#endif
 	#define QINLINE inline
 	#define	PATH_SEP '/'
 

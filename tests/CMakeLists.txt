@@ -27,6 +27,9 @@ set(TestFiles
 	"safe/limited_vector.cpp"
 	"${SharedDir}/qcommon/safe/string.cpp"
 	)
+# iOS pure-logic tests; each file includes the source it tests.
+file(GLOB IOSTestFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/ios/*.cpp")
+set(TestFiles ${TestFiles} ${IOSTestFiles})
 if(MSVC)
 	set(TestFiles
 		${TestFiles}
