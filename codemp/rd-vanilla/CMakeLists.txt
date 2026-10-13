@@ -127,12 +127,19 @@ list(APPEND MPVanillaRendererLibraries          ${ZLIB_LIBRARIES})
 list(APPEND MPVanillaRendererIncludeDirectories ${MINIZIP_INCLUDE_DIRS})
 list(APPEND MPVanillaRendererLibraries          ${MINIZIP_LIBRARIES})
 
-find_package(OpenGL REQUIRED)
-set(MPVanillaRendererIncludeDirectories ${MPVanillaRendererIncludeDirectories} ${OPENGL_INCLUDE_DIR})
-set(MPVanillaRendererLibraries ${MPVanillaRendererLibraries} ${OPENGL_LIBRARIES})
+if(OPENJK_GLES)
+	list(APPEND MPVanillaRendererIncludeDirectories ${GL4ES_INCLUDE_DIR})
+else()
+	find_package(OpenGL REQUIRED)
+	set(MPVanillaRendererIncludeDirectories ${MPVanillaRendererIncludeDirectories} ${OPENGL_INCLUDE_DIR})
+	set(MPVanillaRendererLibraries ${MPVanillaRendererLibraries} ${OPENGL_LIBRARIES})
+endif()
 
 set(MPVanillaRendererIncludeDirectories ${MPVanillaRendererIncludeDirectories} ${OpenJKLibDir})
 add_library(${MPVanillaRenderer} SHARED ${MPVanillaRendererFiles})
+if(OPENJK_IOS)
+	openjk_ios_configure_module(${MPVanillaRenderer})
+endif()
 
 if(NOT MSVC)
 	# remove "lib" prefix for .so/.dylib files

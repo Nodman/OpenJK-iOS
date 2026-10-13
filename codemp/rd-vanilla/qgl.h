@@ -28,6 +28,14 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #elif defined( _WIN32 )
 #	include <windows.h>
 #	include <GL/gl.h>
+#elif defined(OPENJK_GLES)
+// gl4es headers; on Apple they rename glX to gl4es_glX
+#	define GL_GLEXT_LEGACY
+#	include <GL/gl.h>
+#	include <stddef.h>
+// glext.h skips these when MACOS_X is set (the macOS SDK has them); gl4es does not
+typedef ptrdiff_t GLsizeiptrARB;
+typedef ptrdiff_t GLintptrARB;
 #elif defined(MACOS_X)
 // Prevent OS X from including its own out-of-date glext.h
 #	define GL_GLEXT_LEGACY

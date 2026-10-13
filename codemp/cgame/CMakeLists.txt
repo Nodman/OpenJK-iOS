@@ -141,6 +141,9 @@ source_group("ghoul2" FILES ${MPCGameG2Files})
 set(MPCGameFiles ${MPCGameFiles} ${MPCGameG2Files})
 
 add_library(${MPCGame} SHARED ${MPCGameFiles})
+if(OPENJK_IOS)
+	openjk_ios_configure_module(${MPCGame})
+endif()
 
 if(NOT MSVC)
 	# remove "lib" prefix for .so/.dylib files

@@ -94,6 +94,9 @@ source_group("rd-common" FILES ${MPUIRendererFiles})
 set(MPUIFiles ${MPUIFiles} ${MPUIRendererFiles})
 
 add_library(${MPUI} SHARED ${MPUIFiles})
+if(OPENJK_IOS)
+	openjk_ios_configure_module(${MPUI})
+endif()
 
 if(NOT MSVC)
 	# remove "lib" prefix for .so/.dylib files

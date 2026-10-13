@@ -357,7 +357,7 @@ if(BuildMPEngine)
 
 	#    Dependencies
 
-	if (NOT WIN32)
+	if (NOT WIN32 AND NOT OPENJK_GLES)
 		# OpenGL
 		find_package(OpenGL REQUIRED)
 		set(MPEngineIncludeDirectories ${MPEngineIncludeDirectories} ${OPENGL_INCLUDE_DIR})
@@ -381,34 +381,36 @@ if(BuildMPEngine)
 		endif(UseInternalOpenAL)
 	endif()
 
-	if(UseInternalSDL2)
-		if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-			set(MPEngineLibraries
-				${MPEngineLibraries}
-				${OpenJKLibDir}/SDL2/lib/x86/SDL2main.lib
-				${OpenJKLibDir}/SDL2/lib/x86/SDL2.lib
+	if(NOT OPENJK_IOS)
+		if(UseInternalSDL2)
+			if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+				set(MPEngineLibraries
+					${MPEngineLibraries}
+					${OpenJKLibDir}/SDL2/lib/x86/SDL2main.lib
+					${OpenJKLibDir}/SDL2/lib/x86/SDL2.lib
+					)
+			else()
+				set(MPEngineLibraries
+					${MPEngineLibraries}
+					${OpenJKLibDir}/SDL2/lib/x64/SDL2main.lib
+					${OpenJKLibDir}/SDL2/lib/x64/SDL2.lib
+					)
+			endif()
+
+			set(MPEngineIncludeDirectories
+				${MPEngineIncludeDirectories}
+				${OpenJKLibDir}/SDL2/include
 				)
 		else()
-			set(MPEngineLibraries
-				${MPEngineLibraries}
-				${OpenJKLibDir}/SDL2/lib/x64/SDL2main.lib
-				${OpenJKLibDir}/SDL2/lib/x64/SDL2.lib
-				)
+			find_package(SDL2 REQUIRED CONFIG)
+			if (TARGET SDL2::SDL2)
+				set(SDL2_INCLUDE_DIRS "")
+				set(SDL2_LIBRARIES SDL2::SDL2)
+			endif()
+			string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES)
+			set(MPEngineIncludeDirectories ${MPEngineIncludeDirectories} ${SDL2_INCLUDE_DIRS})
+			set(MPEngineLibraries ${MPEngineLibraries} ${SDL2_LIBRARIES})
 		endif()
-
-		set(MPEngineIncludeDirectories
-			${MPEngineIncludeDirectories}
-			${OpenJKLibDir}/SDL2/include
-			)
-	else()
-		find_package(SDL2 REQUIRED CONFIG)
-		if (TARGET SDL2::SDL2)
-			set(SDL2_INCLUDE_DIRS "")
-			set(SDL2_LIBRARIES SDL2::SDL2)
-		endif()
-		string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES)
-		set(MPEngineIncludeDirectories ${MPEngineIncludeDirectories} ${SDL2_INCLUDE_DIRS})
-		set(MPEngineLibraries ${MPEngineLibraries} ${SDL2_LIBRARIES})
 	endif()
 
 	# EAX is Windows-Only (right?)
@@ -553,6 +555,9 @@ if(BuildMPEngine)
 	endif(WIN32)
 
 	set(MPEngineFiles ${MPEngineFiles} ${MPEngineSysFiles})
+	if(OPENJK_IOS)
+		set(MPEngineFiles ${MPEngineFiles} ${OPENJK_IOS_SOURCES})
+	endif()
 	source_group("sys" FILES ${MPEngineSysFiles})
 
 	if(MakeApplicationBundles)
@@ -565,7 +570,10 @@ if(BuildMPEngine)
 		set(MPEngineFiles ${MPEngineFiles} ${MPDir}/macosx/English.lproj/InfoPlist.strings)
 	endif(MakeApplicationBundles)
 
-	if(WIN32)
+	if(OPENJK_IOS)
+		add_executable(${MPEngine} MACOSX_BUNDLE ${MPEngineFiles})
+		openjk_ios_configure_app(${MPEngine} MP)
+	elseif(WIN32)
 		add_executable(${MPEngine} WIN32 ${MPEngineFiles})
 		if(UseInternalSDL2)
 			if(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -578,37 +586,39 @@ if(BuildMPEngine)
 					)
 			endif()
 		endif()
-	else(WIN32)
+	else()
 		if(MakeApplicationBundles)
 			add_executable(${MPEngine} MACOSX_BUNDLE ${MPEngineFiles})
 			set_target_properties(${MPEngine} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${MPDir}/macosx/OpenJKInfo.plist")
 		else(MakeApplicationBundles)
 			add_executable(${MPEngine} ${MPEngineFiles})
 		endif(MakeApplicationBundles)
-	endif(WIN32)
+	endif()
 
-	if(MakeApplicationBundles)
-		install(CODE "
-			include(BundleUtilities)
-			set(BU_CHMOD_BUNDLE_ITEMS ON)
-			fixup_bundle(\"${CMAKE_BINARY_DIR}/${MPEngine}.app\" \"\" \"\")
-			"
-			COMPONENT Runtime)
-		install(TARGETS ${MPEngine}
-			BUNDLE
-			DESTINATION ${JKAInstallDir}
-			COMPONENT ${JKAMPClientComponent})
-	else(MakeApplicationBundles)
-		install(TARGETS ${MPEngine}
-			RUNTIME
-			DESTINATION ${JKAInstallDir}
-			COMPONENT ${JKAMPClientComponent})
-		if(MPEngineExtraInstallFiles)
-			install(FILES ${MPEngineExtraInstallFiles}
+	if(NOT OPENJK_IOS)
+		if(MakeApplicationBundles)
+			install(CODE "
+				include(BundleUtilities)
+				set(BU_CHMOD_BUNDLE_ITEMS ON)
+				fixup_bundle(\"${CMAKE_BINARY_DIR}/${MPEngine}.app\" \"\" \"\")
+				"
+				COMPONENT Runtime)
+			install(TARGETS ${MPEngine}
+				BUNDLE
 				DESTINATION ${JKAInstallDir}
 				COMPONENT ${JKAMPClientComponent})
-		endif()
-	endif(MakeApplicationBundles)
+		else(MakeApplicationBundles)
+			install(TARGETS ${MPEngine}
+				RUNTIME
+				DESTINATION ${JKAInstallDir}
+				COMPONENT ${JKAMPClientComponent})
+			if(MPEngineExtraInstallFiles)
+				install(FILES ${MPEngineExtraInstallFiles}
+					DESTINATION ${JKAInstallDir}
+					COMPONENT ${JKAMPClientComponent})
+			endif()
+		endif(MakeApplicationBundles)
+	endif()
 
 	set_target_properties(${MPEngine} PROPERTIES COMPILE_DEFINITIONS "${MPEngineDefines}")
 

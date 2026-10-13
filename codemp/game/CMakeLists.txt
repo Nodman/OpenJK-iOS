@@ -209,6 +209,9 @@ source_group("ui" FILES ${MPGameUiFiles})
 set(MPGameFiles ${MPGameFiles} ${MPGameUiFiles})
 
 add_library(${MPGame} SHARED ${MPGameFiles})
+if(OPENJK_IOS)
+	openjk_ios_configure_module(${MPGame})
+endif()
 
 if(NOT MSVC)
 	# remove "lib" prefix for .so/.dylib files
