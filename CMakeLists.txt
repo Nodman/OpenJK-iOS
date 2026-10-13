@@ -101,6 +101,11 @@ endif()
 #=============================================================================
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
+set(OPENJK_IOS OFF)
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+	set(OPENJK_IOS ON)
+endif()
+
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
 	add_custom_target(
 		copy-compile-commands ALL

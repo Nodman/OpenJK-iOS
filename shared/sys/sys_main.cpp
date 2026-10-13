@@ -350,7 +350,7 @@ void *Sys_LoadDll( const char *name, qboolean useSystemLib )
 	return NULL;
 }
 
-#if defined(MACOS_X) && !defined(_JK2EXE)
+#if defined(MACOS_X) && !defined(_JK2EXE) && !defined(OPENJK_IOS)
 void *Sys_LoadMachOBundle( const char *name )
 {
 	if ( !FS_LoadMachOBundle(name) )
@@ -499,7 +499,7 @@ void *Sys_LoadLegacyGameDll( const char *name, VMMainProc **vmMain, SystemCallPr
 
 		if ( !libHandle )
 		{
-#if defined(MACOS_X) && !defined(_JK2EXE)
+#if defined(MACOS_X) && !defined(_JK2EXE) && !defined(OPENJK_IOS)
 			//First, look for the old-style mac .bundle that's inside a pk3
 			//It's actually zipped, and the zipfile has the same name as 'name'
 			libHandle = Sys_LoadMachOBundle( name );
@@ -557,7 +557,7 @@ void *Sys_LoadSPGameDll( const char *name, GetGameAPIProc **GetGameAPI )
 
 	Com_sprintf (filename, sizeof(filename), "%s" ARCH_STRING DLL_EXT, name);
 
-#if defined(MACOS_X) && !defined(_JK2EXE)
+#if defined(MACOS_X) && !defined(_JK2EXE) && !defined(OPENJK_IOS)
     //First, look for the old-style mac .bundle that's inside a pk3
     //It's actually zipped, and the zipfile has the same name as 'name'
     libHandle = Sys_LoadMachOBundle( filename );
@@ -632,7 +632,7 @@ void *Sys_LoadGameDll( const char *name, GetModuleAPIProc **moduleAPI )
 
 		if ( !libHandle )
 		{
-#if defined(MACOS_X) && !defined(_JK2EXE)
+#if defined(MACOS_X) && !defined(_JK2EXE) && !defined(OPENJK_IOS)
 			//First, look for the old-style mac .bundle that's inside a pk3
 			//It's actually zipped, and the zipfile has the same name as 'name'
 			libHandle = Sys_LoadMachOBundle( name );
