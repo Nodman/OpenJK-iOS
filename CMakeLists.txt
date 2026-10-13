@@ -202,6 +202,10 @@ include(InstallConfig)
 if(OPENJK_IOS)
 	include(OpenJKiOS)
 	set(SharedDefines ${SharedDefines} "OPENJK_IOS" "OPENJK_GLES")
+	option(OPENJK_IOS_PERF "Log renderer backend CPU time per frame (excludes flush/present)" OFF)
+	if(OPENJK_IOS_PERF)
+		set(SharedDefines ${SharedDefines} "OPENJK_IOS_PERF")
+	endif()
 endif()
 
 #=============================================================================
