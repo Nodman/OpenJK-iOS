@@ -2321,8 +2321,10 @@ static void CL_ShutdownRef( qboolean restarting ) {
 	re = NULL;
 
 	if ( rendererLib != NULL ) {
+#ifndef OPENJK_IOS
 		Sys_UnloadDll (rendererLib);
 		rendererLib = NULL;
+#endif
 	}
 }
 
@@ -2426,6 +2428,9 @@ void CL_InitRef( void ) {
 
 	Com_sprintf( dllName, sizeof( dllName ), "%s_" ARCH_STRING DLL_EXT, cl_renderer->string );
 
+#ifdef OPENJK_IOS
+	if ( !rendererLib )	// renderer stays loaded across vid_restart on iOS
+#endif
 	if( !(rendererLib = Sys_LoadDll( dllName, qfalse )) && strcmp( cl_renderer->string, cl_renderer->resetString ) )
 	{
 		Com_Printf( "failed: trying to load fallback renderer\n" );

@@ -291,6 +291,20 @@ void Sys_UnloadDll( void *dllHandle )
 	Sys_UnloadLibrary(dllHandle);
 }
 
+#if defined(OPENJK_IOS) && !defined(OPENJK_STATIC_MODULES)
+// Only signed dylibs inside the app bundle; never Documents or a pk3.
+static void *Sys_IOS_LoadBundledLibrary( const char *filename )
+{
+	const char *fn = va( "%s/Frameworks/%s", Sys_BinaryPath(), filename );
+	void *libHandle = Sys_LoadLibrary( fn );
+	if ( !libHandle )
+		Com_Printf( "Sys_IOS_LoadBundledLibrary(%s) failed: \"%s\"\n", fn, Sys_LibraryError() );
+	else
+		Com_DPrintf( "Sys_IOS_LoadBundledLibrary: loaded %s\n", fn );
+	return libHandle;
+}
+#endif
+
 /*
 =================
 Sys_LoadDll
@@ -309,6 +323,10 @@ void *Sys_LoadDll( const char *name, qboolean useSystemLib )
 		Com_Printf( S_COLOR_YELLOW "WARNING: Rejecting DLL named \"%s\"", name );
 		return NULL;
 	}
+
+#if defined(OPENJK_IOS) && !defined(OPENJK_STATIC_MODULES)
+	return Sys_IOS_LoadBundledLibrary( name );
+#endif
 
 	if ( useSystemLib )
 	{
@@ -473,6 +491,11 @@ void *Sys_LoadLegacyGameDll( const char *name, VMMainProc **vmMain, SystemCallPr
 
 	Com_sprintf (filename, sizeof(filename), "%s" ARCH_STRING DLL_EXT, name);
 
+#if defined(OPENJK_IOS) && !defined(OPENJK_STATIC_MODULES)
+	libHandle = Sys_IOS_LoadBundledLibrary( filename );
+	if ( !libHandle )
+		return NULL;
+#else
 #if defined(_DEBUG)
 	libHandle = Sys_LoadLibrary( filename );
 	if ( !libHandle )
@@ -530,6 +553,7 @@ void *Sys_LoadLegacyGameDll( const char *name, VMMainProc **vmMain, SystemCallPr
 			}
 		}
 	}
+#endif
 
 	typedef void QDECL DllEntryProc( SystemCallProc *syscallptr );
 
@@ -557,6 +581,11 @@ void *Sys_LoadSPGameDll( const char *name, GetGameAPIProc **GetGameAPI )
 
 	Com_sprintf (filename, sizeof(filename), "%s" ARCH_STRING DLL_EXT, name);
 
+#if defined(OPENJK_IOS) && !defined(OPENJK_STATIC_MODULES)
+	libHandle = Sys_IOS_LoadBundledLibrary( filename );
+	if ( !libHandle )
+		return NULL;
+#else
 #if defined(MACOS_X) && !defined(_JK2EXE) && !defined(OPENJK_IOS)
     //First, look for the old-style mac .bundle that's inside a pk3
     //It's actually zipped, and the zipfile has the same name as 'name'
@@ -588,6 +617,7 @@ void *Sys_LoadSPGameDll( const char *name, GetGameAPIProc **GetGameAPI )
 		if ( !libHandle )
 			return NULL;
 	}
+#endif
 
 	*GetGameAPI = (GetGameAPIProc *)Sys_LoadFunction( libHandle, "GetGameAPI" );
 	if ( !*GetGameAPI ) {
@@ -606,6 +636,11 @@ void *Sys_LoadGameDll( const char *name, GetModuleAPIProc **moduleAPI )
 
 	Com_sprintf (filename, sizeof(filename), "%s" ARCH_STRING DLL_EXT, name);
 
+#if defined(OPENJK_IOS) && !defined(OPENJK_STATIC_MODULES)
+	libHandle = Sys_IOS_LoadBundledLibrary( filename );
+	if ( !libHandle )
+		return NULL;
+#else
 #if defined(_DEBUG)
 	libHandle = Sys_LoadLibrary( filename );
 	if ( !libHandle )
@@ -663,6 +698,7 @@ void *Sys_LoadGameDll( const char *name, GetModuleAPIProc **moduleAPI )
 			}
 		}
 	}
+#endif
 
 	*moduleAPI = (GetModuleAPIProc *)Sys_LoadFunction( libHandle, "GetModuleAPI" );
 	if ( !*moduleAPI ) {

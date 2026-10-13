@@ -173,3 +173,11 @@ set_property(TARGET ${MPVanillaRenderer} APPEND PROPERTY COMPILE_OPTIONS ${OPENJ
 set_target_properties(${MPVanillaRenderer} PROPERTIES INCLUDE_DIRECTORIES "${MPVanillaRendererIncludeDirectories}")
 set_target_properties(${MPVanillaRenderer} PROPERTIES PROJECT_LABEL "MP Vanilla Renderer")
 target_link_libraries(${MPVanillaRenderer} ${MPVanillaRendererLibraries})
+if(OPENJK_GLES AND NOT OPENJK_STATIC_MODULES)
+	# gl4es is linked into the renderer dylib only, with hidden visibility
+	target_link_libraries(${MPVanillaRenderer} GL)
+endif()
+if(OPENJK_IOS)
+	# bundled libjpeg/libpng have default visibility; export only the entry point
+	target_link_options(${MPVanillaRenderer} PRIVATE "-Wl,-exported_symbol,_GetRefAPI")
+endif()
