@@ -708,6 +708,11 @@ static void Upload32( unsigned *data,
 			}
 		}
 
+#ifdef OPENJK_GLES
+		// gl4es would convert RGB internal formats to packed RGB on the CPU; Apple stores RGBA8 anyway
+		if ( *pformat == GL_RGB8 || *pformat == 3 )
+			*pformat = GL_RGBA8;
+#endif
 		*pUploadWidth = width;
 		*pUploadHeight = height;
 
