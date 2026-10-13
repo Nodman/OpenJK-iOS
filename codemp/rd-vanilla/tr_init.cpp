@@ -50,6 +50,8 @@ static qboolean R_GLES_ExtensionSupported( const char *extension ) {
 	}
 	return qfalse;
 }
+// native entry point; gl4es does not expose it, and it must act on SDL's bound view FBO
+void (*R_NativeDiscardFramebuffer)( GLenum target, GLsizei count, const GLenum *attachments );
 #endif
 
 static void GfxInfo_f( void );
@@ -834,6 +836,7 @@ static void InitOpenGL( void )
 			initialize_gl4es();
 			gl4esStarted = qtrue;
 		}
+		R_NativeDiscardFramebuffer = (void (*)( GLenum, GLsizei, const GLenum * ))R_NativeGetProcAddress( "glDiscardFramebufferEXT" );
 		gl4es_setBorrowedMainFramebuffer( (unsigned int)sdlFbo );	// EAGL's drawable is not FBO 0
 #endif
 

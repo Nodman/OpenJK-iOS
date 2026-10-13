@@ -33,6 +33,9 @@ extern qboolean tr_distortionPrePost; //tr_shadows.cpp
 extern qboolean tr_distortionNegate; //tr_shadows.cpp
 extern void RB_CaptureScreenImage(void); //tr_shadows.cpp
 extern void RB_DistortionFill(void); //tr_shadows.cpp
+#ifdef OPENJK_GLES
+extern void (*R_NativeDiscardFramebuffer)( GLenum target, GLsizei count, const GLenum *attachments );
+#endif
 static void RB_DrawGlowOverlay();
 static void RB_BlurGlowTexture();
 
@@ -1712,6 +1715,15 @@ const void	*RB_DrawBuffer( const void *data ) {
 
 	qglDrawBuffer( cmd->buffer );
 
+#ifdef OPENJK_GLES
+	// tile GPU: clear every attachment at frame start so nothing is loaded from memory
+	GL_State( GLS_DEFAULT );
+	qglScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+	qglClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
+	qglClearStencil( 0 );
+	qglClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+#endif
+
 	// clear screen for debugging
 	if (tr.world && tr.world->globalFog != -1)
 	{
@@ -1958,6 +1970,10 @@ const void	*RB_SwapBuffers( const void *data ) {
 #ifdef OPENJK_GLES
 	{
 		qglFlush();	// gl4es submission work stays inside the measured time
+		if ( R_NativeDiscardFramebuffer ) {	// depth/stencil are cleared next frame; do not store them
+			static const GLenum attachments[] = { 0x8D00 /* GL_DEPTH_ATTACHMENT */, 0x8D20 /* GL_STENCIL_ATTACHMENT */ };
+			R_NativeDiscardFramebuffer( 0x8D40 /* GL_FRAMEBUFFER */, 2, attachments );
+		}
 #ifdef OPENJK_IOS_PERF
 		uint64_t presentStart = R_PerfNow();
 #endif
