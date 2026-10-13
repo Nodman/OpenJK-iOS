@@ -38,6 +38,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/qcommon.h"
 #include "qcommon/q_shared.h"
 #include "sys_local.h"
+#ifdef OPENJK_IOS
+#include "ios/sys_ios.h"
+#endif
 
 qboolean stdinIsATTY = qfalse;
 
@@ -480,6 +483,13 @@ Sys_DefaultHomePath
 char *Sys_DefaultHomePath(void)
 {
 	return NULL;
+}
+#elif defined(OPENJK_IOS)
+char *Sys_DefaultHomePath(void)
+{
+	if ( !homePath[0] )
+		Q_strncpyz( homePath, Sys_IOS_DocumentsPath(), sizeof( homePath ) );
+	return homePath;
 }
 #elif defined(MACOS_X)
 char *Sys_DefaultHomePath(void)

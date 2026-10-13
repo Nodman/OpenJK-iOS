@@ -24,6 +24,13 @@ function(openjk_ios_configure_app target flavor)
 		XCODE_ATTRIBUTE_LLVM_LTO NO
 		XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)	# the .mm files are written ARC-style
 	set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks")
+	set_target_properties(${target} PROPERTIES
+		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/ios/Info.plist.in"
+		MACOSX_BUNDLE_SHORT_VERSION_STRING "${OPENJK_IOS_VERSION}"
+		MACOSX_BUNDLE_BUNDLE_VERSION "1")
+	target_sources(${target} PRIVATE "${CMAKE_SOURCE_DIR}/shared/ios/ios_default.cfg")
+	set_source_files_properties("${CMAKE_SOURCE_DIR}/shared/ios/ios_default.cfg"
+		PROPERTIES MACOSX_PACKAGE_LOCATION "base")
 	target_link_libraries(${target} SDL2::SDL2main SDL2::SDL2-static
 		"-framework OpenGLES" "-framework Metal" "-framework GameController"
 		"-framework AVFoundation" "-framework UIKit" "-framework QuartzCore")

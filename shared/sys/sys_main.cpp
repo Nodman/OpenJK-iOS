@@ -31,6 +31,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "sys_loadlib.h"
 #include "sys_public.h"
 #include "con_local.h"
+#ifdef OPENJK_IOS
+#include "ios/sys_ios.h"
+#endif
 
 static char binaryPath[ MAX_OSPATH ] = { 0 };
 static char installPath[ MAX_OSPATH ] = { 0 };
@@ -771,7 +774,9 @@ char *Sys_StripAppBundle( char *dir )
 #endif
 
 #ifndef DEFAULT_BASEDIR
-#	ifdef MACOS_X
+#	if defined(OPENJK_IOS)
+#		define DEFAULT_BASEDIR Sys_IOS_DocumentsPath()
+#	elif defined(MACOS_X)
 #		define DEFAULT_BASEDIR Sys_StripAppBundle(Sys_BinaryPath())
 #	else
 #		define DEFAULT_BASEDIR Sys_BinaryPath()
@@ -783,6 +788,9 @@ int main ( int argc, char* argv[] )
 	int		i;
 	char	commandLine[ MAX_STRING_CHARS ] = { 0 };
 
+#ifdef OPENJK_IOS
+	Sys_IOS_EarlyInit();
+#endif
 	Sys_PlatformInit( argc, argv );
 	CON_Init();
 
@@ -797,6 +805,9 @@ int main ( int argc, char* argv[] )
 
 	Sys_SetBinaryPath( Sys_Dirname( argv[ 0 ] ) );
 	Sys_SetDefaultInstallPath( DEFAULT_BASEDIR );
+#ifdef OPENJK_IOS
+	Sys_IOS_PreInit();
+#endif
 
 	// Concatenate the command line for passing to Com_Init
 	for( i = 1; i < argc; i++ )
