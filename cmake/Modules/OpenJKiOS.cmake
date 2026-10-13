@@ -16,7 +16,7 @@ function(openjk_ios_configure_app target flavor)
 	string(TOLOWER "${flavor}" flavor_lower)
 	set_target_properties(${target} PROPERTIES
 		OUTPUT_NAME "OpenJK-${flavor}"
-		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/apps"
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/apps/$<CONFIG>$(EFFECTIVE_PLATFORM_NAME)"	# genex stops Xcode adding only $<CONFIG>
 		MACOSX_BUNDLE_BUNDLE_NAME "OpenJK ${flavor}"
 		MACOSX_BUNDLE_GUI_IDENTIFIER "org.openjk.ios.${flavor_lower}"
 		XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "org.openjk.ios.${flavor_lower}"
