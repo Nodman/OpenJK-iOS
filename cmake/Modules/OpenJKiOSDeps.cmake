@@ -15,7 +15,7 @@ set(DEFAULT_ES 2 CACHE STRING "" FORCE)
 # gl4es already sets both on Apple; explicit so init stays manual after a gl4es bump
 set(NO_LOADER ON CACHE BOOL "" FORCE)
 set(NO_INIT_CONSTRUCTOR ON CACHE BOOL "" FORCE)
-set(_gl4es_patch "${CMAKE_CURRENT_LIST_DIR}/../ios/patches/gl4es-apple-alias.patch")
+set(_gl4es_patch "${CMAKE_CURRENT_LIST_DIR}/../ios/patches/gl4es-apple-build.patch")
 # the hash is part of the patch step args, so editing a patch re-runs the step
 file(SHA256 "${_gl4es_patch}" _gl4es_patch_hash)
 FetchContent_Declare(gl4es
