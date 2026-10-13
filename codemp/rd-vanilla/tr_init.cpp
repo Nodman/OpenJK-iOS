@@ -53,7 +53,7 @@ static qboolean R_GLES_ExtensionSupported( const char *extension ) {
 // e.g. +set r_gl4esEnv LIBGL_USEVBO=3,LIBGL_NOHIGHP=1; gl4es reads env only in initialize_gl4es()
 static void R_GLES_ApplyEnv( void ) {
 	char buf[256];
-	Q_strncpyz( buf, ri.Cvar_Get( "r_gl4esEnv", "", 0, "gl4es env vars, read once per launch" )->string, sizeof( buf ) );
+	Q_strncpyz( buf, ri.Cvar_Get( "r_gl4esEnv", "LIBGL_USEVBO=3", 0, "gl4es env vars, read once per launch" )->string, sizeof( buf ) );
 	for ( char *tok = strtok( buf, " ," ); tok; tok = strtok( NULL, " ," ) ) {
 		char *eq = strchr( tok, '=' );
 		if ( !eq || strncmp( tok, "LIBGL_", 6 ) )
