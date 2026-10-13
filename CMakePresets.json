@@ -22,7 +22,8 @@
         "UseInternalZlib": "ON",
         "UseInternalPNG": "ON",
         "UseInternalJPEG": "ON",
-        "UseInternalSDL2": "OFF"
+        "UseInternalSDL2": "OFF",
+        "OPENJK_STATIC_MODULES": "OFF"
       }
     }
   ],
