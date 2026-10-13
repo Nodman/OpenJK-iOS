@@ -36,6 +36,22 @@ glconfigExt_t glConfigExt;
 glstate_t	glState;
 window_t	window;
 
+#ifdef OPENJK_GLES
+#include <gl4esinit.h>
+static void *(*R_NativeGetProcAddress)( const char *name );
+static void *R_GLES_NativeProcAddress( const char *name ) { return R_NativeGetProcAddress( name ); }
+static void R_GLES_MainFBSize( int *width, int *height ) { *width = glConfig.vidWidth; *height = glConfig.vidHeight; }
+static qboolean R_GLES_ExtensionSupported( const char *extension ) {
+	const char *list = (const char *)qglGetString( GL_EXTENSIONS );
+	size_t len = strlen( extension );
+	for ( const char *p = list; p && ( p = strstr( p, extension ) ); p += len ) {
+		if ( ( p == list || p[-1] == ' ' ) && ( p[len] == ' ' || p[len] == '\0' ) )
+			return qtrue;
+	}
+	return qfalse;
+}
+#endif
+
 static void GfxInfo_f( void );
 
 cvar_t	*r_verbose;
@@ -796,10 +812,30 @@ static void InitOpenGL( void )
 	if ( glConfig.vidWidth == 0 )
 	{
 		windowDesc_t windowDesc = { GRAPHICS_API_OPENGL };
+#ifdef OPENJK_GLES
+		windowDesc.gl.majorVersion = 2;
+		windowDesc.gl.minorVersion = 0;
+		windowDesc.gl.profile = GLPROFILE_ES;
+#endif
 		memset(&glConfig, 0, sizeof(glConfig));
 		memset(&glConfigExt, 0, sizeof(glConfigExt));
 
 		window = ri.WIN_Init(&windowDesc, &glConfig);
+#ifdef OPENJK_GLES
+		GLint sdlFbo = 0;
+		{
+			void (*nativeGetIntegerv)( GLenum, GLint * ) = (void (*)( GLenum, GLint * ))R_NativeGetProcAddress( "glGetIntegerv" );
+			nativeGetIntegerv( 0x8CA6 /* GL_FRAMEBUFFER_BINDING */, &sdlFbo );
+		}
+		static qboolean gl4esStarted = qfalse;	// context persists, so init once
+		if ( !gl4esStarted ) {
+			set_getprocaddress( R_GLES_NativeProcAddress );
+			set_getmainfbsize( R_GLES_MainFBSize );
+			initialize_gl4es();
+			gl4esStarted = qtrue;
+		}
+		gl4es_setBorrowedMainFramebuffer( (unsigned int)sdlFbo );	// EAGL's drawable is not FBO 0
+#endif
 
 		Com_Printf( "GL_RENDERER: %s\n", (char *)qglGetString (GL_RENDERER) );
 
@@ -1973,6 +2009,12 @@ Q_EXPORT refexport_t* QDECL GetRefAPI( int apiVersion, refimport_t *rimp ) {
 
 	assert( rimp );
 	ri = *rimp;
+#ifdef OPENJK_GLES
+	// extension lookups must see gl4es, not the native GLES driver
+	R_NativeGetProcAddress = rimp->GL_GetProcAddress;
+	ri.GL_GetProcAddress = gl4es_GetProcAddress;
+	ri.GL_ExtensionSupported = R_GLES_ExtensionSupported;
+#endif
 
 	memset( &re, 0, sizeof( re ) );
 
