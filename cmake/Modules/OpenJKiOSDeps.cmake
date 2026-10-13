@@ -16,15 +16,18 @@ set(DEFAULT_ES 2 CACHE STRING "" FORCE)
 set(NO_LOADER ON CACHE BOOL "" FORCE)
 set(NO_INIT_CONSTRUCTOR ON CACHE BOOL "" FORCE)
 set(_gl4es_patch "${CMAKE_CURRENT_LIST_DIR}/../ios/patches/gl4es-apple-build.patch")
+set(_gl4es_fbo_patch "${CMAKE_CURRENT_LIST_DIR}/../ios/patches/gl4es-borrowed-fbo.patch")
 # the hash is part of the patch step args, so editing a patch re-runs the step
 file(SHA256 "${_gl4es_patch}" _gl4es_patch_hash)
+file(SHA256 "${_gl4es_fbo_patch}" _gl4es_fbo_patch_hash)
 FetchContent_Declare(gl4es
 	GIT_REPOSITORY https://github.com/ptitSeb/gl4es.git
 	GIT_TAG 201599684ada5bf76059b21be8c69361fa4b891b
 	# checkout first so a re-run of the patch step stays clean
 	PATCH_COMMAND git checkout -- .
 		COMMAND git apply "${_gl4es_patch}"
-		COMMAND ${CMAKE_COMMAND} -E echo "gl4es patches ${_gl4es_patch_hash}")
+		COMMAND git apply "${_gl4es_fbo_patch}"
+		COMMAND ${CMAKE_COMMAND} -E echo "gl4es patches ${_gl4es_patch_hash} ${_gl4es_fbo_patch_hash}")
 
 FetchContent_MakeAvailable(SDL2 gl4es)
 # gl4es writes into ${CMAKE_SOURCE_DIR}/lib by default

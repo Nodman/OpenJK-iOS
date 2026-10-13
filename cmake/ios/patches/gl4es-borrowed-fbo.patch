@@ -1,0 +1,75 @@
+diff --git a/include/gl4esinit.h b/include/gl4esinit.h
+index 79cbb344..ee617f1c 100644
+--- a/include/gl4esinit.h
++++ b/include/gl4esinit.h
+@@ -22,6 +22,8 @@ void set_getmainfbsize(void (APIENTRY_GL4ES *new_getMainFBSize)(int* width, int*
+ void initialize_gl4es(void);
+ // do this to uninitialize GL4ES if init constructors are disabled.
+ void close_gl4es(void);
++// use an FBO owned by the windowing layer (e.g. EAGL) as the default framebuffer
++void gl4es_setBorrowedMainFramebuffer(unsigned int fbo);
+ // wrapped GetProcAddress
+ void* APIENTRY_GL4ES gl4es_GetProcAddress(const char *name);
+ 
+diff --git a/src/gl/framebuffers.c b/src/gl/framebuffers.c
+index 93194fcf..3c17f01e 100644
+--- a/src/gl/framebuffers.c
++++ b/src/gl/framebuffers.c
+@@ -1206,7 +1206,13 @@ void APIENTRY_GL4ES gl4es_glGetRenderbufferParameteriv(GLenum target, GLenum pna
+     gles_glGetRenderbufferParameteriv(target, pname, params);
+ }
+ 
++void gl4es_setBorrowedMainFramebuffer(GLuint fbo) {
++    glstate->fbo.mainfbo_fbo = fbo;
++    glstate->fbo.mainfbo_borrowed = 1;
++}
++
+ void createMainFBO(int width, int height) {
++    if (glstate->fbo.mainfbo_borrowed) return;
+     LOAD_GLES2_OR_OES(glGenFramebuffers);
+     LOAD_GLES2_OR_OES(glBindFramebuffer);
+     LOAD_GLES2_OR_OES(glFramebufferTexture2D);
+@@ -1305,6 +1311,7 @@ void createMainFBO(int width, int height) {
+ }
+ 
+ void blitMainFBO(int x, int y, int width, int height) {
++    if (glstate->fbo.mainfbo_borrowed) return;
+     if (glstate->fbo.mainfbo_fbo==0)
+         return;
+ 
+@@ -1337,6 +1344,7 @@ void blitMainFBO(int x, int y, int width, int height) {
+ }
+ 
+ void bindMainFBO() {
++    if (glstate->fbo.mainfbo_borrowed) return;
+     LOAD_GLES2_OR_OES(glBindFramebuffer);
+     LOAD_GLES2_OR_OES(glCheckFramebufferStatus);
+     if (!glstate->fbo.mainfbo_fbo)
+@@ -1348,6 +1356,7 @@ void bindMainFBO() {
+ }
+ 
+ void unbindMainFBO() {
++    if (glstate->fbo.mainfbo_borrowed) return;
+     LOAD_GLES2_OR_OES(glBindFramebuffer);
+     if (!glstate->fbo.mainfbo_fbo)
+         return;
+@@ -1362,6 +1371,7 @@ void deleteMainFBO(void *state) {
+     LOAD_GLES(glDeleteTextures);
+ 
+     glstate_t *glstate = (glstate_t*)state;
++    if (glstate->fbo.mainfbo_borrowed) { glstate->fbo.mainfbo_fbo = 0; return; }
+ 
+     if (glstate->fbo.mainfbo_dep) {
+         gles_glDeleteRenderbuffers(1, &glstate->fbo.mainfbo_dep);
+diff --git a/src/gl/state.h b/src/gl/state.h
+index 6fc9bea4..8b3249be 100644
+--- a/src/gl/state.h
++++ b/src/gl/state.h
+@@ -318,6 +318,7 @@ typedef struct {
+     int mainfbo_height;
+     int mainfbo_nwidth;
+     int mainfbo_nheight;
++    int mainfbo_borrowed;
+     
+     khash_t(framebufferlist_t) *framebufferlist;
+     glframebuffer_t *fbo_0;
