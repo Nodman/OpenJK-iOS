@@ -1921,6 +1921,11 @@ void RE_Shutdown( qboolean destroyWindow, qboolean restarting ) {
 	// shut down platform specific OpenGL stuff
 	if ( destroyWindow ) {
 		ri.WIN_Shutdown();
+#if defined( OPENJK_STATIC_MODULES ) || defined( OPENJK_IOS )
+		// InitOpenGL re-runs WIN_Init only when vidWidth == 0; a DLL reload used to zero this
+		memset( &glConfig, 0, sizeof( glConfig ) );
+		memset( &glConfigExt, 0, sizeof( glConfigExt ) );
+#endif
 	}
 
 	tr.registered = qfalse;
