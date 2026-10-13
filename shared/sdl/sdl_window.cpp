@@ -663,6 +663,63 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	return RSERR_OK;
 }
 
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+static cvar_t *r_renderScale;
+
+SDL_Window *GLimp_IOS_Window( void ) { return screen; }
+
+static float GLimp_IOS_RenderScale( void ) {
+	float s = r_renderScale->value > 0.0f ? Com_Clamp( 0.5f, 1.0f, r_renderScale->value )
+		: Sys_IOS_DefaultRenderScale( Cvar_VariableIntegerValue( "com_maxfps" ) > 60 ? qtrue : qfalse );
+	float w, h;
+	Sys_IOS_GetViewPointSize( screen, &w, &h );
+	float pixelsH = h * Sys_IOS_GetNativeScale( screen );
+	if ( pixelsH > 0.0f && pixelsH * s < IOS_MIN_DRAWABLE_HEIGHT )	// Slide Over: keep a usable height
+		s = Com_Clamp( 0.5f, 1.0f, IOS_MIN_DRAWABLE_HEIGHT / pixelsH );
+	return s;
+}
+
+// Window and EAGL context live for the whole process: gl4es keeps GL object
+// ids and cannot be reset when a context is destroyed.
+static rserr_t GLimp_IOS_SetMode( glconfig_t *glConfig )
+{
+	if ( !screen ) {
+		SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES );
+		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 2 );
+		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 0 );
+		SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
+		SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8 );
+		SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
+		SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
+		SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
+		SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+		SDL_GL_SetAttribute( SDL_GL_RETAINED_BACKING, 0 );
+		screen = SDL_CreateWindow( CLIENT_WINDOW_TITLE, 0, 0, 0, 0,
+			SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_BORDERLESS );
+		if ( !screen )
+			return RSERR_INVALID_MODE;
+		opengl_context = SDL_GL_CreateContext( screen );
+		if ( !opengl_context ) {
+			SDL_DestroyWindow( screen );
+			screen = NULL;
+			return RSERR_UNKNOWN;
+		}
+	} else {
+		SDL_GL_MakeCurrent( screen, opengl_context );
+	}
+	Sys_IOS_SetDrawableScale( screen, GLimp_IOS_RenderScale() );
+	SDL_GL_GetDrawableSize( screen, &glConfig->vidWidth, &glConfig->vidHeight );
+	glConfig->colorBits = 32;
+	glConfig->depthBits = 24;
+	glConfig->stencilBits = 8;
+	glConfig->isFullscreen = qtrue;
+	glConfig->displayFrequency = 60;	// T0c.1 sets Sys_IOS_MaxFramesPerSecond()
+	Com_Printf( "iOS drawable %d x %d\n", glConfig->vidWidth, glConfig->vidHeight );
+	return RSERR_OK;
+}
+#endif
+
 /*
 ===============
 GLimp_StartDriverAndSetMode
@@ -707,7 +764,11 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 		fullscreen = qfalse;
 	}
 
+#ifdef OPENJK_IOS
+	err = GLimp_IOS_SetMode( glConfig );
+#else
 	err = GLimp_SetMode(glConfig, windowDesc, CLIENT_WINDOW_TITLE, mode, fullscreen, noborder);
+#endif
 
 	switch ( err )
 	{
@@ -754,6 +815,9 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_ignorehwgamma		= Cvar_Get( "r_ignorehwgamma",		"0",		CVAR_ARCHIVE_ND|CVAR_LATCH );
 	r_ext_multisample	= Cvar_Get( "r_ext_multisample",	"0",		CVAR_ARCHIVE_ND|CVAR_LATCH );
 	Cvar_Get( "r_availableModes", "", CVAR_ROM );
+#ifdef OPENJK_IOS
+	r_renderScale = Cvar_Get( "r_renderScale", "0", CVAR_ARCHIVE|CVAR_LATCH );
+#endif
 
 	// Create the window and set up the context
 	if(!GLimp_StartDriverAndSetMode( glConfig, windowDesc, r_mode->integer,
@@ -776,6 +840,10 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 
 	// This depends on SDL_INIT_VIDEO, hence having it here
 	IN_Init( screen );
+#ifdef OPENJK_IOS
+	if ( !Sys_IOS_HardwareKeyboardConnected() )
+		SDL_StopTextInput();	// IN_Init starts text input unconditionally; keep this guard (P4 gates it at the source too)
+#endif
 
 	// window_t is only really useful for Windows if the renderer wants to create a D3D context.
 	window_t window = {};
@@ -814,6 +882,7 @@ void WIN_Shutdown( void )
 
 	IN_Shutdown();
 
+#ifndef OPENJK_IOS
 	if ( opengl_context ) {
 		SDL_GL_DeleteContext( opengl_context );
 		opengl_context = NULL;
@@ -825,6 +894,7 @@ void WIN_Shutdown( void )
 	}
 
 	SDL_QuitSubSystem( SDL_INIT_VIDEO );
+#endif
 }
 
 void GLimp_EnableLogging( qboolean enable )
