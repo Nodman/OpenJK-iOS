@@ -158,6 +158,7 @@ void WIN_Present( window_t *window )
 		}
 	}
 
+#ifndef OPENJK_IOS	// always fullscreen; the toggle's IN_Restart would restart text input
 	if ( r_fullscreen->modified )
 	{
 		bool	fullscreen;
@@ -190,6 +191,7 @@ void WIN_Present( window_t *window )
 
 		r_fullscreen->modified = qfalse;
 	}
+#endif
 }
 
 /*
