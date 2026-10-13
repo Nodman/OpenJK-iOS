@@ -29,6 +29,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/game_version.h"
 #include "../server/NPCNav/navigator.h"
 #include "../shared/sys/sys_local.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -1055,6 +1058,12 @@ void Com_ExecuteCfg(void)
 {
 	Cbuf_ExecuteText(EXEC_NOW, "exec mpdefault.cfg\n");
 	Cbuf_Execute(); // Always execute after exec to prevent text buffer overflowing
+#ifdef OPENJK_IOS
+	Cbuf_ExecuteText( EXEC_NOW, "exec ios_default.cfg\n" );
+	Cbuf_Execute();
+	Cbuf_ExecuteText( EXEC_INSERT, Sys_IOS_DeviceDefaults() );
+	Cbuf_Execute();
+#endif
 
 	if(!Com_SafeMode())
 	{
