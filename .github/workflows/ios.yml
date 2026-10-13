@@ -1,0 +1,116 @@
+name: iOS
+
+on:
+  push:
+    branches: [ios]
+    tags: ['ios-v*']
+  pull_request:
+    branches: [ios]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  unit-tests:
+    runs-on: macos-26
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Boost
+        run: brew install boost
+
+      - name: Configure unit tests
+        run: cmake -S . -B build-tests -DBuildTests=ON -DBuildMPEngine=OFF -DBuildMPRdVanilla=OFF -DBuildMPDed=OFF -DBuildMPGame=OFF -DBuildMPCGame=OFF -DBuildMPUI=OFF -DBuildMPRend2=OFF -DBuildSPEngine=OFF -DBuildSPGame=OFF -DBuildSPRdVanilla=OFF
+
+      - name: Build and run unit tests
+        run: cmake --build build-tests --target UnitTests && ./build-tests/UnitTests
+
+  build:
+    runs-on: macos-26
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26'
+
+      - name: Set version
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            echo "OPENJK_IOS_VERSION=${GITHUB_REF_NAME#ios-v}" >> "$GITHUB_ENV"
+          else
+            echo "OPENJK_IOS_VERSION=0.1.0-dev.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build IPAs
+        run: scripts/build-ios.sh
+
+      - name: Check module symbols
+        run: scripts/ios/check-modules.sh build-ios all
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipas
+          path: build-ios/dist/*
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/ios-v')
+    needs: [unit-tests, build]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ipas
+          path: build-ios/dist
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" build-ios/dist/*.ipa build-ios/dist/SHA256SUMS --title "OpenJK iOS ${GITHUB_REF_NAME#ios-v}" --notes-file docs/ios.md
+
+  pages:
+    if: startsWith(github.ref, 'refs/tags/ios-v')
+    needs: release
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ipas
+          path: build-ios/dist
+
+      - name: Create AltStore source
+        run: python3 scripts/ios/make-altstore-source.py --dist build-ios/dist --version "${GITHUB_REF_NAME#ios-v}" --repo "$GITHUB_REPOSITORY" --out site/altstore/source.json
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - uses: actions/deploy-pages@v4
+        id: deployment
