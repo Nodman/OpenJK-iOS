@@ -1,0 +1,32 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "ios",
+      "displayName": "iOS arm64 (Xcode)",
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build-ios",
+      "toolchainFile": "${sourceDir}/cmake/Toolchains/ios-arm64.cmake",
+      "cacheVariables": {
+        "MakeApplicationBundles": "OFF",
+        "BuildMPDed": "OFF",
+        "BuildMPRend2": "OFF",
+        "BuildSPEngine": "OFF",
+        "BuildSPGame": "OFF",
+        "BuildSPRdVanilla": "OFF",
+        "BuildJK2SPEngine": "OFF",
+        "BuildJK2SPGame": "OFF",
+        "BuildJK2SPRdVanilla": "OFF",
+        "BuildTests": "OFF",
+        "UseInternalZlib": "ON",
+        "UseInternalPNG": "ON",
+        "UseInternalJPEG": "ON",
+        "UseInternalSDL2": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "ios-release", "configurePreset": "ios", "configuration": "Release", "nativeToolOptions": ["-sdk", "iphoneos", "-allowProvisioningUpdates"] }
+  ]
+}
