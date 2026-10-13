@@ -50,6 +50,19 @@ static qboolean R_GLES_ExtensionSupported( const char *extension ) {
 	}
 	return qfalse;
 }
+// e.g. +set r_gl4esEnv LIBGL_USEVBO=3,LIBGL_NOHIGHP=1; gl4es reads env only in initialize_gl4es()
+static void R_GLES_ApplyEnv( void ) {
+	char buf[256];
+	Q_strncpyz( buf, ri.Cvar_Get( "r_gl4esEnv", "", 0, "gl4es env vars, read once per launch" )->string, sizeof( buf ) );
+	for ( char *tok = strtok( buf, " ," ); tok; tok = strtok( NULL, " ," ) ) {
+		char *eq = strchr( tok, '=' );
+		if ( !eq || strncmp( tok, "LIBGL_", 6 ) )
+			continue;
+		*eq = '\0';
+		setenv( tok, eq + 1, 1 );
+		ri.Printf( PRINT_ALL, "gl4es env %s=%s\n", tok, eq + 1 );
+	}
+}
 // native entry point; gl4es does not expose it, and it must act on SDL's bound view FBO
 void (*R_NativeDiscardFramebuffer)( GLenum target, GLsizei count, const GLenum *attachments );
 #endif
@@ -831,6 +844,7 @@ static void InitOpenGL( void )
 		}
 		static qboolean gl4esStarted = qfalse;	// context persists, so init once
 		if ( !gl4esStarted ) {
+			R_GLES_ApplyEnv();
 			set_getprocaddress( R_GLES_NativeProcAddress );
 			set_getmainfbsize( R_GLES_MainFBSize );
 			initialize_gl4es();
