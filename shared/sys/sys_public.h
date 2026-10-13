@@ -156,6 +156,11 @@ qboolean Sys_LowPhysicalMemory();
 
 void Sys_SetProcessorAffinity( void );
 
+qboolean Sys_FramePacedExternally( void );
+#ifdef OPENJK_IOS
+void Sys_IOS_NotePresent( float ms );
+#endif
+
 typedef enum graphicsApi_e
 {
 	GRAPHICS_API_GENERIC,

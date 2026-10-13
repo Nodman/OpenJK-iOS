@@ -146,7 +146,13 @@ void WIN_Present( window_t *window )
 {
 	if ( window->api == GRAPHICS_API_OPENGL )
 	{
+#ifdef OPENJK_IOS
+		uint64_t presentStart = clock_gettime_nsec_np( CLOCK_UPTIME_RAW );
 		SDL_GL_SwapWindow(screen);
+		Sys_IOS_NotePresent( ( clock_gettime_nsec_np( CLOCK_UPTIME_RAW ) - presentStart ) / 1.0e6f );
+#else
+		SDL_GL_SwapWindow(screen);
+#endif
 
 		if ( r_swapInterval->modified )
 		{
@@ -716,7 +722,7 @@ static rserr_t GLimp_IOS_SetMode( glconfig_t *glConfig )
 	glConfig->depthBits = 24;
 	glConfig->stencilBits = 8;
 	glConfig->isFullscreen = qtrue;
-	glConfig->displayFrequency = 60;	// T0c.1 sets Sys_IOS_MaxFramesPerSecond()
+	glConfig->displayFrequency = Sys_IOS_MaxFramesPerSecond();
 	Com_Printf( "iOS drawable %d x %d\n", glConfig->vidWidth, glConfig->vidHeight );
 	return RSERR_OK;
 }

@@ -45,6 +45,10 @@ cvar_t *com_maxfpsMinimized;
 cvar_t *com_maxfpsUnfocused;
 cvar_t *com_unpackLibraries;
 
+#ifndef OPENJK_IOS
+qboolean Sys_FramePacedExternally( void ) { return qfalse; }
+#endif
+
 /*
 =================
 Sys_SetBinaryPath
@@ -835,6 +839,12 @@ int main ( int argc, char* argv[] )
 
 	Com_Printf( "SDL Version Compiled: %d.%d.%d\n", compiled.major, compiled.minor, compiled.patch );
 	Com_Printf( "SDL Version Linked: %d.%d.%d\n", linked.major, linked.minor, linked.patch );
+#endif
+
+#ifdef OPENJK_IOS
+	// UIKit owns the run loop; frames come from CADisplayLink via SDL.
+	Sys_IOS_StartFrameLoop();
+	return 0;
 #endif
 
 	// main game loop

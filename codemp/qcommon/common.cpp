@@ -1557,6 +1557,8 @@ void Com_Frame( void ) {
 		else
 			minMsec = 1;
 
+		if ( Sys_FramePacedExternally() )
+			minMsec = 0; // display link paces frames; one NET_Sleep(0)/Sys_Sleep(0) still runs
 		timeVal = Com_TimeVal(minMsec);
 		do {
 			// Busy sleep the last millisecond for better timeout precision
