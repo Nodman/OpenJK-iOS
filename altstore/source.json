@@ -1,0 +1,53 @@
+{
+  "name": "OpenJK",
+  "identifier": "org.openjk.ios.source",
+  "subtitle": "Open source Jedi Academy engine. Bring your own game files.",
+  "website": "https://github.com/Nodman/OpenJK-iOS",
+  "apps": [
+    {
+      "name": "OpenJK MP",
+      "bundleIdentifier": "org.openjk.ios.mp",
+      "developerName": "OpenJK contributors",
+      "localizedDescription": "OpenJK multiplayer client. Requires your own retail game files (assets0-3.pk3). OpenJK is not affiliated with Disney, Lucasfilm or Raven Software. You need your own copy of the game.",
+      "iconURL": "https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/shared/icons/PNG/mp512.png",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "date": "2026-10-13T00:00:00Z",
+          "downloadURL": "https://github.com/Nodman/OpenJK-iOS/releases/download/ios-v0.1.0/OpenJK-MP-0.1.0.ipa",
+          "size": 0,
+          "minOSVersion": "17.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSLocalNetworkUsageDescription": "Connects to multiplayer servers on your local network."
+        }
+      }
+    },
+    {
+      "name": "OpenJK SP",
+      "bundleIdentifier": "org.openjk.ios.sp",
+      "developerName": "OpenJK contributors",
+      "localizedDescription": "OpenJK single-player client. Requires your own retail game files (assets0-3.pk3). OpenJK is not affiliated with Disney, Lucasfilm or Raven Software. You need your own copy of the game.",
+      "iconURL": "https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/shared/icons/PNG/sp512.png",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "date": "2026-10-13T00:00:00Z",
+          "downloadURL": "https://github.com/Nodman/OpenJK-iOS/releases/download/ios-v0.1.0/OpenJK-SP-0.1.0.ipa",
+          "size": 0,
+          "minOSVersion": "17.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSLocalNetworkUsageDescription": "Connects to multiplayer servers on your local network."
+        }
+      }
+    }
+  ],
+  "news": []
+}
