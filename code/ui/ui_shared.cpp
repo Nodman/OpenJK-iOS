@@ -37,6 +37,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../cgame/animtable.h"
 
 #include "ui_shared.h"
+#ifdef OPENJK_IOS
+#include "qcommon/ios_render_scale.h"
+#endif
 #include "menudef.h"
 
 #include "qcommon/stringed_ingame.h"
@@ -126,6 +129,135 @@ int menuCount = 0;				// how many
 
 menuDef_t *menuStack[MAX_OPEN_MENUS];
 int openMenuCount = 0;
+
+#ifdef OPENJK_IOS
+static char iosVideoLabels[5][48];
+static char iosProMotionLabels[2][4] = { "Off", "On" };
+static char iosProMotionCaption[] = "120 Hz (ProMotion)";
+static char iosDrawFPSCaption[] = "FPS counter";
+
+static qboolean UI_IOS_IsVideoMenu( const menuDef_t *menu )
+{
+	const char *name = menu ? menu->window.name : NULL;
+	return ( name && ( !Q_stricmp( name, "setupMenu" ) || !Q_stricmp( name, "ingameSetupMenu" ) ||
+		!Q_stricmp( name, "setup_menu" ) || !Q_stricmp( name, "ingame_setup" ) ) ) ? qtrue : qfalse;
+}
+
+static qboolean UI_IOS_IsVideoItem( const itemDef_t *item )
+{
+	return ( item && item->type == ITEM_TYPE_MULTI && item->window.name && item->cvar &&
+		!Q_stricmp( item->window.name, "video_mode" ) && !Q_stricmp( item->cvar, "ui_r_mode" ) &&
+		UI_IOS_IsVideoMenu( (const menuDef_t *)item->parent ) ) ? qtrue : qfalse;
+}
+
+static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
+{
+	int i, id;
+	if ( !UI_IOS_IsVideoMenu( menu ) ) {
+		return;
+	}
+	for ( i = 0; i < menu->itemCount; ++i ) {
+		itemDef_t *item = menu->items[i];
+		multiDef_t *multi;
+		if ( !item || item->type != ITEM_TYPE_MULTI || !item->window.name || !item->cvar ||
+			!UI_IOS_IsVideoMenu( (const menuDef_t *)item->parent ) ) {
+			continue;
+		}
+		multi = (multiDef_t *)item->typeData;
+		if ( !multi ) {
+			continue;
+		}
+		if ( !Q_stricmp( item->window.name, "dynamic_glow" ) && !Q_stricmp( item->cvar, "r_dynamicglow" ) ) {
+			item->cvarTest = "r_iosDynamicGlow";
+			item->enableCvar = "1";
+			item->cvarFlags = CVAR_SHOW;
+			continue;
+		}
+
+		if ( !Q_stricmp( item->window.name, "fullscreen" ) &&
+			( !Q_stricmp( item->cvar, "ui_r_fullscreen" ) || !Q_stricmp( item->cvar, "ui_iosProMotion" ) ) ) {
+			item->cvar = "ui_iosProMotion";
+			item->text = iosProMotionCaption;
+			item->descText = "iPad: 120 Hz. iPhone: needs the Metal path (coming)";
+			item->cvarTest = "r_iosMaxRefresh";
+			item->enableCvar = "120";
+			item->cvarFlags = CVAR_SHOW;
+			multi->strDef = qfalse;
+			multi->count = 2;
+			for ( id = 0; id < 2; ++id ) {
+				multi->cvarValue[id] = id;
+				multi->cvarList[id] = iosProMotionLabels[id];
+			}
+			item->textRect.w = item->textRect.h = 0;
+			continue;
+		}
+		if ( !Q_stricmp( item->window.name, "color_depth" ) &&
+			( !Q_stricmp( item->cvar, "ui_r_colorbits" ) || !Q_stricmp( item->cvar, "ui_iosDrawFPS" ) ) ) {
+			item->cvar = "ui_iosDrawFPS";
+			item->text = iosDrawFPSCaption;
+			item->descText = "Show the frame rate at the top right";
+			multi->strDef = qfalse;
+			multi->count = 2;
+			for ( id = 0; id < 2; ++id ) {
+				multi->cvarValue[id] = id;
+				multi->cvarList[id] = iosProMotionLabels[id];
+			}
+			item->textRect.w = item->textRect.h = 0;
+			continue;
+		}
+		if ( !UI_IOS_IsVideoItem( item ) ) {
+			continue;
+		}
+		multi->strDef = qfalse;
+		multi->count = DC->getCVarValue( "ui_r_mode" ) == 4 ? 5 : 4;
+		for ( id = 0; id < 5; ++id ) {
+			char *suffix = strstr( iosVideoLabels[id], " (min)" );
+			float available = item->window.rect.w - item->textalignx - 8;
+			multi->cvarValue[id] = id;
+			multi->cvarList[id] = iosVideoLabels[id];
+			if ( suffix && DC->textWidth( iosVideoLabels[id], item->textscale, item->font ) > available ) {
+				*suffix = '\0';
+			}
+		}
+		item->textRect.w = item->textRect.h = 0;
+	}
+}
+
+void UI_IOS_RefreshVideoMenus( qboolean force )
+{
+	static int lastHigh = -1, lastPreset = -1;
+	static float lastW = -1, lastH = -1;
+	static float lastBase = -1, lastCustom = -1;
+	const float w = DC->getCVarValue( "r_iosNativeWidth" );
+	const float h = DC->getCVarValue( "r_iosNativeHeight" );
+	const int high = DC->getCVarValue( "ui_iosProMotion" ) != 0;
+	const int preset = (int)DC->getCVarValue( "ui_r_mode" );
+	const float base = DC->getCVarValue( "r_iosBaseAutoScale" );
+	const float custom = DC->getCVarValue( "r_renderScale" );
+	const char *names[] = { "Auto", "Native", "3/4", "Native/2", "Custom" };
+	int id, i;
+	if ( !force && w == lastW && h == lastH && high == lastHigh && preset == lastPreset &&
+		base == lastBase && custom == lastCustom ) {
+		return;
+	}
+	lastW = w;
+	lastH = h;
+	lastHigh = high;
+	lastPreset = preset;
+	lastBase = base;
+	lastCustom = custom;
+	for ( id = 0; id < 5; ++id ) {
+		const iosRenderScale_t resolved = IOS_RenderScale_Resolve(
+			id == 4 ? custom : IOS_RenderScale_ForPreset( id ), base, high, w, h );
+		snprintf( iosVideoLabels[id], sizeof( iosVideoLabels[id] ), id == 0 ? "%s (%dx%d)%s" : "%s %dx%d%s",
+			names[id], resolved.width, resolved.height, resolved.floorRaised ? " (min)" : "" );
+	}
+	for ( i = 0; i < menuCount; ++i ) {
+		UI_IOS_PatchVideoMenu( &Menus[i] );
+	}
+}
+#endif
+
 
 static int strPoolIndex = 0;
 static char strPool[STRING_POOL_SIZE];
@@ -5507,6 +5639,11 @@ void  Menus_Activate(menuDef_t *menu)
 	}
 
 //	menu->appearanceTime = DC->realTime + 1000;
+#ifdef OPENJK_IOS
+	if ( UI_IOS_IsVideoMenu( menu ) ) {
+		UI_IOS_RefreshVideoMenus( qtrue );
+	}
+#endif
 	menu->appearanceTime = 0;
 	menu->appearanceCnt = 0;
 
@@ -5874,6 +6011,10 @@ void Menu_New(char *buffer)
 		if (Menu_Parse(buffer, menu))
 		{
 			Menu_PostParse(menu);
+#ifdef OPENJK_IOS
+			UI_IOS_RefreshVideoMenus( qtrue );
+			UI_IOS_PatchVideoMenu( menu );
+#endif
 			menuCount++;
 		}
 	}
@@ -6048,6 +6189,12 @@ Menu_Paint
 void Menu_Paint(menuDef_t *menu, qboolean forcePaint)
 {
 	int i;
+
+#ifdef OPENJK_IOS
+	if ( UI_IOS_IsVideoMenu( menu ) ) {
+		UI_IOS_RefreshVideoMenus( qfalse );
+	}
+#endif
 
 	if (menu == NULL)
 	{
@@ -10939,6 +11086,11 @@ Item_Multi_HandleKey
 */
 qboolean Item_Multi_HandleKey(itemDef_t *item, int key)
 {
+#ifdef OPENJK_IOS
+	if ( UI_IOS_IsVideoItem( item ) ) {
+		UI_IOS_RefreshVideoMenus( qfalse );
+	}
+#endif
 	multiDef_t *multiPtr = (multiDef_t*)item->typeData;
 	if (multiPtr)
 	{
@@ -10986,6 +11138,11 @@ qboolean Item_Multi_HandleKey(itemDef_t *item, int key)
 							DC->setCVar(item->cvar, va("%f", value ));
 						}
 					}
+#ifdef OPENJK_IOS
+					if ( UI_IOS_IsVideoItem( item ) ) {
+						UI_IOS_RefreshVideoMenus( qfalse );
+					}
+#endif
 					if (item->special)
 					{//its a feeder?
 						DC->feederSelection(item->special, current, item);

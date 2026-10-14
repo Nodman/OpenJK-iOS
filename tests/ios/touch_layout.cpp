@@ -92,6 +92,65 @@ BOOST_AUTO_TEST_CASE( safe_area_clamps )
 	BOOST_CHECK_SMALL( rects[TB_ALTATTACK].y + rects[TB_ALTATTACK].h - 110.0f, 1e-3f );
 }
 
+BOOST_AUTO_TEST_CASE( console_geometry_matches_layout )
+{
+	const float fixtures[][6] = {
+		{ 1434, 660, 66, 0, 66, 51 },
+		{ 2868, 1320, 132, 0, 132, 102 },
+		{ 1434, 660, 66, 0, 0, 51 },
+		{ 1434, 660, 0, 0, 66, 51 },
+		{ 600, 400, 20, 30, 40, 50 },
+		{ 400, 1000, 20, 30, 40, 50 }
+	};
+	for ( const auto &f : fixtures ) {
+		touchRect_t rects[TB_COUNT], con;
+		TouchLayout_Build( f[0], f[1], f[2], f[3], f[4], f[5], rects );
+		IOS_TouchConsoleRectPixels( f[0], f[1], f[2], f[3], f[4], f[5],
+			&con.x, &con.y, &con.w, &con.h );
+		BOOST_CHECK_EQUAL( con.x, rects[TB_CONSOLE].x );
+		BOOST_CHECK_EQUAL( con.y, rects[TB_CONSOLE].y );
+		BOOST_CHECK_EQUAL( con.w, rects[TB_CONSOLE].w );
+		BOOST_CHECK_EQUAL( con.h, rects[TB_CONSOLE].h );
+	}
+	float x, y, w, h;
+	IOS_TouchConsoleRectPixels( 1434, 660, 66, 0, 66, 51, &x, &y, &w, &h );
+	BOOST_CHECK_SMALL( x - 1269.405f, 1e-3f );
+	BOOST_CHECK_SMALL( y - 15.225f, 1e-3f );
+	BOOST_CHECK_SMALL( w - 66.99f, 1e-3f );
+	BOOST_CHECK_EQUAL( w, h );
+}
+
+BOOST_AUTO_TEST_CASE( fps_clears_console )
+{
+	for ( int factor = 1; factor <= 2; ++factor ) {
+		for ( int corrected = 0; corrected <= 1; ++corrected ) {
+			for ( int side = 0; side < 3; ++side ) {
+				const int L = side == 2 ? 0 : 66 * factor;
+				const int R = side == 1 ? 0 : 66 * factor;
+				const aspectLayout_t layout = AspectLayout_Build( 1434 * factor, 660 * factor,
+					corrected, 1.5f, L, 0, R, 51 * factor );
+				touchRect_t con;
+				IOS_TouchConsoleRectPixels( layout.W, layout.H, L, 0, R, layout.safeB,
+					&con.x, &con.y, &con.w, &con.h );
+				const float scale = AspectLayout_SharpTextScale( &layout, 18, 22 );
+				BOOST_CHECK_SMALL( scale - ( factor == 1 ? 0.888889f : 0.444444f ), 1e-6f );
+				const double right = AspectLayout_ToVirtual( &layout,
+					fminf( layout.W - R, con.x - 6 ), 0 ).x;
+				// Retail ocr_a "60fps" has five glyphs and 51 total advances; emulate
+				// integer width and draw coordinates using only the pure geometry helpers.
+				const int width = (int)ceilf( 51 * scale );
+				const aspectPoint_t origin = AspectLayout_ToPixels( &layout,
+					(int)( right - width ), (int)( layout.fullRect.y + 2 ) );
+				const aspectPoint_t size = AspectLayout_SizeToPixels( &layout, width, 18 * scale );
+				BOOST_CHECK_LE( origin.x + size.x, con.x - 6 + 1e-3 );
+				BOOST_CHECK_LE( origin.x + size.x, layout.W - R );
+				BOOST_CHECK( origin.x + size.x <= con.x || origin.x >= con.x + con.w ||
+					origin.y + size.y <= con.y || origin.y >= con.y + con.h );
+			}
+		}
+	}
+}
+
 BOOST_AUTO_TEST_CASE( first_hit_and_ui_filter )
 {
 	touchRect_t rects[TB_COUNT];

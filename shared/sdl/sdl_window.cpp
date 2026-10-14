@@ -673,19 +673,15 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 
 #ifdef OPENJK_IOS
 #include "sys/ios/sys_ios.h"
+#include "qcommon/ios_render_scale.h"
 static cvar_t *r_renderScale;
 
 SDL_Window *GLimp_IOS_Window( void ) { return screen; }
 
 static float GLimp_IOS_RenderScale( void ) {
-	float s = r_renderScale->value > 0.0f ? Com_Clamp( 0.5f, 1.0f, r_renderScale->value )
-		: Sys_IOS_DefaultRenderScale( Cvar_VariableIntegerValue( "com_maxfps" ) > 60 ? qtrue : qfalse );
-	float w, h;
-	Sys_IOS_GetViewPointSize( screen, &w, &h );
-	float pixelsH = h * Sys_IOS_GetNativeScale( screen );
-	if ( pixelsH > 0.0f && pixelsH * s < IOS_MIN_DRAWABLE_HEIGHT )	// Slide Over: keep a usable height
-		s = Com_Clamp( 0.5f, 1.0f, ( IOS_MIN_DRAWABLE_HEIGHT + 0.5f ) / pixelsH );
-	return s;
+	return IOS_RenderScale_Resolve( r_renderScale->value,
+		Cvar_VariableValue( "r_iosBaseAutoScale" ), IOS_RenderScale_HighRefresh( Cvar_VariableIntegerValue( "com_maxfps" ) ),
+		Cvar_VariableValue( "r_iosNativeWidth" ), Cvar_VariableValue( "r_iosNativeHeight" ) ).scale;
 }
 
 // Window and EAGL context live for the whole process: gl4es keeps GL object
@@ -716,6 +712,23 @@ static rserr_t GLimp_IOS_SetMode( glconfig_t *glConfig )
 	} else {
 		SDL_GL_MakeCurrent( screen, opengl_context );
 	}
+	float w, h;
+	Sys_IOS_GetViewPointSize( screen, &w, &h );
+	const float nativeScale = Sys_IOS_GetNativeScale( screen );
+	static qboolean registered = qfalse;
+	if ( !registered ) {
+		Cvar_Get( "r_iosNativeWidth", "0", CVAR_ROM );
+		Cvar_Get( "r_iosNativeHeight", "0", CVAR_ROM );
+		Cvar_Get( "r_iosBaseAutoScale", "0", CVAR_ROM );
+		Cvar_Get( "r_iosMaxRefresh", "0", CVAR_ROM );
+		Cvar_Get( "r_iosDynamicGlow", "0", CVAR_ROM );
+		registered = qtrue;
+	}
+	Cvar_SetValue( "r_iosNativeWidth", w * nativeScale );
+	Cvar_SetValue( "r_iosNativeHeight", h * nativeScale );
+	Cvar_SetValue( "r_iosBaseAutoScale", Sys_IOS_DefaultRenderScale( qfalse ) );
+	Cvar_SetValue( "r_iosMaxRefresh", Sys_IOS_MaxFramesPerSecond() );
+	Cvar_SetValue( "r_iosDynamicGlow", 0 );
 	Sys_IOS_SetDrawableScale( screen, GLimp_IOS_RenderScale() );
 	SDL_GL_GetDrawableSize( screen, &glConfig->vidWidth, &glConfig->vidHeight );
 	glConfig->colorBits = 32;
@@ -824,7 +837,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_ext_multisample	= Cvar_Get( "r_ext_multisample",	"0",		CVAR_ARCHIVE_ND|CVAR_LATCH );
 	Cvar_Get( "r_availableModes", "", CVAR_ROM );
 #ifdef OPENJK_IOS
-	r_renderScale = Cvar_Get( "r_renderScale", "0", CVAR_ARCHIVE|CVAR_LATCH );
+	r_renderScale = Cvar_Get( "r_renderScale", "1", CVAR_ARCHIVE|CVAR_LATCH );
 #endif
 
 	// Create the window and set up the context

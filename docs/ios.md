@@ -14,7 +14,7 @@
 - iPad 8th generation or later, Air 3 or later, mini 5 or later, and iPad Pro models from 2018 or later.
 - A11 and older, including A10 / A10X iPads, are outside the supported device list.
 - ProMotion screens: iPhone 13 Pro through 17 Pro Max, iPhone 17, iPhone Air, and iPad Pro models from 2018 or later. Screen refresh support does not guarantee the game's frame rate.
-- The default is 60 Hz. The GL renderer path does not provide 120 Hz on iPhone. On the measured iPhone 17 Pro Max with iOS 27.0.1, `com_maxfps 120` is accepted but shows 60 Hz.
+- Fresh configs default to 120 Hz on panels that support it and 60 Hz on other panels. Video → `120 Hz (ProMotion)` offers Off / On and appears only on 120 Hz panels. Apply restarts the video. iPhone on the GL path still shows 60 Hz until the P10 Metal path. On the measured iPhone 17 Pro Max with iOS 27.0.1, `com_maxfps 120` is accepted but shows 60 Hz.
 - ProMotion iPads can show 120 Hz. Measured on the 2018 iPad Pro with iPadOS 26.5 and on the M4 iPad Pro with iPadOS 27.0.1 (120.0 frames per second on the display). The 60 Hz limit is an iPhone policy on the OpenGL ES layer, not an iOS version issue.
 - The 2018 A12X iPad Pro passed a 20-minute MP run at 60 Hz and auto scale. Its median window p95 frame interval was 16.72 ms.
 - Memory was tested on a 4 GB iPad with `r_picmip 1` and `r_texturebits 32`. The MP map `mp/ctf1` peaked at 277 MB; the SP map `taspir2` peaked at 394 MB and loaded in 2.7 s. A real 3 GB device was not tested.
@@ -99,10 +99,15 @@
 
 ## Settings
 
+- Dynamic glow is unavailable on the GL path, so its More Video row is hidden. Light flares can be enabled in More Video and persist. Flares use a depth read-back each frame and may cost frame time on tile GPUs.
+
 - Enter commands in the console, or put `seta` lines in that app's autoexec (`base/autoexec.cfg` for MP, `base/autoexec_sp.cfg` for SP).
-- `r_renderScale 0`: auto scale. A value from `0.5` to `1.0` sets a fixed scale. Lower values reduce detail and GPU load. Run `vid_restart` to apply a change.
+- Video → Resolution offers Auto, Native, 3/4 and Native/2 with the predicted pixel size. Native is the default. Apply restarts the video. For custom menus, use `seta r_renderScale 0|1|0.75|0.5` (choose one value), then `vid_restart`. `r_mode` stays a desktop selector.
+- `r_renderScale 1`: default Native resolution. `r_renderScale 0` selects Auto. A value from `0.5` to `1.0` sets a fixed scale. Lower values reduce detail and GPU load. Run `vid_restart` to apply a change.
 - Auto scale: below Apple GPU family 7 uses `0.6`; families 7 / 8 use `0.75`; family 9 or later uses `1.0`. With `com_maxfps` above 60, auto scale is multiplied by `0.8`. Scale is clamped to `0.5`–`1.0`, then raised for a drawable at least 540 px tall, up to full scale.
-- `com_maxfps 60`: default. `com_maxfps 120`: opt in on ProMotion iPads. On the measured iPhone GL path it still shows 60 Hz. If using auto scale, run `vid_restart` after changing the frame rate to update the scale.
+- Video → `120 Hz (ProMotion)` stages `com_maxfps` 60 / 120 on 120 Hz panels. On is the default on these panels; other panels default to 60. Auto resolution previews the staged choice. iPhone on GL still shows 60 Hz until P10. Console fallback: `seta com_maxfps 60|120` (choose one value), then `vid_restart`.
+- Existing saved configs keep their resolution and FPS values. To adopt the new defaults on a 120 Hz panel, enter `seta r_renderScale 1` and `seta com_maxfps 120`, then `vid_restart`.
+- Video → `FPS counter` offers Off / On. Apply shows a small gold frame-rate readout at the top right inside the safe area in a map. Off is the default.
 - `in_touchControls 0`: hide touch controls except CON. `1`: default; hide them when a pad is connected, or a hardware keyboard and mouse/trackpad are both connected. A keyboard alone keeps touch look and buttons. `2`: keep them visible with these devices. Menus and the console show only CON. Full-screen cinematics and SP in-game videos hide all controls in every mode; camera cutscenes still show them.
 - `in_touchLookScale 1.0`: default touch look scale. Higher values turn faster.
 - `j_lookSpeed 1.5`: default pad look scale. Higher values turn faster.
@@ -140,7 +145,7 @@
 
 - **Game files needed:** check the app's own `base` folder and copy all four retail pk3 files. Tap **Check again**. A cfg inside a retail pk3 does not need to be extracted.
 - **Stutter:** lower `r_renderScale`, then run `vid_restart`. Use `com_maxfps 60`.
-- **Shadows:** keep `cg_shadows 1`. Stencil shadows with `cg_shadows 2` read back the full screen every frame. Keep `r_flares 0` and `r_measureOverdraw 0`; their depth / stencil readbacks are not supported on GLES2.
+- **Shadows:** keep `cg_shadows 1`. Stencil shadows with `cg_shadows 2` read back the full screen every frame. Keep `r_measureOverdraw 0`; its stencil readbacks are not supported on GLES2.
 - **Refraction:** keep `cg_renderToTextureFX 0` and `cg_saberTrail 1`. `cg_renderToTextureFX 1` and `cg_saberTrail 2` enable refraction. It copies the screen mid-frame and costs frames on mobile GPUs.
 - **Pure server rejects a join:** extra pk3 files in `base` can block `sv_pure` joins. Check that folder for added files.
 - **Hot device:** the message is “Device is very hot: capped at 30 fps. Lower r_renderScale to help.” The thermal cap changes the frame rate. It does not lower scale for you.

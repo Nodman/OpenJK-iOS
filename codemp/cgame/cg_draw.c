@@ -31,6 +31,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "ui/ui_shared.h"
 #include "ui/ui_public.h"
 
+#ifdef OPENJK_IOS
+#include "sys/ios/ios_touch_geometry.h"
+#endif
+
 extern float CG_RadiusForCent( centity_t *cent );
 qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y);
 qboolean CG_CalcMuzzlePoint( int entityNum, vec3_t muzzle );
@@ -3152,13 +3156,17 @@ CG_DrawFPS
 #define	FPS_FRAMES	16
 static float CG_DrawFPS( float y ) {
 	char		*s;
+#ifndef OPENJK_IOS
 	int			w;
+#endif
 	static unsigned short previousTimes[FPS_FRAMES];
 	static unsigned short index;
 	static int	previous, lastupdate;
 	int		t, i, fps, total;
 	unsigned short frameTime;
+#ifndef OPENJK_IOS
 	const int		xOffset = 0;
+#endif
 
 
 	// don't use serverTime, because that will be drifting to
@@ -3183,11 +3191,27 @@ static float CG_DrawFPS( float y ) {
 	fps = 1000 * FPS_FRAMES / total;
 
 	s = va( "%ifps", fps );
+#ifdef OPENJK_IOS
+	const aspectLayout_t *layout = CG_AspectLayout();
+	const int font = cgDC.Assets.qhSmallFont;
+	const float glyphHeight = trap->R_Font_HeightPixels( font, 1.0f );
+	const float scale = AspectLayout_SharpTextScale( layout, glyphHeight, 22.0f );
+	const float height = glyphHeight * scale;
+	float conX, conY, conW, conH;
+	IOS_TouchConsoleRectPixels( layout->W, layout->H,
+		layout->safeL, layout->safeT, layout->safeR, layout->safeB, &conX, &conY, &conW, &conH );
+	const float right = AspectLayout_ToVirtual( layout,
+		fminf( layout->W - layout->safeR, conX - 6.0f ), 0 ).x;
+	const int width = trap->R_Font_StrLenPixels( s, font, scale );
+	trap->R_Font_DrawString( right - width, y + 2, s, colorTable[CT_LTGOLD1], font, -1, scale );
+	return y + height + 2;
+#else
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 
 	CG_DrawBigString( 635 - w + xOffset, y + 2, s, 1.0F);
 
 	return y + BIGCHAR_HEIGHT + 4;
+#endif
 }
 
 // nmckenzie: DUEL_HEALTH
@@ -4084,6 +4108,10 @@ CG_DrawUpperRight
 */
 static void CG_DrawUpperRight( void ) {
 	float	y = 0;
+#ifdef OPENJK_IOS
+	// The upper-right stack starts at the safe-area top on iOS.
+	y = CG_AspectLayout()->fullRect.y + AspectLayout_SizeToVirtual( CG_AspectLayout(), 0, CG_AspectLayout()->safeT ).y;
+#endif
 
 	trap->R_SetColor( colorTable[CT_WHITE] );
 

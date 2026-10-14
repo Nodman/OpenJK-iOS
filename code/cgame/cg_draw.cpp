@@ -30,6 +30,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../game/objectives.h"
 #include "../game/g_vehicles.h"
 
+#ifdef OPENJK_IOS
+#include "sys/ios/ios_touch_geometry.h"
+#endif
+
 extern vmCvar_t	cg_debugHealthBars;
 
 extern Vehicle_t *G_IsRidingVehicle( gentity_t *ent );
@@ -3443,7 +3447,9 @@ static float CG_DrawFPS( float y ) {
 	static int	previous, lastupdate;
 	int		t, i, fps, total;
 	unsigned short frameTime;
+#ifndef OPENJK_IOS
 	const int		xOffset = 0;
+#endif
 
 	// don't use serverTime, because that will be drifting to
 	// correct for internet lag changes, timescales, timedemos, etc
@@ -3467,10 +3473,26 @@ static float CG_DrawFPS( float y ) {
 	fps = 1000 * FPS_FRAMES / total;
 
 	s = va( "%ifps", fps );
+#ifdef OPENJK_IOS
+	const aspectLayout_t *layout = CG_AspectLayout();
+	const int font = cgs.media.qhFontSmall;
+	const float glyphHeight = cgi_R_Font_HeightPixels( font, 1.0f );
+	const float scale = AspectLayout_SharpTextScale( layout, glyphHeight, 22.0f );
+	const float height = glyphHeight * scale;
+	float conX, conY, conW, conH;
+	IOS_TouchConsoleRectPixels( layout->W, layout->H,
+		layout->safeL, layout->safeT, layout->safeR, layout->safeB, &conX, &conY, &conW, &conH );
+	const float right = AspectLayout_ToVirtual( layout,
+		fminf( layout->W - layout->safeR, conX - 6.0f ), 0 ).x;
+	const int width = cgi_R_Font_StrLenPixels( s, font, scale );
+	cgi_R_Font_DrawString( right - width, y + 2, s, colorTable[CT_LTGOLD1], font, -1, scale );
+	return y + height + 2;
+#else
 	const int w = cgi_R_Font_StrLenPixels(s, cgs.media.qhFontMedium, 1.0f);
 	cgi_R_Font_DrawString(635-xOffset - w, y+2, s, colorTable[CT_LTGOLD1], cgs.media.qhFontMedium, -1, 1.0f);
 
 	return y + BIGCHAR_HEIGHT + 10;
+#endif
 }
 
 /*
@@ -4049,6 +4071,10 @@ static void CG_Draw2D( void )
 	CG_SaberClashFlare();
 
 	float y = 0;
+#ifdef OPENJK_IOS
+	// The upper-right stack starts at the safe-area top on iOS.
+	y = CG_AspectLayout()->fullRect.y + AspectLayout_SizeToVirtual( CG_AspectLayout(), 0, CG_AspectLayout()->safeT ).y;
+#endif
 	if (cg_drawSnapshot.integer) {
 		y=CG_DrawSnapshot(y);
 	}

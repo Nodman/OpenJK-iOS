@@ -1,8 +1,7 @@
 #include "ios_touch_layout.h"
+#include "ios_touch_geometry.h"
 
 #include <math.h>
-
-#define TOUCH_MIN_LAYOUT_H 540.0f
 
 const touchButtonDef_t touchButtonDefs[TB_COUNT] = {
 	{ "ATK",   0.90f, 0.72f, 0.20f, 1 },
@@ -16,21 +15,15 @@ const touchButtonDef_t touchButtonDefs[TB_COUNT] = {
 	{ "<W",    0.40f, 0.10f, 0.11f, 1 },
 	{ "W>",    0.52f, 0.10f, 0.11f, 1 },
 	{ "MENU",  0.05f, 0.08f, 0.11f, 1 },
-	{ "CON",   0.95f, 0.08f, 0.11f, 0 }
+	{ "CON",   IOS_TOUCH_CONSOLE_CX, IOS_TOUCH_CONSOLE_CY, IOS_TOUCH_CONSOLE_SIZE, 0 }
 };
 
 void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, touchRect_t out[TB_COUNT] )
 {
-	float safeW = viewW - safeL - safeR;
-	float safeH = viewH - safeT - safeB;
-	float layoutH = fminf( fmaxf( safeH, TOUCH_MIN_LAYOUT_H ), safeW );
 	for ( int i = 0; i < TB_COUNT; ++i ) {
-		float s = touchButtonDefs[i].size * layoutH;
-		float x = safeL + touchButtonDefs[i].cx * safeW - s / 2;
-		float y = safeT + touchButtonDefs[i].cy * safeH - s / 2;
-		out[i].x = fmaxf( safeL, fminf( x, viewW - safeR - s ) );
-		out[i].y = fmaxf( safeT, fminf( y, viewH - safeB - s ) );
-		out[i].w = out[i].h = s;
+		IOS_TouchButtonRectPixels( viewW, viewH, safeL, safeT, safeR, safeB,
+			touchButtonDefs[i].cx, touchButtonDefs[i].cy, touchButtonDefs[i].size,
+			&out[i].x, &out[i].y, &out[i].w, &out[i].h );
 	}
 }
 

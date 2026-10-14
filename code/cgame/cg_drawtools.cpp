@@ -29,17 +29,26 @@ const aspectLayout_t *CG_AspectLayout( void ) {
 	static aspectLayout_t layout;
 	static qboolean initialized = qfalse;
 	char value[64];
-	int enabled;
+	int enabled, safeL, safeT, safeR, safeB;
 	float minRatio;
 
 	gi.Cvar_VariableStringBuffer( "r_aspectCorrect", value, sizeof( value ) );
 	enabled = atoi( value );
 	gi.Cvar_VariableStringBuffer( "r_aspectCorrectMinRatio", value, sizeof( value ) );
 	minRatio = atof( value );
+	gi.Cvar_VariableStringBuffer( "r_aspectSafeLeft", value, sizeof( value ) );
+	safeL = atoi( value );
+	gi.Cvar_VariableStringBuffer( "r_aspectSafeTop", value, sizeof( value ) );
+	safeT = atoi( value );
+	gi.Cvar_VariableStringBuffer( "r_aspectSafeRight", value, sizeof( value ) );
+	safeR = atoi( value );
+	gi.Cvar_VariableStringBuffer( "r_aspectSafeBottom", value, sizeof( value ) );
+	safeB = atoi( value );
 	if ( !initialized || layout.W != cgs.glconfig.vidWidth || layout.H != cgs.glconfig.vidHeight ||
-		layout.enabled != enabled || layout.minRatio != minRatio ) {
+		layout.enabled != enabled || layout.minRatio != minRatio ||
+		layout.safeL != safeL || layout.safeT != safeT || layout.safeR != safeR || layout.safeB != safeB ) {
 		layout = AspectLayout_Build( cgs.glconfig.vidWidth, cgs.glconfig.vidHeight,
-			enabled, minRatio, 0, 0, 0, 0 );
+			enabled, minRatio, safeL, safeT, safeR, safeB );
 		initialized = qtrue;
 	}
 	return &layout;

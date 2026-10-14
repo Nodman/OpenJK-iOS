@@ -39,6 +39,9 @@ USER INTERFACE MAIN
 #include "menudef.h"
 
 #include "ui_shared.h"
+#ifdef OPENJK_IOS
+#include "qcommon/ios_render_scale.h"
+#endif
 
 #include "../ghoul2/G2.h"
 
@@ -3487,13 +3490,19 @@ static void UI_Update(const char *name)
 		{
 			case 0:	// high quality
 
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 				Cvar_SetValue( "ui_r_subdivisions", 4 );
 				Cvar_SetValue( "ui_r_lodbias", 0 );
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_colorbits", 32 );
+#endif
 				Cvar_SetValue( "ui_r_depthbits", 24 );
 				Cvar_SetValue( "ui_r_picmip", 0 );
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_mode", 4 );
+#endif
 				Cvar_SetValue( "ui_r_texturebits", 32 );
 				Cvar_SetValue( "ui_r_fastSky", 0 );
 				Cvar_SetValue( "ui_r_inGameVideo", 1 );
@@ -3502,13 +3511,19 @@ static void UI_Update(const char *name)
 				break;
 
 			case 1: // normal
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 				Cvar_SetValue( "ui_r_subdivisions", 4 );
 				Cvar_SetValue( "ui_r_lodbias", 0 );
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_colorbits", 0 );
+#endif
 				Cvar_SetValue( "ui_r_depthbits", 24 );
 				Cvar_SetValue( "ui_r_picmip", 1 );
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_mode", 3 );
+#endif
 				Cvar_SetValue( "ui_r_texturebits", 0 );
 				Cvar_SetValue( "ui_r_fastSky", 0 );
 				Cvar_SetValue( "ui_r_inGameVideo", 1 );
@@ -3518,13 +3533,19 @@ static void UI_Update(const char *name)
 
 			case 2: // fast
 
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 				Cvar_SetValue( "ui_r_subdivisions", 12 );
 				Cvar_SetValue( "ui_r_lodbias", 1 );
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_colorbits", 0 );
+#endif
 				Cvar_SetValue( "ui_r_depthbits", 0 );
 				Cvar_SetValue( "ui_r_picmip", 2 );
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_mode", 3 );
+#endif
 				Cvar_SetValue( "ui_r_texturebits", 0 );
 				Cvar_SetValue( "ui_r_fastSky", 1 );
 				Cvar_SetValue( "ui_r_inGameVideo", 0 );
@@ -3534,12 +3555,18 @@ static void UI_Update(const char *name)
 
 			case 3: // fastest
 
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 				Cvar_SetValue( "ui_r_subdivisions", 20 );
 				Cvar_SetValue( "ui_r_lodbias", 2 );
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_colorbits", 16 );
+#endif
 				Cvar_SetValue( "ui_r_depthbits", 16 );
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_mode", 3 );
+#endif
 				Cvar_SetValue( "ui_r_picmip", 3 );
 				Cvar_SetValue( "ui_r_texturebits", 16 );
 				Cvar_SetValue( "ui_r_fastSky", 1 );
@@ -4196,9 +4223,29 @@ you to discard your changes if you did something you didnt want
 */
 void UI_UpdateVideoSetup ( void )
 {
+#ifdef OPENJK_IOS
+	const int preset = (int)Cvar_VariableValue( "ui_r_mode" );
+	const char *scales[] = { "0", "1", "0.75", "0.5" };
+	if ( preset >= 0 && preset < 4 ) {
+		Cvar_Set( "r_renderScale", scales[preset] );
+	}
+#else
 	Cvar_Set ( "r_mode", Cvar_VariableString ( "ui_r_mode" ) );
+#endif
+#ifdef OPENJK_IOS
+	const int high = Cvar_VariableValue( "ui_iosProMotion" ) != 0;
+	if ( high != IOS_RenderScale_HighRefresh( (int)Cvar_VariableValue( "com_maxfps" ) ) ) {
+		Cvar_Set( "com_maxfps", high ? "120" : "60" );
+	}
+#else
 	Cvar_Set ( "r_fullscreen", Cvar_VariableString ( "ui_r_fullscreen" ) );
+#endif
+#ifdef OPENJK_IOS
+	Cvar_Get( "cg_drawFPS", "0", CVAR_ARCHIVE );
+	Cvar_Set( "cg_drawFPS", Cvar_VariableValue( "ui_iosDrawFPS" ) != 0 ? "1" : "0" );
+#else
 	Cvar_Set ( "r_colorbits", Cvar_VariableString ( "ui_r_colorbits" ) );
+#endif
 	Cvar_Set ( "r_lodbias", Cvar_VariableString ( "ui_r_lodbias" ) );
 	Cvar_Set ( "r_picmip", Cvar_VariableString ( "ui_r_picmip" ) );
 	Cvar_Set ( "r_texturebits", Cvar_VariableString ( "ui_r_texturebits" ) );
@@ -4231,6 +4278,10 @@ void UI_GetVideoSetup ( void )
 	// Make sure the cvars are registered as read only.
 	Cvar_Register ( NULL, "ui_r_mode",					"0", CVAR_ROM );
 	Cvar_Register ( NULL, "ui_r_fullscreen",			"0", CVAR_ROM );
+#ifdef OPENJK_IOS
+	Cvar_Register( NULL, "ui_iosProMotion", "0", CVAR_ROM );
+	Cvar_Register( NULL, "ui_iosDrawFPS", "0", CVAR_ROM );
+#endif
 	Cvar_Register ( NULL, "ui_r_colorbits",				"0", CVAR_ROM );
 	Cvar_Register ( NULL, "ui_r_lodbias",				"0", CVAR_ROM );
 	Cvar_Register ( NULL, "ui_r_picmip",				"0", CVAR_ROM );
@@ -4247,7 +4298,14 @@ void UI_GetVideoSetup ( void )
 	Cvar_Register ( NULL, "ui_r_modified",				"0", CVAR_ROM );
 
 	// Copy over the real video cvars into their temporary counterparts
+#ifdef OPENJK_IOS
+	Cvar_SetValue( "ui_r_mode", IOS_RenderScale_PresetFromScale( Cvar_VariableValue( "r_renderScale" ) ) );
+	Cvar_SetValue( "ui_iosProMotion", IOS_RenderScale_HighRefresh( (int)Cvar_VariableValue( "com_maxfps" ) ) );
+	Cvar_SetValue( "ui_iosDrawFPS", (int)Cvar_VariableValue( "cg_drawFPS" ) != 0 );
+	UI_IOS_RefreshVideoMenus( qtrue );
+#else
 	Cvar_Set ( "ui_r_mode", Cvar_VariableString ( "r_mode" ) );
+#endif
 	Cvar_Set ( "ui_r_colorbits", Cvar_VariableString ( "r_colorbits" ) );
 	Cvar_Set ( "ui_r_fullscreen", Cvar_VariableString ( "r_fullscreen" ) );
 	Cvar_Set ( "ui_r_lodbias", Cvar_VariableString ( "r_lodbias" ) );

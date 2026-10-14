@@ -32,5 +32,7 @@ const char *Sys_IOS_DeviceDefaults( void ) {
 		Q_strcat( text, sizeof( text ), "seta r_picmip 1\n" );
 	if ( Sys_IOS_Class() == IOS_CLASS_A12 )
 		Q_strcat( text, sizeof( text ), "seta r_surfaceSprites 0\n" );
+	if ( Sys_IOS_MaxFramesPerSecond() >= 120 )
+		Q_strcat( text, sizeof( text ), "seta com_maxfps 120\n" );
 	return text;
 }
