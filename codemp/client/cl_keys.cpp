@@ -402,7 +402,7 @@ x, y, amd width are in pixels
 ===================
 */
 extern console_t con;
-void Field_VariableSizeDraw( field_t *edit, int x, int y, int size, qboolean showCursor, qboolean noColorEscape ) {
+void Field_VariableSizeDraw( field_t *edit, int x, int y, int size, qboolean showCursor, qboolean noColorEscape, qboolean consoleField = qfalse, qboolean big = qfalse ) {
 	int		len;
 	int		drawLen;
 	int		prestep;
@@ -442,7 +442,9 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int size, qboolean sho
 	str[ drawLen ] = 0;
 
 	// draw it
-	if ( size == con.charWidth ) {
+	if (consoleField) {
+		SCR_DrawConsoleString( x, y, str, noColorEscape, big );
+	} else if ( size == con.charWidth ) {
 		float	color[4];
 
 		color[0] = color[1] = color[2] = color[3] = 1.0;
@@ -466,7 +468,11 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int size, qboolean sho
 
 		i = drawLen - strlen( str );
 
-		if ( size == con.charWidth ) {
+		if (consoleField) {
+			str[0] = cursorChar;
+			str[1] = 0;
+			SCR_DrawConsoleString( x + (edit->cursor - prestep - i) * size, y, str, qtrue, big );
+		} else if ( size == con.charWidth ) {
 			SCR_DrawSmallChar( x + ( edit->cursor - prestep - i ) * size, y, cursorChar );
 		} else {
 			str[0] = cursorChar;
@@ -474,6 +480,15 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int size, qboolean sho
 			SCR_DrawBigString( x + ( edit->cursor - prestep - i ) * size, y, str, 1.0, qfalse );
 		}
 	}
+}
+
+void Console_DrawField( field_t *edit, int x, int y, qboolean showCursor, qboolean noColorEscape, qboolean big )
+{
+	if (SCR_GetAspectLayout().branch != ASPECT_CORRECTED) {
+		Field_VariableSizeDraw( edit, x, y, big ? BIGCHAR_WIDTH : con.charWidth, showCursor, noColorEscape );
+		return;
+	}
+	Field_VariableSizeDraw( edit, x, y, big ? BIGCHAR_WIDTH : con.charWidth, showCursor, noColorEscape, qtrue, big );
 }
 
 void Field_Draw( field_t *edit, int x, int y, qboolean showCursor, qboolean noColorEscape )
