@@ -46,6 +46,12 @@ static void Sys_IOS_EnterForeground( void ) {
 	Sys_IOS_SetFramePaused( qfalse );
 }
 
+static const char *Sys_IOS_AudioOutput( void ) {
+	AVAudioSessionPortDescription *port = [AVAudioSession sharedInstance].currentRoute.outputs.firstObject;
+	return port ? port.portType.UTF8String : "none";
+}
+
+// Interruptions stay with SDL's CoreAudio backend (pause on Began, restart on Ended and app-active).
 void Sys_IOS_InitLifecycle( void ) {
 	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
 	// Not SDL_APP_* events: SDL drops its UIKit lifecycle observer once main() returns to the display-link loop.
@@ -59,4 +65,17 @@ void Sys_IOS_InitLifecycle( void ) {
 		usingBlock:^( NSNotification * ) { Sys_IOS_EnterForeground(); }];
 	[center addObserverForName:UIApplicationDidReceiveMemoryWarningNotification object:nil queue:nil
 		usingBlock:^( NSNotification * ) { Com_Printf( "iOS low memory warning\n" ); }];
+
+	NSOperationQueue *mainQueue = [NSOperationQueue mainQueue];	// audio session posts from other threads
+	[center addObserverForName:AVAudioSessionRouteChangeNotification object:nil queue:mainQueue
+		usingBlock:^( NSNotification *note ) {
+			NSNumber *reason = note.userInfo[AVAudioSessionRouteChangeReasonKey];
+			if ( reason.unsignedIntegerValue == AVAudioSessionRouteChangeReasonOldDeviceUnavailable )
+				Com_Printf( "Audio route changed, output %s\n", Sys_IOS_AudioOutput() );
+		}];
+	[center addObserverForName:AVAudioSessionMediaServicesWereResetNotification object:nil queue:mainQueue
+		usingBlock:^( NSNotification * ) {
+			Com_Printf( "iOS audio: media services reset, restarting sound\n" );
+			Cbuf_ExecuteText( EXEC_APPEND, "snd_restart\n" );
+		}];
 }
