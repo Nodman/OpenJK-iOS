@@ -52,28 +52,37 @@
 
 ## Controls
 
-- Touch: use the floating stick on the left to move. Drag on the right to look. Tap or drag in menus to use the cursor.
-- **MENU** sends Escape and opens the game menu.
+- Touch: put a finger on the lower left to move, or on free space on the right to aim. Each stick appears while touched and starts where your finger lands. Its center stays fixed until you lift.
+- Aim is a turn-rate stick. Deflect a little for a slow turn, or farther for a fast turn. Holding the deflection keeps turning; returning to the center stops turning. Lifting stops that stick.
+- Attack, alternate attack and jump form an arc on the right, from left to right. Tap attack or alternate attack for an immediate press and release. Hold to keep the action pressed. Drag that held finger to aim while attacking; lifting ends both actions. Weapon cooldown and charge rules still apply.
+- The first aiming finger keeps aim until it lifts. Another finger can attack but cannot take aim. If you start dragging an attack while aim is busy, lift and press again to aim with that attack; it will not take over later.
+- Use sits at the bottom left. Crouch sits near the bottom right, with Style to its right. Style switches saber stance; its glyph is blue for fast, yellow for medium, dual or staff, and red for strong. Unknown stance is white.
+- At the top right, previous weapon, saber and next weapon run left to right. Saber selects the saber, or toggles its blade when already selected. Force cycle and Force use sit below that row. MP melee selection has no dedicated touch button.
+- Menu sits at the top left and sends Escape. Chat sits beside it in MP and opens global chat and the soft keyboard. Pad sits below Menu: tap for the SP datapad, or hold for the MP scoreboard and lift to close it.
+- Buttons keep their positions when others hide. Saber hides without a saber. Style hides with only one legal stance unless a blade toggle is useful; Siege, dual and staff keep it available in MP. Force use hides without a selectable power; Force cycle hides with fewer than two. Weapon arrows hide with only one selectable weapon.
+- The SP datapad button appears once you have a selectable Force power. It may hide an objective-only datapad; a keyboard's TAB still works. Chat is MP-only. Death, spectator and intermission states keep basic actions and sticks, while equipment buttons hide.
+- If a custom mod never reports which controls are available, the full set returns after about one second in a map. SP still has no chat button. Menu, cinematic and hardware-hide rules still apply.
+- The console glyph replaces the old CON text in the same top-right corner. Tap or drag elsewhere in menus to use the cursor.
 - Tap the console button in a map or menu to open the console and keyboard. Tap it again to close both. Closing the console another way also closes its soft keyboard.
 - Hold the console button for at least 500 ms, keeping your finger on the button, to toggle the soft keyboard for menu text fields or the open console; a console hold does nothing with a hardware keyboard. Leaving the button cancels the gesture. All touch controls hide during full-screen cinematics and SP in-game videos. Tap anywhere to skip a video through the normal Escape path.
-- Pad sends TAB: datapad in SP, held scoreboard in MP. Chat sends Y in MP. Both use the game's defaults and your key rebinds.
+- Pad sends the real TAB key; Chat sends the real Y key. Both follow your key rebinds.
 - Touch button binds:
 
-| Label | Key | Default bind | Action |
+| Button | Key | Default bind | Action |
 | --- | --- | --- | --- |
-| ATK | `AUX16` | `+attack` | Attack |
-| ALT | `AUX17` | `+altattack` | Alternate attack |
-| JUMP | `AUX18` | `+moveup` | Jump |
-| DUCK | `AUX19` | `+movedown` | Crouch |
-| USE | `AUX20` | `+use` | Use |
-| FORCE | `AUX21` | `+useforce` | Use selected Force power |
-| F>> | `AUX22` | `forcenext` | Next Force power |
-| STYLE | `AUX23` | `saberAttackCycle` | Change saber style |
-| <W | `AUX24` | `weapprev` | Previous weapon |
-| W> | `AUX25` | `weapnext` | Next weapon |
-| SABER | `AUX26` | `weapon 1` | Select saber slot |
-| PAD | TAB | `datapad` (SP), `+scores` (MP) | Datapad / held scoreboard |
-| CHAT | Y | `messagemode` (MP) | Chat |
+| Attack | `AUX16` | `+attack` | Attack |
+| Alt attack | `AUX17` | `+altattack` | Alternate attack |
+| Jump | `AUX18` | `+moveup` | Jump |
+| Crouch | `AUX19` | `+movedown` | Crouch |
+| Use | `AUX20` | `+use` | Use |
+| Force use | `AUX21` | `+useforce` | Use selected Force power |
+| Force cycle | `AUX22` | `forcenext` | Next Force power |
+| Style | `AUX23` | `saberAttackCycle` | Change saber style |
+| Previous weapon | `AUX24` | `weapprev` | Previous weapon |
+| Next weapon | `AUX25` | `weapnext` | Next weapon |
+| Saber | `AUX26` | `weapon 1` | Select saber or toggle its blade |
+| Pad | TAB | `datapad` (SP), `+scores` (MP) | Datapad / held scoreboard |
+| Chat | Y | `messagemode` (MP) | Chat |
 
 - Gamepad: left stick moves; right stick looks. In menus, left stick moves the cursor, A / Cross selects, and B / Circle goes back.
 - SDL button `n` maps to `A_JOY0+n`. Console bind names are `JOY0`, `JOY1`, and so on. Start sends `A_ESCAPE`. LT sends `A_JOY21`; RT sends `A_JOY22`.
@@ -96,10 +105,10 @@
 | RT / R2 | `JOY22` | `+attack` | Attack |
 | Start / Options | Escape | — | Menu / back |
 
-- Keep `in_joystick 1` for the touch stick and pad axes. Keep `j_twinStick 1` for pad look.
+- Keep `in_joystick 1` and `j_twinStick 1` for touch and pad sticks. In touch mode 2, a deflected pad stick takes priority over the matching touch stick; move and aim are separate.
 - iPad keyboard and mouse use the normal key and mouse binds. Text input stays active for the console unless the console button hid its soft keyboard, MP chat, menus with a hardware keyboard, and menus where the console button requested the soft keyboard. It is off in gameplay and cinematics. Keyboard disconnect hands active text entry to the soft keyboard. Input and video restarts restore this state.
-- Rebind in the console. For example, `bind AUX16 +altattack` changes ATK. Use the same command with a `JOY` key to change a pad bind.
-- Real Xbox / DualSense, Smart Keyboard, and mouse checks remain release checks. The recorded touch checks used synthetic input.
+- Rebind in the console. For example, `bind AUX16 +altattack` changes Attack, `bind TAB +scores` changes Pad, and `bind y messagemode` changes Chat. Use a `JOY` key to change a pad bind.
+- Desktop builds and tests checked touch geometry, gestures, visibility, aim rates, colours and embedded icon decoding. These used synthetic input. Real touch feel, reach, icon appearance, restart/server behaviour, Xbox / DualSense, Smart Keyboard and mouse checks remain device checks.
 
 ## Settings
 
@@ -113,7 +122,9 @@
 - Existing saved configs keep their resolution and FPS values. To adopt the new defaults on a 120 Hz panel, enter `seta r_renderScale 1` and `seta com_maxfps 120`, then `vid_restart`.
 - Video → `FPS counter` offers Off / On. Apply shows a small gold frame-rate readout at the top right inside the safe area in a map. Off is the default.
 - `in_touchControls 0`: hide touch controls except the console button. `1`: default; hide them when a pad is connected, or a hardware keyboard and mouse/trackpad are both connected. A keyboard alone keeps touch look and buttons. `2`: keep them visible with these devices. Menus and the console show only the console button. Full-screen cinematics and SP in-game videos hide all controls in every mode; camera cutscenes still show them.
-- `in_touchLookScale 1.0`: default touch look scale. Higher values turn faster.
+- `in_touchLookScale 1.0`: default touch turn-rate scale. Higher values turn faster. It now scales joystick turn rate instead of swipe distance. Old saved values survive; reset to `1.0` if aim feels wrong. It does not change pad look.
+- `in_touchOpacity 1.0`: default touch opacity. Effective values clamp to `0`–`1`. `0` hides the drawing but leaves touch input active. It does not change which buttons are available.
+- Touch mode, look scale and opacity are saved. Console examples: `seta in_touchControls 2`, `seta in_touchLookScale 1.0`, `seta in_touchOpacity 0.5`. The same lines work in your app's autoexec.
 - `j_lookSpeed 1.5`: default pad look scale. Higher values turn faster.
 - `j_deadzone 0.15`: default stick dead zone. Raise it if a stick drifts.
 - `j_lookExponent 2.0`: default right-stick response curve.
