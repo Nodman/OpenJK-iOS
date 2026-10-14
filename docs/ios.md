@@ -121,7 +121,7 @@
 - The following cvars are archived. Saved values and autoexec settings win over defaults.
 - `r_aspectCorrect 1`: iOS default. Enables aspect-correct 2D. The desktop default is `0`.
 - `r_aspectCorrectMinRatio 1.5`: default minimum screen ratio for aspect-correct 2D.
-- `r_aspectStretchBackdrops 0`: iOS default. Menu and loading art fits 4:3 with black gutters. `1` stretches that art over the full screen.
+- `r_aspectStretchBackdrops 0`: iOS default. Loading art and menu-owned backgrounds fit 4:3 with black gutters. `1` stretches that art over the full screen. Retail main menus build their art from items, so they always stay 4:3.
 - `cg_fovAspectAdjust 1`: iOS default. Keeps the 4:3 vertical field of view on wide screens. `0` restores the old crop. `cg_fov` stays at its default of `80`.
 - Use `seta r_aspectCorrect 0` to restore the old 2D path for mods or menus that already compensate for stretch. FOV has its own switch, `cg_fovAspectAdjust`.
 - Console text, chat and the touch overlay keep clear of the camera cutout and home indicator in both landscape orientations. `r_aspectSafeLeft`, `r_aspectSafeTop`, `r_aspectSafeRight` and `r_aspectSafeBottom` are read-only values in drawable pixels for reference.
