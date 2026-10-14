@@ -35,6 +35,9 @@ int g_console_field_width = 78;
 
 console_t	con;
 
+static int chatBaseWidth = 30;
+static qboolean chatWidthAdjusted = qfalse;
+
 cvar_t		*con_conspeed;
 cvar_t		*con_notifytime;
 cvar_t		*con_opacity; // background alpha multiplier
@@ -97,6 +100,8 @@ void Con_MessageMode_f (void) {	//yell
 	chat_team = qfalse;
 	Field_Clear( &chatField );
 	chatField.widthInChars = 30;
+	chatBaseWidth = chatField.widthInChars;
+	chatWidthAdjusted = qfalse;
 
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
 }
@@ -111,6 +116,8 @@ void Con_MessageMode2_f (void) {	//team chat
 	chat_team = qtrue;
 	Field_Clear( &chatField );
 	chatField.widthInChars = 25;
+	chatBaseWidth = chatField.widthInChars;
+	chatWidthAdjusted = qfalse;
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
 }
 
@@ -135,6 +142,8 @@ void Con_MessageMode3_f (void)
 	chat_team = qfalse;
 	Field_Clear( &chatField );
 	chatField.widthInChars = 30;
+	chatBaseWidth = chatField.widthInChars;
+	chatWidthAdjusted = qfalse;
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
 }
 
@@ -159,6 +168,8 @@ void Con_MessageMode4_f (void)
 	chat_team = qfalse;
 	Field_Clear( &chatField );
 	chatField.widthInChars = 30;
+	chatBaseWidth = chatField.widthInChars;
+	chatWidthAdjusted = qfalse;
 	Key_SetCatcher( Key_GetCatcher( ) ^ KEYCATCH_MESSAGE );
 }
 
@@ -443,11 +454,11 @@ void Con_CheckResize (void)
 		scale = (float)charWidth / SMALLCHAR_WIDTH;
 	}
 
-	width = (cls.glconfig.vidWidth / charWidth) - 2;
+	width = (SCR_GetSafeWidth() / charWidth) - 2;
 
 	if (width < 20) {
 		width = 20;
-		charWidth = cls.glconfig.vidWidth / 22;
+		charWidth = SCR_GetSafeWidth() / 22;
 		scale = (float)charWidth / SMALLCHAR_WIDTH;
 	}
 
@@ -462,6 +473,11 @@ void Con_CheckResize (void)
 	con.linewidth = width;
 	con.xadjust = ((float)SCREEN_WIDTH) / cls.glconfig.vidWidth;
 	con.yadjust = ((float)SCREEN_HEIGHT) / cls.glconfig.vidHeight;
+	if (SCR_GetAspectLayout().branch == ASPECT_CORRECTED) {
+		const aspectPoint_t size = SCR_PixelSizeToVirtual( 1, 1 );
+		con.xadjust = size.x;
+		con.yadjust = size.y;
+	}
 	g_consoleField.widthInChars = width - 1; // Command prompt
 
 	if (con.rowwidth != rowwidth)
@@ -677,6 +693,24 @@ DRAWING
 */
 
 
+static void Con_DrawString( int y, const char *text, const float *color, int font, float scale, int xOffset = 0 ) {
+	if (SCR_GetAspectLayout().branch != ASPECT_CORRECTED) {
+		re->Font_DrawString( xOffset + con.xadjust * (con.xadjust + con.charWidth), con.yadjust * y,
+			text, color, font, -1, scale );
+		return;
+	}
+	// cl_conXOffset stays virtual for fonts and physical for bitmap notify text.
+	const aspectPoint_t origin = SCR_ConsoleToVirtual( con.charWidth, y );
+	const aspectPoint_t safeOrigin = SCR_GetSafeTextOrigin();
+	const aspectPoint_t right = SCR_ConsoleToVirtual( SCR_GetSafeWidth(), 0 );
+	const int x = (int)ceil( fmax( safeOrigin.x, origin.x + xOffset ) );
+	const int width = (int)floor( right.x ) - x;
+	if (y < 0 || width <= 0) {
+		return;
+	}
+	re->Font_DrawString( x, (int)ceil( origin.y ), text, color, font, width, scale );
+}
+
 /*
 ================
 Con_DrawInput
@@ -695,19 +729,19 @@ void Con_DrawInput (void) {
 
 	re->SetColor( con.color );
 
-	Field_Draw( &g_consoleField, 2 * con.charWidth, y, qtrue, qtrue );
+	Console_DrawField( &g_consoleField, 2 * con.charWidth, y, qtrue, qtrue );
 
-	SCR_DrawSmallChar( con.charWidth, y, CONSOLE_PROMPT_CHAR );
+	SCR_DrawSmallChar( con.charWidth, y, CONSOLE_PROMPT_CHAR, qtrue );
 
 	re->SetColor( g_color_table[ColorIndex(COLOR_GREY)] );
 
 	if ( g_consoleField.scroll > 0 )
-		SCR_DrawSmallChar( 0, y, CON_SCROLL_L_CHAR );
+		SCR_DrawSmallChar( 0, y, CON_SCROLL_L_CHAR, qtrue );
 
 	int len = Q_PrintStrlen( g_consoleField.buffer );
 	int pos = Q_PrintStrLenTo( g_consoleField.buffer, g_consoleField.scroll, NULL );
 	if ( pos + g_consoleField.widthInChars < len )
-		SCR_DrawSmallChar( cls.glconfig.vidWidth - con.charWidth, y, CON_SCROLL_R_CHAR );
+		SCR_DrawSmallChar( SCR_GetSafeWidth() - con.charWidth, y, CON_SCROLL_R_CHAR, qtrue );
 }
 
 
@@ -756,6 +790,8 @@ void Con_DrawNotify (void)
 		time = cls.realtime - time;
 		if (time > con_notifytime->value*1000)
 			continue;
+		if (SCR_GetAspectLayout().branch == ASPECT_CORRECTED)
+			lineLimit = con.rowwidth - 1;
 		text = con.text + (i % con.totallines)*con.rowwidth;
 		if (con_timestamps->integer == 0 || con_timestamps->integer == 2) {
 			// don't show timestamps in the notify lines
@@ -771,6 +807,11 @@ void Con_DrawNotify (void)
 		if (!cl_conXOffset)
 		{
 			cl_conXOffset = Cvar_Get ("cl_conXOffset", "0", 0);
+		}
+
+		if (SCR_GetAspectLayout().branch == ASPECT_CORRECTED &&
+			v + (re->Language_IsAsian() ? iPixelHeightToAdvance : con.charHeight) > SCR_GetSafeHeight()) {
+			break;
 		}
 
 		// asian language needs to use the new font system to print glyphs...
@@ -794,8 +835,7 @@ void Con_DrawNotify (void)
 			//
 			// and print...
 			//
-			re->Font_DrawString(cl_conXOffset->integer + con.xadjust * (con.xadjust + con.charWidth), con.yadjust * v, sTemp,
-				g_color_table[currentColor], iFontIndex, -1, fFontScale);
+			Con_DrawString( v, sTemp, g_color_table[currentColor], iFontIndex, fFontScale, cl_conXOffset->integer );
 
 			v +=  iPixelHeightToAdvance;
 		}
@@ -813,7 +853,7 @@ void Con_DrawNotify (void)
 				{
 					cl_conXOffset = Cvar_Get ("cl_conXOffset", "0", 0);
 				}
-				SCR_DrawSmallChar( (int)(cl_conXOffset->integer + (x+1)*con.charWidth), v, text[x].f.character );
+				SCR_DrawSmallChar( (int)(cl_conXOffset->integer + (x+1)*con.charWidth), v, text[x].f.character, qtrue );
 			}
 
 			v += con.charHeight;
@@ -832,17 +872,29 @@ void Con_DrawNotify (void)
 		if (chat_team)
 		{
 			chattext = SE_GetString("MP_SVGAME", "SAY_TEAM");
-			SCR_DrawBigString (8, v, chattext, 1.0f, qfalse );
+			SCR_DrawConsoleString( 8, v, chattext, qfalse, qtrue );
 			skip = strlen(chattext)+1;
 		}
 		else
 		{
 			chattext = SE_GetString("MP_SVGAME", "SAY");
-			SCR_DrawBigString (8, v, chattext, 1.0f, qfalse );
+			SCR_DrawConsoleString( 8, v, chattext, qfalse, qtrue );
 			skip = strlen(chattext)+1;
 		}
 
-		Field_BigDraw( &chatField, skip * BIGCHAR_WIDTH, v, qtrue, qtrue );
+		if (SCR_GetAspectLayout().branch == ASPECT_CORRECTED) {
+			int width = (int)SCR_PixelSizeToVirtual( SCR_GetSafeWidth(), 0 ).x / BIGCHAR_WIDTH - skip - 1;
+			if (width < 2)
+				width = 2;
+			if (chatField.widthInChars != width) {
+				chatField.widthInChars = width;
+				chatWidthAdjusted = qtrue;
+			}
+		} else if (chatWidthAdjusted) {
+			chatField.widthInChars = chatBaseWidth;
+			chatWidthAdjusted = qfalse;
+		}
+		Console_DrawField( &chatField, skip * BIGCHAR_WIDTH, v, qtrue, qtrue, qtrue );
 
 		v += BIGCHAR_HEIGHT;
 	}
@@ -872,9 +924,17 @@ void Con_DrawSolidConsole( float frac ) {
 	if (lines > cls.glconfig.vidHeight )
 		lines = cls.glconfig.vidHeight;
 
+	const bool corrected = SCR_GetAspectLayout().branch == ASPECT_CORRECTED;
+	const aspectRect_t &full = SCR_GetAspectLayout().fullRect;
+	const aspectLayout_t &layout = SCR_GetAspectLayout();
+	const int safeBottom = layout.safeT + SCR_GetSafeHeight();
+	const int textLines = corrected ? (lines < layout.safeT ? 0 :
+		(lines < safeBottom ? lines : safeBottom) - layout.safeT) : lines;
+
 	// draw the background
 	y = (int) (frac * SCREEN_HEIGHT - 2);
-	if ( y < 1 ) {
+	const float backgroundHeight = corrected ? frac * full.h - 2 : y;
+	if ( backgroundHeight < 1 ) {
 		y = 0;
 	}
 	else {
@@ -889,29 +949,34 @@ void Con_DrawSolidConsole( float frac ) {
 		{
 			re->SetColor(NULL);
 		}
-		SCR_DrawPic( 0, 0, SCREEN_WIDTH, (float) y, cls.consoleShader );
+		SCR_DrawPic( corrected ? full.x : 0, corrected ? full.y : 0,
+			corrected ? full.w : SCREEN_WIDTH, corrected ? backgroundHeight : y, cls.consoleShader );
 	}
 
 	// draw the bottom bar and version number
 
 	re->SetColor( console_color );
-	re->DrawStretchPic( 0, y, SCREEN_WIDTH, 2, 0, 0, 0, 0, cls.whiteShader );
+	re->DrawStretchPic( corrected ? full.x : 0, corrected ? full.y + (backgroundHeight < 1 ? 0 : backgroundHeight) : y,
+		corrected ? full.w : SCREEN_WIDTH, 2, 0, 0, 0, 0, cls.whiteShader );
 
 	i = strlen( JK_VERSION );
 
 	for (x=0 ; x<i ; x++) {
-		SCR_DrawSmallChar( cls.glconfig.vidWidth - ( i - x + 1 ) * con.charWidth,
-			(lines-(con.charHeight+con.charHeight/2)), JK_VERSION[x] );
+		SCR_DrawSmallChar( SCR_GetSafeWidth() - ( i - x + 1 ) * con.charWidth,
+			(textLines-(con.charHeight+con.charHeight/2)), JK_VERSION[x], qtrue );
 	}
 
 	// draw the input prompt, user text, and cursor if desired
+	if (corrected) {
+		con.vislines = textLines;
+	}
 	Con_DrawInput ();
 
 	// draw the text
-	con.vislines = lines;
-	rows = (lines-con.charHeight)/con.charHeight;		// rows of text to draw
+	con.vislines = textLines;
+	rows = (textLines-con.charHeight)/con.charHeight;		// rows of text to draw
 
-	y = lines - (con.charHeight*3);
+	y = textLines - (con.charHeight*3);
 
 	// draw from the bottom up
 	if (con.display != con.current)
@@ -919,7 +984,7 @@ void Con_DrawSolidConsole( float frac ) {
 	// draw arrows to show the buffer is backscrolled
 		re->SetColor( console_color );
 		for (x=0 ; x<con.linewidth ; x+=4)
-			SCR_DrawSmallChar( (x+1)*con.charWidth, y, '^' );
+			SCR_DrawSmallChar( (x+1)*con.charWidth, y, '^', qtrue );
 		y -= con.charHeight;
 		rows--;
 	}
@@ -946,6 +1011,8 @@ void Con_DrawSolidConsole( float frac ) {
 
 	for (i=0 ; i<rows ; i++, y -= iPixelHeightToAdvance, row--)
 	{
+		if (corrected && (y < 0 || y + iPixelHeightToAdvance > SCR_GetSafeHeight()))
+			break;
 		if (row < 0)
 			break;
 		if (con.current - row >= con.totallines) {
@@ -978,8 +1045,7 @@ void Con_DrawSolidConsole( float frac ) {
 			//
 			// and print...
 			//
-			re->Font_DrawString(con.xadjust*(con.xadjust + con.charWidth), con.yadjust * y, sTemp, g_color_table[currentColor],
-				iFontIndex, -1, fFontScale);
+			Con_DrawString( y, sTemp, g_color_table[currentColor], iFontIndex, fFontScale );
 		}
 		else
 		{
@@ -992,7 +1058,7 @@ void Con_DrawSolidConsole( float frac ) {
 					currentColor = text[x].f.color;
 					re->SetColor( g_color_table[currentColor] );
 				}
-				SCR_DrawSmallChar( (x+1)*con.charWidth, y, text[x].f.character );
+				SCR_DrawSmallChar( (x+1)*con.charWidth, y, text[x].f.character, qtrue );
 			}
 		}
 	}

@@ -39,6 +39,57 @@ cvar_t		*cl_graphheight;
 cvar_t		*cl_graphscale;
 cvar_t		*cl_graphshift;
 
+const aspectLayout_t &SCR_GetAspectLayout( qboolean refresh ) {
+	static aspectLayout_t layout = {};
+	static int checkedFrame = -1;
+	if (!refresh && checkedFrame == cls.framecount && layout.W == cls.glconfig.vidWidth && layout.H == cls.glconfig.vidHeight) {
+		return layout;
+	}
+	checkedFrame = cls.framecount;
+	const int W = cls.glconfig.vidWidth;
+	const int H = cls.glconfig.vidHeight;
+	const int enabled = Cvar_VariableValue( "r_aspectCorrect" ) != 0;
+	const float minRatio = Cvar_VariableValue( "r_aspectCorrectMinRatio" );
+	const int L = Cvar_VariableIntegerValue( "r_aspectSafeLeft" );
+	const int T = Cvar_VariableIntegerValue( "r_aspectSafeTop" );
+	const int R = Cvar_VariableIntegerValue( "r_aspectSafeRight" );
+	const int B = Cvar_VariableIntegerValue( "r_aspectSafeBottom" );
+	if (layout.W != W || layout.H != H || layout.enabled != enabled || layout.minRatio != minRatio ||
+		layout.safeL != L || layout.safeT != T || layout.safeR != R || layout.safeB != B) {
+		layout = AspectLayout_Build( W, H, enabled, minRatio, L, T, R, B );
+	}
+	return layout;
+}
+
+aspectPoint_t SCR_PixelsToVirtual( double x, double y ) {
+	return AspectLayout_ToVirtual( &SCR_GetAspectLayout(), x, y );
+}
+
+aspectPoint_t SCR_PixelSizeToVirtual( double w, double h ) {
+	return AspectLayout_SizeToVirtual( &SCR_GetAspectLayout(), w, h );
+}
+
+aspectPoint_t SCR_GetSafeTextOrigin( void ) {
+	const aspectLayout_t &layout = SCR_GetAspectLayout();
+	return { layout.leftTranslation, layout.topTranslation };
+}
+
+aspectPoint_t SCR_ConsoleToVirtual( double x, double y ) {
+	const aspectPoint_t origin = SCR_GetSafeTextOrigin();
+	const aspectPoint_t size = SCR_PixelSizeToVirtual( x, y );
+	return { origin.x + size.x, origin.y + size.y };
+}
+
+int SCR_GetSafeWidth( void ) {
+	const aspectLayout_t &layout = SCR_GetAspectLayout();
+	return layout.branch == ASPECT_CORRECTED ? layout.W - layout.safeL - layout.safeR : layout.W;
+}
+
+int SCR_GetSafeHeight( void ) {
+	const aspectLayout_t &layout = SCR_GetAspectLayout();
+	return layout.branch == ASPECT_CORRECTED ? layout.H - layout.safeT - layout.safeB : layout.H;
+}
+
 /*
 ================
 SCR_DrawNamedPic
@@ -129,7 +180,7 @@ static void SCR_DrawChar( int x, int y, float size, int ch ) {
 ** SCR_DrawSmallChar
 ** small chars are drawn at native screen resolution
 */
-void SCR_DrawSmallChar( int x, int y, int ch ) {
+void SCR_DrawSmallChar( int x, int y, int ch, qboolean consoleText ) {
 	int row, col;
 	float frow, fcol;
 	float size;
@@ -156,6 +207,17 @@ void SCR_DrawSmallChar( int x, int y, int ch ) {
 //	size = 0.0625;
 
 	size2 = 0.0625;
+
+	if (consoleText && SCR_GetAspectLayout().branch == ASPECT_CORRECTED) {
+		if (x < 0 || y < 0 || x + con.charWidth > SCR_GetSafeWidth() || y + con.charHeight > SCR_GetSafeHeight()) {
+			return;
+		}
+		const aspectPoint_t origin = SCR_ConsoleToVirtual( x, y );
+		const aspectPoint_t size = SCR_PixelSizeToVirtual( con.charWidth, con.charHeight );
+		re->DrawStretchPic( origin.x, origin.y, size.x, size.y, fcol, frow,
+			fcol + 0.03125f, frow + 0.0625f, cls.charSetShader );
+		return;
+	}
 
 	re->DrawStretchPic( x * con.xadjust, y * con.yadjust,
 					   con.charWidth * con.xadjust, con.charHeight * con.yadjust,
@@ -273,6 +335,56 @@ void SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, 
 }
 
 
+
+void SCR_DrawConsoleString( int x, int y, const char *s, qboolean noColorEscape, qboolean big ) {
+	if (SCR_GetAspectLayout().branch != ASPECT_CORRECTED) {
+		if (big) {
+			SCR_DrawBigString( x, y, s, 1.0f, noColorEscape );
+		} else {
+			vec4_t color = { 1, 1, 1, 1 };
+			SCR_DrawSmallStringExt( x, y, s, color, qfalse, noColorEscape );
+		}
+		return;
+	}
+	const float *color = g_color_table[ColorIndex(COLOR_WHITE)];
+	re->SetColor( color );
+	for (; *s; ++s) {
+		if (Q_IsColorString( s )) {
+			color = g_color_table[ColorIndex(*(s+1))];
+			re->SetColor( color );
+			if (!noColorEscape) {
+				s++;
+				continue;
+			}
+		}
+		if (!big) {
+			SCR_DrawSmallChar( x, y, *s, qtrue );
+			x += con.charWidth;
+			continue;
+		}
+		if (*s == ' ') {
+			x += BIGCHAR_WIDTH;
+			continue;
+		}
+		// Big text keeps virtual x advances; y remains a console pixel row.
+		const aspectPoint_t available = SCR_PixelSizeToVirtual( SCR_GetSafeWidth(), SCR_GetSafeHeight() - y );
+		if (x >= 0 && y >= 0 && x + BIGCHAR_WIDTH + 2 <= available.x && BIGCHAR_HEIGHT + 2 <= available.y) {
+			const int ch = (unsigned char)*s;
+			const float col = (ch & 15) * 0.0625f;
+			const float row = (ch >> 4) * 0.0625f;
+			const aspectPoint_t origin = SCR_ConsoleToVirtual( 0, y );
+			const vec4_t shadow = { 0, 0, 0, 1 };
+			re->SetColor( shadow );
+			re->DrawStretchPic( origin.x + x + 2, origin.y + 2, BIGCHAR_WIDTH, BIGCHAR_HEIGHT, col, row,
+				col + 0.03125f, row + 0.0625f, cls.charSetShader );
+			re->SetColor( color );
+			re->DrawStretchPic( origin.x + x, origin.y, BIGCHAR_WIDTH, BIGCHAR_HEIGHT, col, row,
+				col + 0.03125f, row + 0.0625f, cls.charSetShader );
+		}
+		x += BIGCHAR_WIDTH;
+	}
+	re->SetColor( NULL );
+}
 
 /*
 ** SCR_Strlen -- skips color escape codes
@@ -476,6 +588,7 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 #ifdef OPENJK_IOS
 	SCR_PublishSafeArea();
 #endif
+	SCR_GetAspectLayout( qtrue );
 	re->BeginFrame( stereoFrame );
 
 	qboolean uiFullscreen = (qboolean)(cls.uiStarted && UIVM_IsFullscreen());
