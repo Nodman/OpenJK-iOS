@@ -5333,8 +5333,8 @@ qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y)
 
 	// z = how far is the object in our forward direction
     z = DotProduct(trans, cg.refdef.viewaxis[0]);
-    if (z <= 0.001)
-        return qfalse;
+	if (z <= 0.001)
+		return qfalse;
 
 	const aspectLayout_t *layout = CG_AspectLayout();
 	if ( layout->branch == ASPECT_CORRECTED ) {
@@ -7392,6 +7392,12 @@ chatbox functionality -rww
 ====================================*/
 #define	CHATBOX_CUTOFF_LEN	550
 #define	CHATBOX_FONT_HEIGHT	20
+#define CHATBOX_FONT_SCALE 0.65f
+#define CHATBOX_SAFE_PAD 8
+
+static char chatRaw[MAX_CHATBOX_ITEMS][MAX_SAY_TEXT];
+static char chatWrapped[MAX_CHATBOX_ITEMS][MAX_SAY_TEXT * 4 + 1];
+static qboolean chatRawValid[MAX_CHATBOX_ITEMS];
 
 //utility func, insert a string into a string at the specified
 //place (assuming this will not overflow the buffer)
@@ -7417,26 +7423,93 @@ void CG_ChatBox_StrInsert(char *buffer, int place, char *str)
 	}
 }
 
-//add chatbox string
-void CG_ChatBox_AddString(char *chatStr)
+static void CG_ChatBox_CopyRaw( char *out, const char *text )
 {
-	chatBoxItem_t *chat = &cg.chatItems[cg.chatItemActive];
+	int length = 0;
+	while ( *text ) {
+		int bytes = CG_Text_CharBytes( text );
+		if ( length + bytes >= MAX_SAY_TEXT ) {
+			break;
+		}
+		memcpy( out + length, text, bytes );
+		length += bytes;
+		text += bytes;
+	}
+	out[length] = 0;
+}
+
+static void CG_ChatBox_WrapSafe( int slot, const aspectLayout_t *layout, float scale )
+{
+	const char *raw = chatRaw[slot];
+	char *out = chatWrapped[slot];
+	char color = '7';
+	int pos = 0, length = 0;
+	aspectPoint_t size = AspectLayout_SizeToVirtual( layout, layout->W - layout->safeL - layout->safeR, 0 );
+	float width = fmax( 0, size.x - CHATBOX_SAFE_PAD * 2 );
+
+	cg.chatItems[slot].lines = 1;
+	while ( raw[pos] ) {
+		char measure[MAX_SAY_TEXT];
+		int scan = pos, end = pos, lastSpace = -1, measured = 0, glyphs = 0;
+		while ( raw[scan] && raw[scan] != '\n' ) {
+			int bytes = CG_Text_CharBytes( raw + scan );
+			memcpy( measure + measured, raw + scan, bytes );
+			measure[measured + bytes] = 0;
+			if ( Q_IsColorString( raw + scan ) ) {
+				measured += bytes;
+				scan += bytes;
+				end = scan;
+				continue;
+			}
+			if ( CG_Text_Width( measure, scale, FONT_SMALL ) > width ) {
+				if ( lastSpace > pos ) {
+					end = lastSpace;
+				} else if ( !glyphs ) {
+					// An individual glyph cannot fit this safe rectangle.
+					while ( pos < scan ) {
+						if ( Q_IsColorString( raw + pos ) ) {
+							color = raw[pos + 1];
+						}
+						pos += CG_Text_CharBytes( raw + pos );
+					}
+					pos = scan + bytes;
+					end = pos;
+				}
+				break;
+			}
+			measured += bytes;
+			glyphs++;
+			scan += bytes;
+			end = scan;
+			if ( bytes == 1 && raw[scan - 1] == ' ' ) {
+				lastSpace = end;
+			}
+		}
+		while ( pos < end ) {
+			int bytes = CG_Text_CharBytes( raw + pos );
+			if ( Q_IsColorString( raw + pos ) ) {
+				color = raw[pos + 1];
+			}
+			memcpy( out + length, raw + pos, bytes );
+			length += bytes;
+			pos += bytes;
+		}
+		if ( raw[pos] == '\n' ) {
+			pos++;
+		} else if ( !raw[pos] ) {
+			break;
+		}
+		out[length++] = '\n';
+		out[length++] = Q_COLOR_ESCAPE;
+		out[length++] = color;
+		cg.chatItems[slot].lines++;
+	}
+	out[length] = 0;
+}
+
+static void CG_ChatBox_WrapLegacy( chatBoxItem_t *chat )
+{
 	float chatLen;
-
-	if (cg_chatBox.integer<=0)
-	{ //don't bother then.
-		return;
-	}
-
-	memset(chat, 0, sizeof(chatBoxItem_t));
-
-	if (strlen(chatStr) > sizeof(chat->string))
-	{ //too long, terminate at proper len.
-		chatStr[sizeof(chat->string)-1] = 0;
-	}
-
-	strcpy(chat->string, chatStr);
-	chat->time = cg.time + cg_chatBox.integer;
 
 	chat->lines = 1;
 
@@ -7480,6 +7553,96 @@ void CG_ChatBox_AddString(char *chatStr)
 		}
 	}
 
+}
+
+static void CG_ChatBox_Refresh( const aspectLayout_t *layout, float scale )
+{
+	static aspectLayout_t previous;
+	static float previousScale;
+	static int previousFont, previousHeight, previousWidth;
+	static char previousLanguage[64];
+	static qboolean initialized = qfalse;
+	char language[64];
+	int font, height, width, i;
+
+	if ( layout->branch == ASPECT_LEGACY ) {
+		if ( initialized && previous.branch == ASPECT_CORRECTED ) {
+			for ( i = 0; i < MAX_CHATBOX_ITEMS; i++ ) {
+				if ( chatRawValid[i] && cg.chatItems[i].string[0] ) {
+					Q_strncpyz( cg.chatItems[i].string, chatRaw[i], sizeof( cg.chatItems[i].string ) );
+					CG_ChatBox_WrapLegacy( &cg.chatItems[i] );
+				}
+			}
+		}
+		previous = *layout;
+		initialized = qtrue;
+		return;
+	}
+
+	font = MenuFontToHandle( FONT_SMALL );
+	height = CG_Text_Height( "M", scale, FONT_SMALL );
+	width = CG_Text_Width( "MWil", scale, FONT_SMALL );
+	trap->Cvar_VariableStringBuffer( "se_language", language, sizeof( language ) );
+	if ( initialized && previous.W == layout->W && previous.H == layout->H &&
+		previous.branch == layout->branch && previous.safeL == layout->safeL &&
+		previous.safeT == layout->safeT && previous.safeR == layout->safeR && previous.safeB == layout->safeB &&
+		previousScale == scale && previousFont == font && previousHeight == height && previousWidth == width &&
+		!strcmp( previousLanguage, language ) ) {
+		return;
+	}
+	for ( i = 0; i < MAX_CHATBOX_ITEMS; i++ ) {
+		if ( !chatRawValid[i] || !cg.chatItems[i].string[0] ) {
+			continue;
+		}
+		CG_ChatBox_WrapSafe( i, layout, scale );
+	}
+	previous = *layout;
+	previousScale = scale;
+	previousFont = font;
+	previousHeight = height;
+	previousWidth = width;
+	Q_strncpyz( previousLanguage, language, sizeof( previousLanguage ) );
+	initialized = qtrue;
+}
+
+//add chatbox string
+void CG_ChatBox_AddString(char *chatStr)
+{
+	chatBoxItem_t *chat = &cg.chatItems[cg.chatItemActive];
+	const aspectLayout_t *layout = CG_AspectLayout();
+	int slot = cg.chatItemActive;
+
+	if (cg_chatBox.integer<=0)
+	{ //don't bother then.
+		return;
+	}
+
+	CG_ChatBox_Refresh( layout, CHATBOX_FONT_SCALE );
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		CG_ChatBox_CopyRaw( chatRaw[slot], chatStr );
+	} else {
+		Q_strncpyz( chatRaw[slot], chatStr, sizeof( chatRaw[slot] ) );
+	}
+	chatRawValid[slot] = qtrue;
+	memset(chat, 0, sizeof(chatBoxItem_t));
+
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		Q_strncpyz( chat->string, chatRaw[slot], sizeof( chat->string ) );
+		chat->time = cg.time + cg_chatBox.integer;
+		CG_ChatBox_WrapSafe( slot, layout, CHATBOX_FONT_SCALE );
+		cg.chatItemActive = ( slot + 1 ) % MAX_CHATBOX_ITEMS;
+		return;
+	}
+
+	if (strlen(chatStr) > sizeof(chat->string))
+	{ //too long, terminate at proper len.
+		chatStr[sizeof(chat->string)-1] = 0;
+	}
+
+	strcpy(chat->string, chatStr);
+	chat->time = cg.time + cg_chatBox.integer;
+
+	CG_ChatBox_WrapLegacy( chat );
 	cg.chatItemActive++;
 	if (cg.chatItemActive >= MAX_CHATBOX_ITEMS)
 	{
@@ -7512,40 +7675,80 @@ static QINLINE void CG_ChatBox_DrawStrings(void)
 	int i = 0;
 	int x = 30;
 	float y = cg.scoreBoardShowing ? 475 : cg_chatBoxHeight.integer;
-	float fontScale = 0.65f;
+	float fontScale = CHATBOX_FONT_SCALE;
+	const aspectLayout_t *layout = CG_AspectLayout();
 
 	if (!cg_chatBox.integer)
 	{
 		return;
 	}
 
+	CG_ChatBox_Refresh( layout, fontScale );
 	memset(drawThese, 0, sizeof(drawThese));
 
 	while (i < MAX_CHATBOX_ITEMS)
 	{
-		if (cg.chatItems[i].time >= cg.time)
+		int slot = layout->branch == ASPECT_CORRECTED ? ( cg.chatItemActive + i ) % MAX_CHATBOX_ITEMS : i;
+		if (cg.chatItems[slot].time >= cg.time)
 		{
 			int check = numToDraw;
 			int insertionPoint = numToDraw;
 
-			while (check >= 0)
+			while (layout->branch == ASPECT_LEGACY && check >= 0)
 			{
 				if (drawThese[check] &&
-					cg.chatItems[i].time < drawThese[check]->time)
+					cg.chatItems[slot].time < drawThese[check]->time)
 				{ //insert here
 					insertionPoint = check;
 				}
 				check--;
 			}
-			CG_ChatBox_ArrayInsert(drawThese, insertionPoint, MAX_CHATBOX_ITEMS, &cg.chatItems[i]);
+			CG_ChatBox_ArrayInsert(drawThese, insertionPoint, MAX_CHATBOX_ITEMS, &cg.chatItems[slot]);
 			numToDraw++;
-			linesToDraw += cg.chatItems[i].lines;
+			linesToDraw += cg.chatItems[slot].lines;
 		}
 		i++;
 	}
 
 	if (!numToDraw)
 	{ //nothing, then, just get out of here now.
+		return;
+	}
+
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		float lineHeight = fmax( CHATBOX_FONT_HEIGHT * fontScale, CG_Text_Height( "M", fontScale, FONT_SMALL ) );
+		float top = ceil( layout->topTranslation );
+		float bottom = floor( 480 + layout->bottomTranslation ) - 1;
+		float safeX = ceil( layout->leftTranslation + CHATBOX_SAFE_PAD );
+		int visible, skip;
+		aspectPoint_t size = AspectLayout_SizeToVirtual( layout, layout->W - layout->safeL - layout->safeR, 0 );
+		if ( bottom - top < lineHeight || size.x <= CHATBOX_SAFE_PAD * 2 ) {
+			return;
+		}
+		y = fmin( bottom, fmax( top + lineHeight, y ) );
+		visible = (int)floor( ( y - top ) / lineHeight );
+		visible = visible < linesToDraw ? visible : linesToDraw;
+		skip = linesToDraw - visible;
+		y -= visible * lineHeight;
+		for ( i = 0; i < numToDraw; i++ ) {
+			int slot = drawThese[i] - cg.chatItems;
+			const char *text = chatWrapped[slot];
+			int line;
+			for ( line = 0; line < drawThese[i]->lines; line++ ) {
+				char buffer[sizeof( chatWrapped[slot] )];
+				const char *end = strchr( text, '\n' );
+				int length = end ? end - text : strlen( text );
+				if ( skip ) {
+					skip--;
+				} else {
+					memcpy( buffer, text, length );
+					buffer[length] = 0;
+					CG_Text_Paint( safeX, ceil( y ), fontScale, colorWhite, buffer, 0, 0, ITEM_TEXTSTYLE_OUTLINED, FONT_SMALL );
+					y += lineHeight;
+				}
+				text = end ? end + 1 : text + length;
+			}
+		}
 		return;
 	}
 

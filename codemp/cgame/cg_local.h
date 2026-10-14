@@ -1717,6 +1717,7 @@ Ghoul2 Insert End
 // cg_drawtools.c
 //
 const aspectLayout_t *CG_AspectLayout( void );
+int CG_Text_CharBytes( const char *text );
 
 void CG_FillRect( float x, float y, float width, float height, const float *color );
 void CG_DrawPic( float x, float y, float width, float height, qhandle_t hShader );

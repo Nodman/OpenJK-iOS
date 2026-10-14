@@ -28,21 +28,42 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 const aspectLayout_t *CG_AspectLayout( void ) {
 	static aspectLayout_t layout;
 	static qboolean initialized = qfalse;
+	static int frame, enabled, safeL, safeT, safeR, safeB;
+	static float minRatio;
 	char value[64];
-	int enabled;
-	float minRatio;
 
-	trap->Cvar_VariableStringBuffer( "r_aspectCorrect", value, sizeof( value ) );
-	enabled = atoi( value );
-	trap->Cvar_VariableStringBuffer( "r_aspectCorrectMinRatio", value, sizeof( value ) );
-	minRatio = atof( value );
+	if ( !initialized || frame != cg.clientFrame ) {
+		trap->Cvar_VariableStringBuffer( "r_aspectCorrect", value, sizeof( value ) );
+		enabled = atoi( value );
+		trap->Cvar_VariableStringBuffer( "r_aspectCorrectMinRatio", value, sizeof( value ) );
+		minRatio = atof( value );
+		trap->Cvar_VariableStringBuffer( "r_aspectSafeLeft", value, sizeof( value ) );
+		safeL = atoi( value );
+		trap->Cvar_VariableStringBuffer( "r_aspectSafeTop", value, sizeof( value ) );
+		safeT = atoi( value );
+		trap->Cvar_VariableStringBuffer( "r_aspectSafeRight", value, sizeof( value ) );
+		safeR = atoi( value );
+		trap->Cvar_VariableStringBuffer( "r_aspectSafeBottom", value, sizeof( value ) );
+		safeB = atoi( value );
+		frame = cg.clientFrame;
+	}
 	if ( !initialized || layout.W != cgs.glconfig.vidWidth || layout.H != cgs.glconfig.vidHeight ||
-		layout.enabled != enabled || layout.minRatio != minRatio ) {
+		layout.enabled != enabled || layout.minRatio != minRatio ||
+		layout.safeL != safeL || layout.safeT != safeT || layout.safeR != safeR || layout.safeB != safeB ) {
 		layout = AspectLayout_Build( cgs.glconfig.vidWidth, cgs.glconfig.vidHeight,
-			enabled, minRatio, 0, 0, 0, 0 );
+			enabled, minRatio, safeL, safeT, safeR, safeB );
 		initialized = qtrue;
 	}
 	return &layout;
+}
+
+int CG_Text_CharBytes( const char *text ) {
+	int advance = 1;
+	if ( Q_IsColorString( text ) ) {
+		return 2;
+	}
+	trap->R_AnyLanguage_ReadCharFromString( text, &advance, NULL );
+	return advance > 0 && advance <= (int)strlen( text ) ? advance : 1;
 }
 
 
