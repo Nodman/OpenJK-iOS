@@ -30,6 +30,16 @@ cvar_t		*cvar_vars = NULL;
 cvar_t		*cvar_cheats;
 uint32_t	cvar_modifiedFlags;
 
+static qboolean cvar_platformDefaults = qfalse;
+
+void Cvar_BeginPlatformDefaults( void ) {
+	cvar_platformDefaults = qtrue;
+}
+
+void Cvar_EndPlatformDefaults( void ) {
+	cvar_platformDefaults = qfalse;
+}
+
 #define	MAX_CVARS	8192
 cvar_t		cvar_indexes[MAX_CVARS];
 int			cvar_numIndexes;
@@ -49,6 +59,18 @@ static void Cvar_FreeString(char *string)
 			string >= lastMemPool + memPoolSize) {
 		Z_Free(string);
 	}
+}
+
+static cvar_t *Cvar_SetPlatformDefault( cvar_t *var, const char *value ) {
+	if ( cvar_platformDefaults && var ) {
+		if ( strcmp( var->resetString, value ) ) {
+			char *reset = CopyString( value );
+			Cvar_FreeString( var->resetString );
+			var->resetString = reset;
+		}
+		var->flags |= CVAR_PLATFORM_DEFAULT;
+	}
+	return var;
 }
 
 /*
@@ -371,13 +393,14 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, uint32_t flags, c
 				flags &= ~CVAR_VM_CREATED;
 		}
 
-		// if the C code is now specifying a variable that the user already
-		// set a value for, take the new value as the reset value
+		// Registration adopts the code reset value unless the platform supplied one.
 		if ( var->flags & CVAR_USER_CREATED )
 		{
 			var->flags &= ~CVAR_USER_CREATED;
-			Cvar_FreeString( var->resetString );
-			var->resetString = CopyString( var_value );
+			if ( !(var->flags & CVAR_PLATFORM_DEFAULT) ) {
+				Cvar_FreeString( var->resetString );
+				var->resetString = CopyString( var_value );
+			}
 
 			if(flags & CVAR_ROM)
 			{
@@ -406,11 +429,11 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, uint32_t flags, c
 		var->flags |= flags;
 
 		// only allow one non-empty reset string without a warning
-		if ( !var->resetString[0] ) {
+		if ( !(var->flags & CVAR_PLATFORM_DEFAULT) && !var->resetString[0] ) {
 			// we don't have a reset string yet
 			Cvar_FreeString( var->resetString );
 			var->resetString = CopyString( var_value );
-		} else if ( var_value[0] && strcmp( var->resetString, var_value ) ) {
+		} else if ( !(var->flags & CVAR_PLATFORM_DEFAULT) && var_value[0] && strcmp( var->resetString, var_value ) ) {
 			Com_DPrintf( S_COLOR_YELLOW "Warning: cvar \"%s\" given initial values: \"%s\" and \"%s\"\n",
 				var_name, var->resetString, var_value );
 		}
@@ -618,7 +641,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, uint32_t defaultFlag
 			return NULL;
 		}
 		// create it
-		return Cvar_Get( var_name, value, defaultFlags );
+		return Cvar_SetPlatformDefault( Cvar_Get( var_name, value, defaultFlags ), value );
 	}
 
 	if (!value ) {
@@ -633,14 +656,14 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, uint32_t defaultFlag
 		{
 			Cvar_FreeString(var->latchedString);
 			var->latchedString = NULL;
-			return var;
+			return Cvar_SetPlatformDefault( var, value );
 		}
 
 		if(!strcmp(value, var->latchedString))
-			return var;
+			return Cvar_SetPlatformDefault( var, value );
 	}
 	else if(!strcmp(value, var->string))
-		return var;
+		return Cvar_SetPlatformDefault( var, value );
 
 	// note what types of cvars have been modified (userinfo, archive, serverinfo, systeminfo)
 	cvar_modifiedFlags |= var->flags;
@@ -683,7 +706,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, uint32_t defaultFlag
 			var->latchedString = CopyString(value);
 			var->modified = qtrue;
 			var->modificationCount++;
-			return var;
+			return Cvar_SetPlatformDefault( var, var->latchedString );
 		}
 
 		if ( (var->flags & CVAR_CHEAT) && !cvar_cheats->integer )
@@ -702,7 +725,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, uint32_t defaultFlag
 	}
 
 	if (!strcmp(value, var->string))
-		return var;		// not changed
+		return Cvar_SetPlatformDefault( var, value );		// not changed
 
 	var->modified = qtrue;
 	var->modificationCount++;
@@ -713,7 +736,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, uint32_t defaultFlag
 	var->value = atof (var->string);
 	var->integer = atoi (var->string);
 
-	return var;
+	return Cvar_SetPlatformDefault( var, var->string );
 }
 
 /*

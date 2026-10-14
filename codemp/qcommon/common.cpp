@@ -1062,10 +1062,12 @@ void Com_ExecuteCfg(void)
 	Cbuf_ExecuteText(EXEC_NOW, "exec mpdefault.cfg\n");
 	Cbuf_Execute(); // Always execute after exec to prevent text buffer overflowing
 #ifdef OPENJK_IOS
+	Cvar_BeginPlatformDefaults();
 	Cbuf_ExecuteText( EXEC_NOW, "exec ios_default.cfg\n" );
 	Cbuf_Execute();
 	Cbuf_ExecuteText( EXEC_INSERT, Sys_IOS_DeviceDefaults() );
 	Cbuf_Execute();
+	Cvar_EndPlatformDefaults();
 #endif
 
 	if(!Com_SafeMode())

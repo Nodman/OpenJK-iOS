@@ -360,6 +360,9 @@ modules of the program.
 
 */
 
+void Cvar_BeginPlatformDefaults( void );
+void Cvar_EndPlatformDefaults( void );
+
 cvar_t *Cvar_Get( const char *var_name, const char *value, int flags );
 // creates the variable if it doesn't exist, or returns the existing one
 // if it exists, the value will not be changed, but flags will be ORed in

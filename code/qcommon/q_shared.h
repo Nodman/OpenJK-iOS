@@ -454,6 +454,8 @@ default values.
 #define CVAR_PROTECTED		8192	// prevent modifying this var from VMs or the server
 #define CVAR_NODEFAULT		16384	// do not write to config if matching with default value
 
+#define CVAR_PLATFORM_DEFAULT	32768	// internal: reset value supplied by the platform
+
 #define CVAR_ARCHIVE_ND		(CVAR_ARCHIVE | CVAR_NODEFAULT)
 // These flags are only returned by the Cvar_Flags() function
 #define CVAR_MODIFIED		0x40000000		// Cvar was modified

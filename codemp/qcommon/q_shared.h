@@ -724,6 +724,8 @@ Many variables can be used for cheating purposes, so when cheats is zero,
 #define CVAR_PROTECTED		(0x00008000u)	// prevent modifying this var from VMs or the server
 #define CVAR_NODEFAULT		(0x00010000u)	// do not write to config if matching with default value
 
+#define CVAR_PLATFORM_DEFAULT	(0x00020000u)	// internal: reset value supplied by the platform
+
 #define CVAR_ARCHIVE_ND		(CVAR_ARCHIVE | CVAR_NODEFAULT)
 // These flags are only returned by the Cvar_Flags() function
 #define CVAR_MODIFIED		(0x40000000u)	// Cvar was modified
