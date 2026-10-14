@@ -835,7 +835,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_ext_multisample	= Cvar_Get( "r_ext_multisample",	"0",		CVAR_ARCHIVE_ND|CVAR_LATCH );
 	Cvar_Get( "r_availableModes", "", CVAR_ROM );
 #ifdef OPENJK_IOS
-	r_renderScale = Cvar_Get( "r_renderScale", "0", CVAR_ARCHIVE|CVAR_LATCH );
+	r_renderScale = Cvar_Get( "r_renderScale", "1", CVAR_ARCHIVE|CVAR_LATCH );
 #endif
 
 	// Create the window and set up the context
