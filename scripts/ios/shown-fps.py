@@ -68,7 +68,7 @@ def main():
     span = (shown[-1] - shown[0]) / 1e9
     gaps = sorted((shown[i + 1] - shown[i]) / 1e6 for i in range(len(shown) - 1))
     hist = collections.Counter(round(g / 8.333) for g in gaps)
-    print(f'{name}: {a.app} shown {len(shown)} frames in {span:.2f} s = {len(shown) / span:.1f} fps')
+    print(f'{name}: {a.app} shown {len(shown)} frames in {span:.2f} s = {len(gaps) / span:.1f} fps')  # gaps/span: no endpoint bias
     print(f'frame gap p50 {statistics.median(gaps):.2f} ms  p95 {gaps[int(len(gaps) * 0.95)]:.2f} ms  max {gaps[-1]:.2f} ms')
     print('gaps by 120 Hz refresh count: ' + '  '.join(f'{k}x={v}' for k, v in sorted(hist.items())))
 
