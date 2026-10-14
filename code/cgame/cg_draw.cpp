@@ -3479,15 +3479,13 @@ static float CG_DrawFPS( float y ) {
 	const float glyphHeight = cgi_R_Font_HeightPixels( font, 1.0f );
 	const float scale = AspectLayout_SharpTextScale( layout, glyphHeight, 22.0f );
 	const float height = glyphHeight * scale;
-	const aspectPoint_t safe = AspectLayout_SizeToVirtual( layout, layout->safeR, layout->safeT );
 	float conX, conY, conW, conH;
 	IOS_TouchConsoleRectPixels( layout->W, layout->H,
 		layout->safeL, layout->safeT, layout->safeR, layout->safeB, &conX, &conY, &conW, &conH );
 	const float right = AspectLayout_ToVirtual( layout,
 		fminf( layout->W - layout->safeR, conX - 6.0f ), 0 ).x;
 	const int width = cgi_R_Font_StrLenPixels( s, font, scale );
-	const float top = layout->fullRect.y + safe.y + 2 + y;
-	cgi_R_Font_DrawString( right - width, top, s, colorTable[CT_LTGOLD1], font, -1, scale );
+	cgi_R_Font_DrawString( right - width, y + 2, s, colorTable[CT_LTGOLD1], font, -1, scale );
 	return y + height + 2;
 #else
 	const int w = cgi_R_Font_StrLenPixels(s, cgs.media.qhFontMedium, 1.0f);
@@ -4073,6 +4071,10 @@ static void CG_Draw2D( void )
 	CG_SaberClashFlare();
 
 	float y = 0;
+#ifdef OPENJK_IOS
+	// The upper-right stack starts at the safe-area top on iOS.
+	y = CG_AspectLayout()->fullRect.y + AspectLayout_SizeToVirtual( CG_AspectLayout(), 0, CG_AspectLayout()->safeT ).y;
+#endif
 	if (cg_drawSnapshot.integer) {
 		y=CG_DrawSnapshot(y);
 	}
