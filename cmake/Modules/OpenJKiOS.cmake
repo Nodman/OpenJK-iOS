@@ -24,10 +24,20 @@ function(openjk_ios_configure_app target flavor)
 		XCODE_ATTRIBUTE_LLVM_LTO NO
 		XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)	# the .mm files are written ARC-style
 	set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks")
+	execute_process(COMMAND git rev-list --count HEAD
+		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}" OUTPUT_VARIABLE build_number
+		OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+	if(NOT build_number)
+		set(build_number 1)
+	endif()
 	set_target_properties(${target} PROPERTIES
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/ios/Info.plist.in"
 		MACOSX_BUNDLE_SHORT_VERSION_STRING "${OPENJK_IOS_VERSION}"
-		MACOSX_BUNDLE_BUNDLE_VERSION "1")
+		MACOSX_BUNDLE_BUNDLE_VERSION "${build_number}")
+	set(icons "${CMAKE_SOURCE_DIR}/cmake/ios/AppIcon-${flavor}.xcassets")
+	target_sources(${target} PRIVATE "${icons}")
+	set_source_files_properties("${icons}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+	set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME AppIcon)
 	target_sources(${target} PRIVATE "${CMAKE_SOURCE_DIR}/shared/ios/ios_default.cfg")
 	set_source_files_properties("${CMAKE_SOURCE_DIR}/shared/ios/ios_default.cfg"
 		PROPERTIES MACOSX_PACKAGE_LOCATION "base")
