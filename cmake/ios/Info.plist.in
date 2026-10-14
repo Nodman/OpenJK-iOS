@@ -31,6 +31,7 @@
 	<array><dict><key>ProfileName</key><string>ExtendedGamepad</string></dict></array>
 	<key>GCSupportsControllerUserInteraction</key><true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key><true/>
+	<key>MetalHudEnabled</key><true/>
 	<key>NSLocalNetworkUsageDescription</key><string>Connects to multiplayer servers on your local network.</string>
 </dict>
 </plist>
