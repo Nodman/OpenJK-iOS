@@ -2297,6 +2297,7 @@ void CG_LoadHudMenu()
 	cgDC.runCinematicFrame				= &CG_RunCinematicFrame;
 	cgDC.ext.Font_StrLenPixels			= trap->ext.R_Font_StrLenPixels;
 
+	UI_RefreshLayout( &cgDC );
 
 	Init_Display(&cgDC);
 

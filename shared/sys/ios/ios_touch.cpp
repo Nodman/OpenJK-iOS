@@ -25,6 +25,8 @@ static SDL_Window *touchWindow;
 static touchFinger_t fingers[MAX_TOUCH_FINGERS];
 static touchRect_t rects[TB_COUNT];
 static int viewW, viewH;
+static float safeL, safeT, safeR, safeB;
+static aspectLayout_t touchLayout;
 static float safeH;
 static qboolean lastUIMode, lastHidden, lastCinematic;
 static int softKeyboardTarget;
@@ -44,13 +46,19 @@ static qboolean IN_TouchOnConsole( float x, float y ) {
 static void IN_TouchUpdateLayout( void ) {
 	int w, h;
 	SDL_GL_GetDrawableSize( touchWindow, &w, &h );
-	if ( w == viewW && h == viewH )
-		return;
 	float l, t, r, b;
 	Sys_IOS_GetSafeAreaPixels( touchWindow, &l, &t, &r, &b );
+	touchLayout = AspectLayout_Build( w, h, (int)Cvar_VariableValue( "r_aspectCorrect" ) != 0,
+		Cvar_VariableValue( "r_aspectCorrectMinRatio" ), (int)l, (int)t, (int)r, (int)b );
+	if ( w == viewW && h == viewH && l == safeL && t == safeT && r == safeR && b == safeB )
+		return;
 	TouchLayout_Build( (float)w, (float)h, l, t, r, b, rects );
 	viewW = w;
 	viewH = h;
+	safeL = l;
+	safeT = t;
+	safeR = r;
+	safeB = b;
 	safeH = h - t - b;
 }
 
@@ -214,7 +222,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		if ( IN_TouchHasRole( ROLE_UITAP ) )
 			return;
 		int vx, vy;
-		TouchLayout_ToVirtual( tf->x, tf->y, &vx, &vy );
+		TouchLayout_ToVirtual( &touchLayout, tf->x, tf->y, &vx, &vy );
 		Sys_QueEvent( 0, SE_MOUSE_ABS, vx, vy, 0, NULL );
 		Sys_QueEvent( 0, SE_KEY, A_MOUSE1, qtrue, 0, NULL );
 		f->role = ROLE_UITAP;
@@ -256,7 +264,7 @@ static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
 			f->cancelled = qtrue;
 	} else if ( f->role == ROLE_UITAP ) {
 		int vx, vy;
-		TouchLayout_ToVirtual( tf->x, tf->y, &vx, &vy );
+		TouchLayout_ToVirtual( &touchLayout, tf->x, tf->y, &vx, &vy );
 		Sys_QueEvent( 0, SE_MOUSE_ABS, vx, vy, 0, NULL );
 	} else if ( f->role == ROLE_LOOK ) {
 		float dx = tf->dx * viewW * in_touchLookScale->value + f->remX;
@@ -335,10 +343,11 @@ static void IN_TouchAddItem( touchDrawItem_t *items, int *n, int maxItems, float
 	if ( *n >= maxItems )
 		return;
 	touchDrawItem_t *it = &items[( *n )++];
-	it->x = x * SCREEN_WIDTH / viewW;
-	it->y = y * SCREEN_HEIGHT / viewH;
-	it->w = w * SCREEN_WIDTH / viewW;
-	it->h = h * SCREEN_HEIGHT / viewH;
+	const touchRect_t overlay = TouchLayout_RectToVirtual( &touchLayout, { x, y, w, h } );
+	it->x = overlay.x;
+	it->y = overlay.y;
+	it->w = overlay.w;
+	it->h = overlay.h;
 	it->label = label;
 	it->pressed = pressed;
 }

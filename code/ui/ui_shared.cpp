@@ -198,6 +198,37 @@ void Init_Display(displayContextDef_t *dc)
 	DC = dc;
 }
 
+void UI_RefreshLayout(displayContextDef_t *dc)
+{
+	const float enabled = trap_Cvar_VariableValue( "r_aspectCorrect" );
+	const float minRatio = trap_Cvar_VariableValue( "r_aspectCorrectMinRatio" );
+	trap_GetGlconfig( &dc->glconfig );
+	if ( dc->aspectLayout.W == dc->glconfig.vidWidth &&
+		dc->aspectLayout.H == dc->glconfig.vidHeight &&
+		dc->aspectCorrectValue == enabled && dc->aspectLayout.minRatio == minRatio ) {
+		return;
+	}
+	dc->aspectCorrectValue = enabled;
+	dc->aspectLayout = AspectLayout_Build( dc->glconfig.vidWidth, dc->glconfig.vidHeight,
+#ifdef JK2_MODE
+		0, minRatio, 0, 0, 0, 0 );
+#else
+		(int)enabled, minRatio, 0, 0, 0, 0 );
+#endif
+	if ( dc->aspectLayout.branch == ASPECT_CORRECTED ) {
+		dc->xscale = dc->yscale = dc->aspectLayout.s;
+		dc->bias = dc->aspectLayout.ox;
+	} else {
+		dc->yscale = dc->glconfig.vidHeight * (1.0/480.0);
+		dc->xscale = dc->glconfig.vidWidth * (1.0/640.0);
+		if ( dc->glconfig.vidWidth * 480 > dc->glconfig.vidHeight * 640 ) {
+			dc->bias = 0.5 * ( dc->glconfig.vidWidth - ( dc->glconfig.vidHeight * (640.0/480.0) ) );
+		} else {
+			dc->bias = 0;
+		}
+	}
+}
+
 /*
 ==================
 Window_Init
@@ -5991,6 +6022,16 @@ void Menu_PaintAll(void)
 		Menu_Paint(&Menus[i], qfalse);
 	}
 
+	if ( DC->aspectLayout.branch == ASPECT_CORRECTED && Menus_AnyFullScreenVisible()
+		&& DC->getCVarValue( "r_aspectStretchBackdrops" ) == 0 ) {
+		const vec4_t black = { 0, 0, 0, 1 };
+		aspectRect_t gutters[4];
+		const int count = AspectLayout_GutterRects( &DC->aspectLayout, gutters );
+		for ( i = 0; i < count; ++i ) {
+			DC->fillRect( gutters[i].x, gutters[i].y, gutters[i].w, gutters[i].h, black );
+		}
+	}
+
 	if (uis.debugMode)
 	{
 		vec4_t v = {1, 1, 1, 1};
@@ -6065,7 +6106,19 @@ void Menu_Paint(menuDef_t *menu, qboolean forcePaint)
 			menu->window.background = uis.whiteShader;
 		}
 
-		DC->drawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menu->window.background );
+		if ( DC->aspectLayout.branch == ASPECT_CORRECTED ) {
+			const aspectRect_t *full = &DC->aspectLayout.fullRect;
+			if ( DC->getCVarValue( "r_aspectStretchBackdrops" ) != 0 ) {
+				DC->drawHandlePic( full->x, full->y, full->w, full->h, menu->window.background );
+			} else {
+				const vec4_t black = { 0, 0, 0, 1 };
+				DC->fillRect( full->x, full->y, full->w, full->h, black );
+				ui.R_SetColor( color );
+				DC->drawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menu->window.background );
+			}
+		} else {
+			DC->drawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menu->window.background );
+		}
 	}
 	else if (menu->window.background)
 	{
@@ -7295,10 +7348,19 @@ void Item_Model_Paint(itemDef_t *item)
 	w = item->window.rect.w-2;
 	h = item->window.rect.h-2;
 
-	refdef.x = x * DC->xscale;
-	refdef.y = y * DC->yscale;
-	refdef.width = w * DC->xscale;
-	refdef.height = h * DC->yscale;
+	if ( DC->aspectLayout.branch == ASPECT_CORRECTED ) {
+		const aspectPoint_t origin = AspectLayout_ToPixels( &DC->aspectLayout, x, y );
+		const aspectPoint_t size = AspectLayout_SizeToPixels( &DC->aspectLayout, w, h );
+		refdef.x = origin.x;
+		refdef.y = origin.y;
+		refdef.width = size.x;
+		refdef.height = size.y;
+	} else {
+		refdef.x = x * DC->xscale;
+		refdef.y = y * DC->yscale;
+		refdef.width = w * DC->xscale;
+		refdef.height = h * DC->yscale;
+	}
 
 	if (item->flags&ITF_G2VALID)
 	{ //ghoul2 models don't have bounds, so we have to parse them.

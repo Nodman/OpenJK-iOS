@@ -27,6 +27,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 #include "../rd-common/tr_public.h"
+#include "qcommon/aspect_layout.h"
 #include "keys.h"
 #include "snd_public.h"
 #include "../cgame/cg_public.h"
@@ -380,6 +381,16 @@ void Con_Close( void );
 void	SCR_Init (void);
 void	SCR_UpdateScreen (void);
 
+const aspectLayout_t &SCR_GetAspectLayout( qboolean refresh = qfalse );
+aspectPoint_t SCR_PixelsToVirtual( double x, double y );
+aspectPoint_t SCR_PixelSizeToVirtual( double w, double h );
+aspectPoint_t SCR_GetSafeTextOrigin( void );
+aspectPoint_t SCR_ConsoleToVirtual( double x, double y );
+int SCR_GetSafeWidth( void );
+int SCR_GetSafeHeight( void );
+void Console_DrawField( field_t *edit, int x, int y, qboolean showCursor, qboolean noColorEscape, qboolean big = qfalse );
+void SCR_DrawConsoleString( int x, int y, const char *s, qboolean noColorEscape, qboolean big );
+
 void	SCR_DebugGraph (float value, int color);
 
 int		SCR_GetBigStringWidth( const char *str );	// returns in virtual 640x480 coordinates
@@ -393,7 +404,7 @@ void	SCR_DrawBigString( int x, int y, const char *s, float alpha, qboolean noCol
 void	SCR_DrawBigStringColor( int x, int y, const char *s, vec4_t color, qboolean noColorEscape );	// ignores embedded color control characters
 void	SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, qboolean forceColor, qboolean noColorEscape );
 void	SCR_DrawBigChar( int x, int y, int ch );
-void	SCR_DrawSmallChar( int x, int y, int ch );
+void	SCR_DrawSmallChar( int x, int y, int ch, qboolean consoleText = qfalse );
 
 #ifdef JK2_MODE
 void	SCR_PrecacheScreenshot();

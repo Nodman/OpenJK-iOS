@@ -2752,6 +2752,19 @@ static void CG_DrawCrosshair( vec3_t worldPoint )
 		y = cg_crosshairY.integer;
 	}
 
+	const aspectLayout_t *layout = CG_AspectLayout();
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		if ( !worldPoint || !VectorLength( worldPoint ) ) {
+			const aspectPoint_t center = AspectLayout_ToVirtual( layout,
+				cg.refdef.x + cg.refdef.width / 2.0, cg.refdef.y + cg.refdef.height / 2.0 );
+			x += center.x - 320;
+			y += center.y - 240;
+		}
+		// Corrected positions already include the pixel viewport origin.
+		x -= cg.refdef.x;
+		y -= cg.refdef.y;
+	}
+
 	if ( cg.snap->ps.viewEntity > 0 && cg.snap->ps.viewEntity < ENTITYNUM_WORLD )
 	{
 		if ( !Q_stricmp( "misc_panel_turret", g_entities[cg.snap->ps.viewEntity].classname ))
@@ -2816,8 +2829,19 @@ qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y)
     if (z <= 0.001)
         return qfalse;
 
+	const aspectLayout_t *layout = CG_AspectLayout();
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		const double halfWidth = cg.refdef.width / 2.0;
+		const double halfHeight = cg.refdef.height / 2.0;
+		const double pixelX = cg.refdef.x + halfWidth - DotProduct(trans, cg.refdef.viewaxis[1])*halfWidth/(z*px);
+		const double pixelY = cg.refdef.y + halfHeight - DotProduct(trans, cg.refdef.viewaxis[2])*halfHeight/(z*py);
+		const aspectPoint_t point = AspectLayout_ToVirtual( layout, pixelX, pixelY );
+		*x = point.x;
+		*y = point.y;
+	} else {
     *x = xc - DotProduct(trans, cg.refdef.viewaxis[1])*xc/(z*px);
     *y = yc - DotProduct(trans, cg.refdef.viewaxis[2])*yc/(z*py);
+	}
 
     return qtrue;
 }
@@ -3563,6 +3587,7 @@ static void CG_UseIcon()
 
 static void CG_Draw2DScreenTints( void )
 {
+	const aspectRect_t *full = &CG_AspectLayout()->fullRect;
 	float	rageTime, rageRecTime, absorbTime, protectTime;
 	vec4_t	hcolor;
 	//force effects
@@ -3593,7 +3618,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if (!cg.renderingThirdPerson)
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 
 		cgRageFadeTime = 0;
@@ -3648,7 +3673,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if (!cg.renderingThirdPerson && rageTime)
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 		else
 		{
@@ -3658,7 +3683,7 @@ static void CG_Draw2DScreenTints( void )
 				hcolor[0] = 0.2f;
 				hcolor[1] = 0.2f;
 				hcolor[2] = 0.2f;
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 			}
 			cgRageTime = 0;
 		}
@@ -3690,7 +3715,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if ( !cg.renderingThirdPerson )
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 
 		cgRageRecFadeTime = 0;
@@ -3724,7 +3749,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if (!cg.renderingThirdPerson && rageRecTime)
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 		else
 		{
@@ -3759,7 +3784,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if ( !cg.renderingThirdPerson )
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 
 		cgAbsorbFadeTime = 0;
@@ -3793,7 +3818,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if ( !cg.renderingThirdPerson && absorbTime )
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 		else
 		{
@@ -3828,7 +3853,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if ( !cg.renderingThirdPerson )
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 
 		cgProtectFadeTime = 0;
@@ -3862,7 +3887,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if ( !cg.renderingThirdPerson && protectTime )
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 		else
 		{
@@ -3878,7 +3903,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0;
 		hcolor[2] = 0;
 
-		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+		CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 	}
 	else if ( (cg.refdef.viewContents&CONTENTS_SLIME) )
 	{//tint screen green
@@ -3888,7 +3913,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0.7f;
 		hcolor[2] = 0;
 
-		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+		CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 	}
 	else if ( (cg.refdef.viewContents&CONTENTS_WATER) )
 	{//tint screen light blue -- FIXME: check to see if in fog?
@@ -3898,7 +3923,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0.2f;
 		hcolor[2] = 0.8f;
 
-		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+		CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 	}
 }
 /*

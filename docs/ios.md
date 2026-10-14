@@ -115,6 +115,21 @@
 - `cg_drawFPS 1` shows the engine frame rate in a map. For frames the display actually showed, plug the device in by USB and run `scripts/ios/shown-fps.py --device <name, OS version or id>`. It records a 3 second Metal System Trace and counts the app's displayed frames. Apple's Metal Performance HUD does not draw over the GL layer.
 - Frame-stats CPU counters measure wall time. They can include driver waits. They are not pure CPU work counters.
 
+### Aspect-correct 2D, FOV and safe area
+
+- On screens wider than 1.5:1, the 640×480 menus, HUD and console keep their 4:3 shape. They use one scale in both directions and sit in the center with side gutters. The 3D view still fills the screen. iPads with a ratio below 1.5 keep the old stretched 2D.
+- The following cvars are archived. Saved values and autoexec settings win over defaults.
+- `r_aspectCorrect 1`: iOS default. Enables aspect-correct 2D. The desktop default is `0`.
+- `r_aspectCorrectMinRatio 1.5`: default minimum screen ratio for aspect-correct 2D.
+- `r_aspectStretchBackdrops 0`: iOS default. Loading art and menu-owned backgrounds fit 4:3 with black gutters. `1` stretches that art over the full screen. Retail main menus build their art from items, so they always stay 4:3.
+- `cg_fovAspectAdjust 1`: iOS default. Keeps the 4:3 vertical field of view on wide screens. `0` restores the old crop. `cg_fov` stays at its default of `80`.
+- Use `seta r_aspectCorrect 0` to restore the old 2D path for mods or menus that already compensate for stretch. FOV has its own switch, `cg_fovAspectAdjust`.
+- Console text, chat and the touch overlay keep clear of the camera cutout and home indicator in both landscape orientations. `r_aspectSafeLeft`, `r_aspectSafeTop`, `r_aspectSafeRight` and `r_aspectSafeBottom` are read-only values in drawable pixels for reference.
+- iPads below the 1.5 band get no new safe margins for 2D. The Face ID iPad's roughly 20 pt bottom inset is unchanged behavior, not a bug.
+- The HUD stays centered. Side gutters stay free for touch controls. An “edges” option is planned for a later version.
+- Taps and the touch overlay follow the same mapping. Nothing needs configuring.
+- JK2 mode is not built for iOS. A JK2 build on a wide desktop with `r_aspectCorrect 1` is unsupported. Third-party menus or HUDs that already compensate for stretch may look wrong; use `seta r_aspectCorrect 0`.
+
 ### Lifecycle
 
 - Backgrounding pauses frames and sound, releases held input, and saves the config. Returning resumes the app. MP disconnects from a remote server if time away exceeds `cl_timeout`.

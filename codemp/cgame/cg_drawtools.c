@@ -25,6 +25,47 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "cg_local.h"
 #include "qcommon/q_shared.h"
 
+const aspectLayout_t *CG_AspectLayout( void ) {
+	static aspectLayout_t layout;
+	static qboolean initialized = qfalse;
+	static int frame, enabled, safeL, safeT, safeR, safeB;
+	static float minRatio;
+	char value[64];
+
+	if ( !initialized || frame != cg.clientFrame ) {
+		trap->Cvar_VariableStringBuffer( "r_aspectCorrect", value, sizeof( value ) );
+		enabled = atoi( value );
+		trap->Cvar_VariableStringBuffer( "r_aspectCorrectMinRatio", value, sizeof( value ) );
+		minRatio = atof( value );
+		trap->Cvar_VariableStringBuffer( "r_aspectSafeLeft", value, sizeof( value ) );
+		safeL = atoi( value );
+		trap->Cvar_VariableStringBuffer( "r_aspectSafeTop", value, sizeof( value ) );
+		safeT = atoi( value );
+		trap->Cvar_VariableStringBuffer( "r_aspectSafeRight", value, sizeof( value ) );
+		safeR = atoi( value );
+		trap->Cvar_VariableStringBuffer( "r_aspectSafeBottom", value, sizeof( value ) );
+		safeB = atoi( value );
+		frame = cg.clientFrame;
+	}
+	if ( !initialized || layout.W != cgs.glconfig.vidWidth || layout.H != cgs.glconfig.vidHeight ||
+		layout.enabled != enabled || layout.minRatio != minRatio ||
+		layout.safeL != safeL || layout.safeT != safeT || layout.safeR != safeR || layout.safeB != safeB ) {
+		layout = AspectLayout_Build( cgs.glconfig.vidWidth, cgs.glconfig.vidHeight,
+			enabled, minRatio, safeL, safeT, safeR, safeB );
+		initialized = qtrue;
+	}
+	return &layout;
+}
+
+int CG_Text_CharBytes( const char *text ) {
+	int advance = 1;
+	if ( Q_IsColorString( text ) ) {
+		return 2;
+	}
+	trap->R_AnyLanguage_ReadCharFromString( text, &advance, NULL );
+	return advance > 0 && advance <= (int)strlen( text ) ? advance : 1;
+}
+
 
 /*
 ================
@@ -95,13 +136,17 @@ Coords are virtual 640x480
 ================
 */
 void CG_DrawSides(float x, float y, float w, float h, float size) {
-	size *= cgs.screenXScale;
+	if ( CG_AspectLayout()->branch == ASPECT_LEGACY ) {
+		size *= cgs.screenXScale;
+	}
 	trap->R_DrawStretchPic( x, y, size, h, 0, 0, 0, 0, cgs.media.whiteShader );
 	trap->R_DrawStretchPic( x + w - size, y, size, h, 0, 0, 0, 0, cgs.media.whiteShader );
 }
 
 void CG_DrawTopBottom(float x, float y, float w, float h, float size) {
-	size *= cgs.screenYScale;
+	if ( CG_AspectLayout()->branch == ASPECT_LEGACY ) {
+		size *= cgs.screenYScale;
+	}
 	trap->R_DrawStretchPic( x, y, w, size, 0, 0, 0, 0, cgs.media.whiteShader );
 	trap->R_DrawStretchPic( x, y + h - size, w, size, 0, 0, 0, 0, cgs.media.whiteShader );
 }
@@ -343,7 +388,14 @@ static void CG_TileClearBox( int x, int y, int w, int h, qhandle_t hShader ) {
 	t1 = y/64.0;
 	s2 = (x+w)/64.0;
 	t2 = (y+h)/64.0;
-	trap->R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, hShader );
+	const aspectLayout_t *layout = CG_AspectLayout();
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		const aspectPoint_t origin = AspectLayout_ToVirtual( layout, x, y );
+		const aspectPoint_t size = AspectLayout_SizeToVirtual( layout, w, h );
+		trap->R_DrawStretchPic( origin.x, origin.y, size.x, size.y, s1, t1, s2, t2, hShader );
+	} else {
+		trap->R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, hShader );
+	}
 }
 
 

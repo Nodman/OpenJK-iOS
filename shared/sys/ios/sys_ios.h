@@ -18,6 +18,7 @@ void Sys_IOS_SetDrawableScale( struct SDL_Window *window, float scale );
 void Sys_IOS_GetViewPointSize( struct SDL_Window *window, float *width, float *height );
 float Sys_IOS_GetNativeScale( struct SDL_Window *window );	// pixels per point of the screen
 #define IOS_MIN_DRAWABLE_HEIGHT 540.0f	// Slide Over / small windows: render and lay out for at least this
+// View-relative insets in drawable pixels; zeros until the view is attached and laid out.
 void Sys_IOS_GetSafeAreaPixels( struct SDL_Window *window, float *left, float *top, float *right, float *bottom );
 qboolean Sys_IOS_HardwareKeyboardConnected( void );
 qboolean Sys_IOS_PointerConnected( void );

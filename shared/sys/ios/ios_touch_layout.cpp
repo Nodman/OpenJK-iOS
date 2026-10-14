@@ -65,11 +65,23 @@ void TouchLayout_Stick( float ox, float oy, float x, float y, float radius, floa
 	*outY = dy;
 }
 
-void TouchLayout_ToVirtual( float nx, float ny, int *vx, int *vy )
+void TouchLayout_ToVirtual( const aspectLayout_t *layout, float nx, float ny, int *vx, int *vy )
 {
-	// clamp before the cast: (int) of NaN or a huge float is undefined
-	float cx = nx < 0 ? 0 : ( nx > 1 ? 1 : nx );
-	float cy = ny < 0 ? 0 : ( ny > 1 ? 1 : ny );
-	*vx = (int)( cx * 640 + 0.5f );
-	*vy = (int)( cy * 480 + 0.5f );
+	if ( layout->branch == ASPECT_LEGACY ) {
+		float cx = nx < 0 ? 0 : ( nx > 1 ? 1 : nx );
+		float cy = ny < 0 ? 0 : ( ny > 1 ? 1 : ny );
+		*vx = (int)( cx * 640 + 0.5f );
+		*vy = (int)( cy * 480 + 0.5f );
+		return;
+	}
+	const aspectPoint_t cursor = AspectLayout_ToVirtualCursor( layout, (double)nx * layout->W, (double)ny * layout->H );
+	*vx = (int)( cursor.x + 0.5 );
+	*vy = (int)( cursor.y + 0.5 );
+}
+
+touchRect_t TouchLayout_RectToVirtual( const aspectLayout_t *layout, const touchRect_t &rect )
+{
+	const aspectPoint_t origin = AspectLayout_ToVirtual( layout, rect.x, rect.y );
+	const aspectPoint_t size = AspectLayout_SizeToVirtual( layout, rect.w, rect.h );
+	return { (float)origin.x, (float)origin.y, (float)size.x, (float)size.y };
 }
