@@ -1842,33 +1842,43 @@ void R_Init( void ) {
 RE_Shutdown
 ===============
 */
+static void R_DeleteGPUPrograms( void )
+{
+	// Release the Glow Vertex Shader.
+	if ( tr.glowVShader )
+	{
+		qglDeleteProgramsARB( 1, &tr.glowVShader );
+	}
+
+	// Release Pixel Shader.
+	if ( tr.glowPShader )
+	{
+		if ( qglCombinerParameteriNV  )
+		{
+			// Release the Glow Regcom call list.
+			qglDeleteLists( tr.glowPShader, 1 );
+		}
+		else if ( qglGenProgramsARB )
+		{
+			// Release the Glow Fragment Shader.
+			qglDeleteProgramsARB( 1, &tr.glowPShader );
+		}
+	}
+}
+
 extern void R_ShutdownWorldEffects(void);
 void RE_Shutdown( qboolean destroyWindow, qboolean restarting ) {
 	for ( size_t i = 0; i < numCommands; i++ )
 		ri.Cmd_RemoveCommand( commands[i].cmd );
 
+#ifdef OPENJK_IOS
+	R_DeleteGPUPrograms();	// made on every init; the persistent context outlives tr
+#endif
 	if ( r_DynamicGlow && r_DynamicGlow->integer )
 	{
-		// Release the Glow Vertex Shader.
-		if ( tr.glowVShader )
-		{
-			qglDeleteProgramsARB( 1, &tr.glowVShader );
-		}
-
-		// Release Pixel Shader.
-		if ( tr.glowPShader )
-		{
-			if ( qglCombinerParameteriNV  )
-			{
-				// Release the Glow Regcom call list.
-				qglDeleteLists( tr.glowPShader, 1 );
-			}
-			else if ( qglGenProgramsARB )
-			{
-				// Release the Glow Fragment Shader.
-				qglDeleteProgramsARB( 1, &tr.glowPShader );
-			}
-		}
+#ifndef OPENJK_IOS
+		R_DeleteGPUPrograms();
+#endif
 
 		// Release the scene glow texture.
 		qglDeleteTextures( 1, &tr.screenGlow );
