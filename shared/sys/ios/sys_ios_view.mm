@@ -37,10 +37,22 @@ float Sys_IOS_GetNativeScale( SDL_Window *window ) {
 }
 
 void Sys_IOS_GetSafeAreaPixels( SDL_Window *window, float *left, float *top, float *right, float *bottom ) {
+	*left = *top = *right = *bottom = 0.0f;
 	UIView *view = Sys_IOS_GLView( window );
-	UIEdgeInsets in = view ? view.window.safeAreaInsets : UIEdgeInsetsZero;
-	CGFloat s = view ? view.contentScaleFactor : 1.0;
-	*left = in.left * s; *top = in.top * s; *right = in.right * s; *bottom = in.bottom * s;
+	if ( !view || !view.window || view.bounds.size.width <= 0.0 || view.bounds.size.height <= 0.0 )
+		return;
+	UIEdgeInsets in = view.safeAreaInsets;
+	CGFloat s = view.contentScaleFactor;
+	int width = (int)( view.bounds.size.width * s );
+	int height = (int)( view.bounds.size.height * s );
+	*left = fmax( round( in.left * s ), 0.0 );
+	*top = fmax( round( in.top * s ), 0.0 );
+	*right = fmax( round( in.right * s ), 0.0 );
+	*bottom = fmax( round( in.bottom * s ), 0.0 );
+	if ( *left + *right >= width )
+		*left = *right = 0.0f;
+	if ( *top + *bottom >= height )
+		*top = *bottom = 0.0f;
 }
 
 qboolean Sys_IOS_HardwareKeyboardConnected( void ) {
