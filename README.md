@@ -60,6 +60,12 @@ If you have the Mac App Store Version of Jedi Academy, follow these steps to get
 1. Run `OpenJK.app` or `OpenJK SP.app`
 1. Savegames, Config Files and Log Files are stored in `/Users/$USER/Library/Application Support/OpenJK/`
 
+### iOS / iPadOS
+
+- OpenJK SP and OpenJK MP run Jedi Academy on iOS / iPadOS 17.0 or later, on A12 and newer devices.
+- See the [iOS guide](docs/ios.md) for sideloading, game files, builds, controls, and settings.
+- OpenJK is not affiliated with Disney, Lucasfilm or Raven Software. You need your own copy of the game.
+
 ## For Developers
 
 ### Building OpenJK
