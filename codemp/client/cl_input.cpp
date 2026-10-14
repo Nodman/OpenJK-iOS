@@ -978,6 +978,11 @@ void CL_JoystickEvent( int axis, int value, int time ) {
 	cl.joystickAxis[axis] = value;
 }
 
+#ifdef OPENJK_IOS
+static cvar_t *j_twinStick;
+static cvar_t *j_lookSpeed;
+#endif
+
 /*
 =================
 CL_JoystickMove
@@ -1001,6 +1006,17 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 	} else {
 		anglespeed = 0.001 * cls.frametime;
 	}
+
+#ifdef OPENJK_IOS
+	if ( j_twinStick->integer ) {
+		float frameScale = 0.001f * cls.frametime * j_lookSpeed->value;
+		cmd->rightmove = ClampChar( cmd->rightmove + cl.joystickAxis[AXIS_SIDE] );
+		cmd->forwardmove = ClampChar( cmd->forwardmove + cl.joystickAxis[AXIS_FORWARD] );
+		cl.viewangles[YAW] -= frameScale * cl_yawspeed->value * ( cl.joystickAxis[AXIS_YAW] / 127.0f );
+		cl.viewangles[PITCH] += frameScale * cl_pitchspeed->value * ( cl.joystickAxis[AXIS_PITCH] / 127.0f );
+		return;
+	}
+#endif
 
 	if ( !in_strafe.active ) {
 		if ( cl_mYawOverride )
@@ -1783,6 +1799,10 @@ void CL_InitInput( void ) {
 
 	cl_nodelta = Cvar_Get ("cl_nodelta", "0", 0);
 	cl_debugMove = Cvar_Get ("cl_debugMove", "0", 0);
+#ifdef OPENJK_IOS
+	j_twinStick = Cvar_Get( "j_twinStick", "0", CVAR_ARCHIVE_ND, "Left stick moves, right stick looks" );
+	j_lookSpeed = Cvar_Get( "j_lookSpeed", "1.5", CVAR_ARCHIVE_ND, "Gamepad look speed scale" );
+#endif
 }
 
 /*

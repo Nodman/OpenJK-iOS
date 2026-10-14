@@ -24,10 +24,15 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/q_shared.h"
 #include "client/client.h"
 #include "sys/sys_local.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 
 static cvar_t *in_keyboardDebug     = NULL;
 
+#ifndef OPENJK_IOS
 static SDL_Joystick *stick = NULL;
+#endif
 
 static qboolean mouseAvailable = qfalse;
 static qboolean mouseActive = qfalse;
@@ -36,9 +41,11 @@ static cvar_t *in_mouse             = NULL;
 static cvar_t *in_nograb;
 
 cvar_t *in_joystick          		= NULL;
+#ifndef OPENJK_IOS
 static cvar_t *in_joystickThreshold = NULL;
 static cvar_t *in_joystickNo        = NULL;
 static cvar_t *in_joystickUseAnalog = NULL;
+#endif
 
 static SDL_Window *SDL_window = NULL;
 
@@ -500,6 +507,7 @@ static void IN_DeactivateMouse( void )
 	}
 }
 
+#ifndef OPENJK_IOS	// iOS uses ios_gamepad.cpp
 // We translate axes movement into keypresses
 static int joy_keys[16] = {
 	A_CURSOR_LEFT, A_CURSOR_RIGHT,
@@ -606,6 +614,7 @@ static void IN_InitJoystick( void )
 
 	SDL_JoystickEventState(SDL_QUERY);
 }
+#endif
 
 void IN_Init( void *windowData )
 {
@@ -645,7 +654,11 @@ void IN_Init( void *windowData )
 	Cvar_SetValue( "com_unfocused", ( appState & SDL_WINDOW_INPUT_FOCUS ) == 0 );
 	Cvar_SetValue( "com_minimized", ( appState & SDL_WINDOW_MINIMIZED ) != 0 );
 
+#ifdef OPENJK_IOS
+	IN_GamepadInit( );
+#else
 	IN_InitJoystick( );
+#endif
 	Com_DPrintf( "------------------------------------\n" );
 }
 
@@ -913,6 +926,15 @@ static void IN_ProcessEvents( void )
 				}
 				break;
 
+#ifdef OPENJK_IOS
+			case SDL_CONTROLLERDEVICEADDED:
+			case SDL_CONTROLLERDEVICEREMOVED:
+			case SDL_CONTROLLERBUTTONDOWN:
+			case SDL_CONTROLLERBUTTONUP:
+				IN_GamepadHandleEvent( &e );
+				break;
+#endif
+
 			case SDL_QUIT:
 				Cbuf_ExecuteText(EXEC_NOW, "quit Closed window\n");
 				break;
@@ -945,6 +967,7 @@ static void IN_ProcessEvents( void )
 	}
 }
 
+#ifndef OPENJK_IOS	// iOS uses ios_gamepad.cpp
 /*
 ===============
 IN_JoyMove
@@ -1148,12 +1171,17 @@ static void IN_JoyMove( void )
 	/* Save for future generations. */
 	stick_state.oldaxes = axes;
 }
+#endif
 
 
 void IN_Frame (void) {
 	qboolean loading;
 
+#ifdef OPENJK_IOS
+	IN_GamepadFrame( );
+#else
 	IN_JoyMove( );
+#endif
 
 	// If not DISCONNECTED (main menu) or ACTIVE (in game), we're loading
 	loading = (qboolean)( cls.state != CA_DISCONNECTED && cls.state != CA_ACTIVE );
@@ -1179,6 +1207,7 @@ void IN_Frame (void) {
 	IN_ProcessEvents( );
 }
 
+#ifndef OPENJK_IOS	// iOS uses ios_gamepad.cpp
 /*
 ===============
 IN_ShutdownJoystick
@@ -1197,6 +1226,7 @@ static void IN_ShutdownJoystick( void )
 
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 }
+#endif
 
 void IN_Shutdown( void ) {
 	SDL_StopTextInput( );
@@ -1204,7 +1234,11 @@ void IN_Shutdown( void ) {
 	IN_DeactivateMouse( );
 	mouseAvailable = qfalse;
 
+#ifdef OPENJK_IOS
+	IN_GamepadShutdown( );
+#else
 	IN_ShutdownJoystick( );
+#endif
 
 	SDL_window = NULL;
 }
@@ -1216,6 +1250,10 @@ IN_Restart
 */
 void IN_Restart( void )
 {
+#ifdef OPENJK_IOS
+	IN_GamepadShutdown( );
+#else
 	IN_ShutdownJoystick( );
+#endif
 	IN_Init( SDL_window );
 }
