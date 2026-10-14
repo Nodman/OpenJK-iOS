@@ -17,7 +17,7 @@
 - The default is 60 Hz. The GL renderer path does not provide 120 Hz on iPhone. On the measured iPhone 17 Pro Max with iOS 27.0.1, `com_maxfps 120` is accepted but shows 60 Hz.
 - ProMotion iPads can show 120 Hz. This was measured on the 2018 iPad Pro with iPadOS 26.5.
 - The 2018 A12X iPad Pro passed a 20-minute MP run at 60 Hz and auto scale. Its median window p95 frame interval was 16.72 ms.
-- Memory was tested on a 4 GB iPad with `r_picmip 1` and `r_texturebits 32`. The MP map `mp/ctf1` peaked at 277 MB. A real 3 GB device was not tested.
+- Memory was tested on a 4 GB iPad with `r_picmip 1` and `r_texturebits 32`. The MP map `mp/ctf1` peaked at 277 MB; the SP map `taspir2` peaked at 394 MB and loaded in 2.7 s. A real 3 GB device was not tested.
 
 ## Install
 
@@ -35,7 +35,7 @@
 - Return to the app and tap **Check again** in the **Game files needed** box.
 - Startup checks for `assets0.pk3` and `default.cfg` for SP or `mpdefault.cfg` for MP. The cfg can be inside a pk3. The retail files supply it; `assets0.pk3` alone is not enough.
 - Game pk3 files are excluded from backup. Keep your original copies.
-- Put your `autoexec.cfg` in the same app's `base` folder.
+- Put your autoexec in the same app's `base` folder: `autoexec.cfg` for MP, `autoexec_sp.cfg` for SP.
 
 ## Build yourself
 
@@ -99,7 +99,7 @@
 
 ## Settings
 
-- Enter commands in the console, or put `seta` lines in `base/autoexec.cfg` for that app.
+- Enter commands in the console, or put `seta` lines in that app's autoexec (`base/autoexec.cfg` for MP, `base/autoexec_sp.cfg` for SP).
 - `r_renderScale 0`: auto scale. A value from `0.5` to `1.0` sets a fixed scale. Lower values reduce detail and GPU load. Run `vid_restart` to apply a change.
 - Auto scale: below Apple GPU family 7 uses `0.6`; families 7 / 8 use `0.75`; family 9 or later uses `1.0`. With `com_maxfps` above 60, auto scale is multiplied by `0.8`. Scale is clamped to `0.5`–`1.0`, then raised for a drawable at least 540 px tall, up to full scale.
 - `com_maxfps 60`: default. `com_maxfps 120`: opt in on ProMotion iPads. On the measured iPhone GL path it still shows 60 Hz. If using auto scale, run `vid_restart` after changing the frame rate to update the scale.
@@ -109,7 +109,7 @@
 - `j_deadzone 0.15`: default stick dead zone. Raise it if a stick drifts.
 - `j_lookExponent 2.0`: default right-stick response curve.
 - `r_texturebits 32`: device default. `r_picmip 1` is set on devices with RAM at or below the device code's 3500 MiB threshold. `r_surfaceSprites 0` is set on A12 / A13 class GPUs.
-- `r_surfaceSprites` and `r_texturebits` use `CVAR_ARCHIVE_ND`. A value equal to the engine default is not saved. For example, `seta r_surfaceSprites 1` on A12 is lost at restart. Put such overrides in `autoexec.cfg`.
+- `r_surfaceSprites` and `r_texturebits` use `CVAR_ARCHIVE_ND`. A value equal to the engine default is not saved. For example, `seta r_surfaceSprites 1` on A12 is lost at restart. Put such overrides in the app's autoexec file.
 - `r_gl4esEnv` defaults to `LIBGL_USEVBO=3`. gl4es reads it once at renderer init. Changes after init are ignored, including across `vid_restart`. Fully relaunch with the setting supplied at startup, for example `+set r_gl4esEnv LIBGL_USEVBO=3`.
 - `ios_frameStats 1` logs frame intervals, frame and present times, and memory use. `ios_frameStats 0` stops the log. `ios_frameStatsReset` starts a new measurement window.
 - Frame-stats CPU counters measure wall time. They can include driver waits. They are not pure CPU work counters.
@@ -128,7 +128,7 @@
 - **Refraction:** keep `cg_renderToTextureFX 0` and `cg_saberTrail 1`. `cg_renderToTextureFX 1` and `cg_saberTrail 2` enable refraction. It copies the screen mid-frame and costs frames on mobile GPUs.
 - **Pure server rejects a join:** extra pk3 files in `base` can block `sv_pure` joins. Check that folder for added files.
 - **Hot device:** the message is “Device is very hot: capped at 30 fps. Lower r_renderScale to help.” The thermal cap changes the frame rate. It does not lower scale for you.
-- **Crash on a 3 GB device during load:** put `seta r_texturebits 16` in `base/autoexec.cfg`, then relaunch. Real 3 GB devices were not tested.
+- **Crash on a 3 GB device during load:** put `seta r_texturebits 16` in the app's autoexec (`base/autoexec.cfg` for MP, `base/autoexec_sp.cfg` for SP), then relaunch. Real 3 GB devices were not tested.
 - **LAN connection:** allow the Local Network prompt on first LAN use. LAN browsing is not supported; connect by server address.
 - **Custom client mods:** servers that need custom native client modules do not work. The apps load their embedded modules.
 - **No sound:** check the silent switch. Real listening and interruption checks on both test devices remain release checks.
