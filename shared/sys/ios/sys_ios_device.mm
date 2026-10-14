@@ -30,6 +30,7 @@ const char *Sys_IOS_DeviceDefaults( void ) {
 	Q_strcat( text, sizeof( text ), "seta r_texturebits 32\n" );
 	if ( [NSProcessInfo processInfo].physicalMemory <= 3500ull * 1024 * 1024 )
 		Q_strcat( text, sizeof( text ), "seta r_picmip 1\n" );
-	// Hook: P3 (T3.1) adds the GPU-family lines here.
+	if ( Sys_IOS_Class() == IOS_CLASS_A12 )
+		Q_strcat( text, sizeof( text ), "seta r_surfaceSprites 0\n" );
 	return text;
 }
