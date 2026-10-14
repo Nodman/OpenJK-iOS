@@ -97,6 +97,32 @@ ASPECT_INLINE aspectLayout_t AspectLayout_Build( int W, int H, int enabled, floa
 	return layout;
 }
 
+ASPECT_INLINE int AspectLayout_GutterRects( const aspectLayout_t *layout, aspectRect_t out[4] )
+{
+	const aspectRect_t *full = &layout->fullRect;
+	const double right = full->x + full->w;
+	const double bottom = full->y + full->h;
+	const double innerLeft = fmax( 0, full->x );
+	const double innerRight = fmin( 640, right );
+	const aspectRect_t gutters[4] = {
+		{ full->x, full->y, fmin( 0, right ) - full->x, full->h },
+		{ fmax( 640, full->x ), full->y, right - fmax( 640, full->x ), full->h },
+		{ innerLeft, full->y, innerRight - innerLeft, fmin( 0, bottom ) - full->y },
+		{ innerLeft, fmax( 480, full->y ), innerRight - innerLeft, bottom - fmax( 480, full->y ) }
+	};
+	int count = 0;
+	int i;
+	if ( layout->branch != ASPECT_CORRECTED ) {
+		return 0;
+	}
+	for ( i = 0; i < 4; ++i ) {
+		if ( gutters[i].w > 0 && gutters[i].h > 0 ) {
+			out[count++] = gutters[i];
+		}
+	}
+	return count;
+}
+
 ASPECT_INLINE aspectPoint_t AspectLayout_ToPixels( const aspectLayout_t *layout, double x, double y )
 {
 	aspectPoint_t point;

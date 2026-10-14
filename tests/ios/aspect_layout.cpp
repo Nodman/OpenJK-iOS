@@ -76,6 +76,41 @@ BOOST_AUTO_TEST_CASE( legacy_gate )
 	BOOST_CHECK_EQUAL( AspectLayout_Build( 640, 600, 1, 1.5f, 0, 0, 0, 0 ).branch, ASPECT_LEGACY );
 }
 
+BOOST_AUTO_TEST_CASE( gutter_rects )
+{
+	aspectRect_t gutters[4];
+	const aspectLayout_t wide = AspectLayout_Build( 1434, 660, 1, 1.5f, 0, 0, 0, 0 );
+	BOOST_REQUIRE_EQUAL( AspectLayout_GutterRects( &wide, gutters ), 2 );
+	BOOST_CHECK_SMALL( gutters[0].x + 277 / 1.375, 1e-9 );
+	BOOST_CHECK_SMALL( gutters[0].w - 277 / 1.375, 1e-9 );
+	BOOST_CHECK_SMALL( gutters[0].x + gutters[0].w, 1e-9 );
+	BOOST_CHECK_EQUAL( gutters[1].x, 640 );
+	BOOST_CHECK_SMALL( gutters[1].w - 277 / 1.375, 1e-9 );
+	BOOST_CHECK_SMALL( gutters[1].x + gutters[1].w - wide.fullRect.x - wide.fullRect.w, 1e-9 );
+	for ( int i = 0; i < 2; ++i ) {
+		BOOST_CHECK_EQUAL( gutters[i].y, wide.fullRect.y );
+		BOOST_CHECK_EQUAL( gutters[i].h, wide.fullRect.h );
+	}
+
+	const aspectLayout_t narrow = AspectLayout_Build( 640, 600, 1, 0, 0, 0, 0, 0 );
+	BOOST_REQUIRE_EQUAL( AspectLayout_GutterRects( &narrow, gutters ), 2 );
+	BOOST_CHECK_EQUAL( gutters[0].y, -60 );
+	BOOST_CHECK_EQUAL( gutters[0].h, 60 );
+	BOOST_CHECK_EQUAL( gutters[0].y + gutters[0].h, 0 );
+	BOOST_CHECK_EQUAL( gutters[1].y, 480 );
+	BOOST_CHECK_EQUAL( gutters[1].h, 60 );
+	BOOST_CHECK_EQUAL( gutters[1].y + gutters[1].h, narrow.fullRect.y + narrow.fullRect.h );
+	for ( int i = 0; i < 2; ++i ) {
+		BOOST_CHECK_EQUAL( gutters[i].x, narrow.fullRect.x );
+		BOOST_CHECK_EQUAL( gutters[i].w, narrow.fullRect.w );
+	}
+
+	const aspectLayout_t identity = AspectLayout_Build( 1024, 768, 1, 1.5f, 0, 0, 0, 0 );
+	BOOST_CHECK_EQUAL( AspectLayout_GutterRects( &identity, gutters ), 0 );
+	const aspectLayout_t legacy = AspectLayout_Build( 2388, 1668, 1, 1.5f, 0, 0, 0, 0 );
+	BOOST_CHECK_EQUAL( AspectLayout_GutterRects( &legacy, gutters ), 0 );
+}
+
 BOOST_AUTO_TEST_CASE( gutter_half_ties )
 {
 	const aspectLayout_t wide = AspectLayout_Build( 603, 402, 1, 1.5f, 0, 0, 0, 0 );

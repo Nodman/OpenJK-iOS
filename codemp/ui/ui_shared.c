@@ -9434,6 +9434,16 @@ void Menu_PaintAll() {
 		Menu_Paint(&Menus[i], qfalse);
 	}
 
+	if ( DC->aspectLayout.branch == ASPECT_CORRECTED && Menus_AnyFullScreenVisible()
+		&& DC->getCVarValue( "r_aspectStretchBackdrops" ) == 0 ) {
+		const vec4_t black = { 0, 0, 0, 1 };
+		aspectRect_t gutters[4];
+		const int count = AspectLayout_GutterRects( &DC->aspectLayout, gutters );
+		for ( i = 0; i < count; ++i ) {
+			DC->fillRect( gutters[i].x, gutters[i].y, gutters[i].w, gutters[i].h, black );
+		}
+	}
+
 	if (debugMode) {
 		vec4_t v = {1, 1, 1, 1};
 		DC->drawText(5, 25, .75, v, va("fps: %f", DC->FPS), 0, 0, 0, 0);
