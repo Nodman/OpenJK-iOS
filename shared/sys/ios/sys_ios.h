@@ -42,6 +42,7 @@ void IN_TouchShutdown( void );
 void IN_TouchHandleEvent( const union SDL_Event *e );
 void IN_TouchFrame( void );
 void IN_TouchReleaseAll( void );
+void IN_GamepadReleaseAll( void );
 typedef struct { float x, y, w, h; const char *label; int pressed; } touchDrawItem_t;	// 640x480 virtual
 int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems );
 

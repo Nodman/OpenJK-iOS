@@ -43,7 +43,7 @@ static void IN_GamepadSendAxes( void ) {
 	axesActive = active;
 }
 
-static void IN_GamepadReleaseAll( void ) {
+void IN_GamepadReleaseAll( void ) {
 	for ( int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++ ) {
 		if ( heldKey[i] ) {
 			Sys_QueEvent( 0, SE_KEY, heldKey[i], qfalse, 0, NULL );

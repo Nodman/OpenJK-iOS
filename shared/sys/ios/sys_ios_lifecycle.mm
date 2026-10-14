@@ -24,6 +24,7 @@ static void Sys_IOS_EnterBackground( void ) {
 		nativeFinish();
 	SNDDMA_Activate( qfalse );
 	IN_TouchReleaseAll();
+	IN_GamepadReleaseAll();	// UIKit cancels touches, not pad buttons
 	Key_ClearStates();
 	Com_WriteConfiguration();
 }
