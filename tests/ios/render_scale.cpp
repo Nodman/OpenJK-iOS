@@ -58,6 +58,11 @@ BOOST_AUTO_TEST_CASE( minimum_drawable_height )
 	BOOST_CHECK_EQUAL( small.floorRaised, 1 );
 	BOOST_CHECK_EQUAL( small.width, 1000 );
 	BOOST_CHECK_EQUAL( small.height, 500 );
+	// Fractional native height (zoomed display modes): floor uses the untruncated height.
+	const iosRenderScale_t fractional = IOS_RenderScale_Resolve( 0.5f, 1, 0, 2868.0f, 1000.5f );
+	BOOST_CHECK_SMALL( fractional.scale - 540.5f / 1000.5f, 1e-6f );
+	BOOST_CHECK_EQUAL( fractional.floorRaised, 1 );
+	BOOST_CHECK_EQUAL( fractional.width, 1549 );
 	const iosRenderScale_t boundary = IOS_RenderScale_Resolve( 0.5f, 1, 0, 2000, 1080 );
 	BOOST_CHECK_EQUAL( boundary.scale, 0.5f );
 	BOOST_CHECK_EQUAL( boundary.floorRaised, 0 );

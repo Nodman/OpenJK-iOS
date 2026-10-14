@@ -182,10 +182,11 @@ static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
 
 void UI_IOS_RefreshVideoMenus( qboolean force )
 {
-	static int lastW = -1, lastH = -1, lastHigh = -1, lastPreset = -1;
+	static int lastHigh = -1, lastPreset = -1;
+	static float lastW = -1, lastH = -1;
 	static float lastBase = -1, lastCustom = -1;
-	const int w = (int)DC->getCVarValue( "r_iosNativeWidth" );
-	const int h = (int)DC->getCVarValue( "r_iosNativeHeight" );
+	const float w = DC->getCVarValue( "r_iosNativeWidth" );
+	const float h = DC->getCVarValue( "r_iosNativeHeight" );
 	const int high = DC->getCVarValue( "ui_iosProMotion" ) != 0;
 	const int preset = (int)DC->getCVarValue( "ui_r_mode" );
 	const float base = DC->getCVarValue( "r_iosBaseAutoScale" );

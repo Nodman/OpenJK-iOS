@@ -27,13 +27,13 @@ IOS_RS_INLINE float IOS_RenderScale_Clamp( float scale )
 
 /* requested <= 0 is Auto; baseAuto excludes the high-refresh multiplier. */
 IOS_RS_INLINE iosRenderScale_t IOS_RenderScale_Resolve( float requested, float baseAuto,
-	int highRefresh, int nativeW, int nativeH )
+	int highRefresh, float nativeW, float nativeH )
 {
 	iosRenderScale_t result;
 	result.scale = IOS_RenderScale_Clamp( requested > 0 ? requested : baseAuto * ( highRefresh ? 0.8f : 1.0f ) );
 	result.floorRaised = 0;
 	result.width = result.height = 0;
-	if ( nativeW <= 0 || nativeH <= 0 ) {
+	if ( nativeW <= 0.0f || nativeH <= 0.0f ) {
 		return result;
 	}
 	if ( nativeH * result.scale < 540.0f ) {

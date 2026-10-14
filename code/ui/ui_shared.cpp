@@ -133,6 +133,7 @@ int openMenuCount = 0;
 #ifdef OPENJK_IOS
 static char iosVideoLabels[5][48];
 static char iosProMotionLabels[2][4] = { "Off", "On" };
+static char iosProMotionCaption[] = "120 Hz (ProMotion)";
 
 static qboolean UI_IOS_IsVideoMenu( const menuDef_t *menu )
 {
@@ -168,7 +169,7 @@ static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
 		if ( !Q_stricmp( item->window.name, "fullscreen" ) &&
 			( !Q_stricmp( item->cvar, "ui_r_fullscreen" ) || !Q_stricmp( item->cvar, "ui_iosProMotion" ) ) ) {
 			item->cvar = "ui_iosProMotion";
-			item->text = "120 Hz (ProMotion)";
+			item->text = iosProMotionCaption;
 			item->descText = "iPad: 120 Hz. iPhone: needs the Metal path (coming)";
 			item->cvarTest = "r_iosMaxRefresh";
 			item->enableCvar = "120";
@@ -202,10 +203,11 @@ static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
 
 void UI_IOS_RefreshVideoMenus( qboolean force )
 {
-	static int lastW = -1, lastH = -1, lastHigh = -1, lastPreset = -1;
+	static int lastHigh = -1, lastPreset = -1;
+	static float lastW = -1, lastH = -1;
 	static float lastBase = -1, lastCustom = -1;
-	const int w = (int)DC->getCVarValue( "r_iosNativeWidth" );
-	const int h = (int)DC->getCVarValue( "r_iosNativeHeight" );
+	const float w = DC->getCVarValue( "r_iosNativeWidth" );
+	const float h = DC->getCVarValue( "r_iosNativeHeight" );
 	const int high = DC->getCVarValue( "ui_iosProMotion" ) != 0;
 	const int preset = (int)DC->getCVarValue( "ui_r_mode" );
 	const float base = DC->getCVarValue( "r_iosBaseAutoScale" );

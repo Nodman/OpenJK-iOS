@@ -681,7 +681,7 @@ SDL_Window *GLimp_IOS_Window( void ) { return screen; }
 static float GLimp_IOS_RenderScale( void ) {
 	return IOS_RenderScale_Resolve( r_renderScale->value,
 		Cvar_VariableValue( "r_iosBaseAutoScale" ), IOS_RenderScale_HighRefresh( Cvar_VariableIntegerValue( "com_maxfps" ) ),
-		Cvar_VariableIntegerValue( "r_iosNativeWidth" ), Cvar_VariableIntegerValue( "r_iosNativeHeight" ) ).scale;
+		Cvar_VariableValue( "r_iosNativeWidth" ), Cvar_VariableValue( "r_iosNativeHeight" ) ).scale;
 }
 
 // Window and EAGL context live for the whole process: gl4es keeps GL object
@@ -723,8 +723,8 @@ static rserr_t GLimp_IOS_SetMode( glconfig_t *glConfig )
 		Cvar_Get( "r_iosMaxRefresh", "0", CVAR_ROM );
 		registered = qtrue;
 	}
-	Cvar_SetValue( "r_iosNativeWidth", (int)( w * nativeScale ) );
-	Cvar_SetValue( "r_iosNativeHeight", (int)( h * nativeScale ) );
+	Cvar_SetValue( "r_iosNativeWidth", w * nativeScale );
+	Cvar_SetValue( "r_iosNativeHeight", h * nativeScale );
 	Cvar_SetValue( "r_iosBaseAutoScale", Sys_IOS_DefaultRenderScale( qfalse ) );
 	Cvar_SetValue( "r_iosMaxRefresh", Sys_IOS_MaxFramesPerSecond() );
 	Sys_IOS_SetDrawableScale( screen, GLimp_IOS_RenderScale() );
