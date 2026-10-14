@@ -149,14 +149,21 @@ if(BuildSPRdVanilla OR BuildJK2SPRdVanilla)
 	source_group("rd-common" FILES ${SPRDVanillaRdCommonFiles})
 	set(SPRDVanillaFiles ${SPRDVanillaFiles} ${SPRDVanillaRdCommonFiles})
 
-	find_package(OpenGL REQUIRED)
-	set(SPRDVanillaRendererIncludeDirectories ${SPRDVanillaRendererIncludeDirectories} ${OPENGL_INCLUDE_DIR})
-	set(SPRDVanillaRendererLibraries ${SPRDVanillaRendererLibraries} ${OPENGL_LIBRARIES})
+	if(OPENJK_GLES)
+		list(APPEND SPRDVanillaRendererIncludeDirectories ${GL4ES_INCLUDE_DIR})
+	else()
+		find_package(OpenGL REQUIRED)
+		set(SPRDVanillaRendererIncludeDirectories ${SPRDVanillaRendererIncludeDirectories} ${OPENGL_INCLUDE_DIR})
+		set(SPRDVanillaRendererLibraries ${SPRDVanillaRendererLibraries} ${OPENGL_LIBRARIES})
+	endif()
 
 	set(SPRDVanillaRendererIncludeDirectories ${SPRDVanillaRendererIncludeDirectories} ${OpenJKLibDir})
 
 	function(add_sp_renderer_project ProjectName Label EngineName InstallDir Component)
 		add_library(${ProjectName} SHARED ${SPRDVanillaFiles})
+		if(OPENJK_IOS)
+			openjk_ios_configure_module(${ProjectName})
+		endif()
 		if(NOT MSVC)
 			# remove "lib" prefix for .so/.dylib files
 			set_target_properties(${ProjectName} PROPERTIES PREFIX "")
@@ -190,6 +197,14 @@ if(BuildSPRdVanilla OR BuildJK2SPRdVanilla)
 		set_target_properties(${ProjectName} PROPERTIES PROJECT_LABEL ${Label})
 
 		target_link_libraries(${ProjectName} ${SPRDVanillaRendererLibraries})
+		if(OPENJK_GLES AND NOT OPENJK_STATIC_MODULES)
+			# gl4es is linked into the renderer dylib only, with hidden visibility
+			target_link_libraries(${ProjectName} GL)
+		endif()
+		if(OPENJK_IOS)
+			# bundled libjpeg/libpng have default visibility; export only the entry point
+			target_link_options(${ProjectName} PRIVATE "-Wl,-exported_symbol,_GetRefAPI")
+		endif()
 	endfunction(add_sp_renderer_project)
 
 	if(BuildSPRdVanilla)

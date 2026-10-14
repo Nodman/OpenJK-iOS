@@ -374,6 +374,9 @@ if(WIN32)
 endif(WIN32)
 
 add_library(${SPGame} SHARED ${SPGameFiles})
+if(OPENJK_IOS)
+	openjk_ios_configure_module(${SPGame})
+endif()
 
 # Hide symbols not explicitly marked public.
 set_property(TARGET ${SPGame} APPEND PROPERTY COMPILE_OPTIONS ${OPENJK_VISIBILITY_FLAGS})
