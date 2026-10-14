@@ -684,7 +684,7 @@ static float GLimp_IOS_RenderScale( void ) {
 	Sys_IOS_GetViewPointSize( screen, &w, &h );
 	float pixelsH = h * Sys_IOS_GetNativeScale( screen );
 	if ( pixelsH > 0.0f && pixelsH * s < IOS_MIN_DRAWABLE_HEIGHT )	// Slide Over: keep a usable height
-		s = Com_Clamp( 0.5f, 1.0f, IOS_MIN_DRAWABLE_HEIGHT / pixelsH );
+		s = Com_Clamp( 0.5f, 1.0f, ( IOS_MIN_DRAWABLE_HEIGHT + 0.5f ) / pixelsH );
 	return s;
 }
 
