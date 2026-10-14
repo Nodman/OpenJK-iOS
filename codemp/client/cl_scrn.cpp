@@ -403,6 +403,10 @@ void SCR_Init( void ) {
 	cl_graphheight = Cvar_Get ("graphheight", "32", CVAR_CHEAT);
 	cl_graphscale = Cvar_Get ("graphscale", "1", CVAR_CHEAT);
 	cl_graphshift = Cvar_Get ("graphshift", "0", CVAR_CHEAT);
+	Cvar_Get( "r_aspectSafeLeft", "0", CVAR_ROM, "Left view safe-area inset in drawable pixels" );
+	Cvar_Get( "r_aspectSafeTop", "0", CVAR_ROM, "Top view safe-area inset in drawable pixels" );
+	Cvar_Get( "r_aspectSafeRight", "0", CVAR_ROM, "Right view safe-area inset in drawable pixels" );
+	Cvar_Get( "r_aspectSafeBottom", "0", CVAR_ROM, "Bottom view safe-area inset in drawable pixels" );
 
 	scr_initialized = qtrue;
 }
@@ -411,6 +415,31 @@ void SCR_Init( void ) {
 //=======================================================
 
 #ifdef OPENJK_IOS
+static void SCR_PublishSafeArea( void ) {
+	static const char *const names[4] = {
+		"r_aspectSafeLeft", "r_aspectSafeTop", "r_aspectSafeRight", "r_aspectSafeBottom"
+	};
+	static int last[4] = { 0, 0, 0, 0 };
+	float insets[4];
+	Sys_IOS_GetSafeAreaPixels( GLimp_IOS_Window(), &insets[0], &insets[1], &insets[2], &insets[3] );
+	int pixels[4];
+	qboolean changed = qfalse;
+	for ( int i = 0; i < 4; i++ ) {
+		pixels[i] = (int)insets[i];
+		if ( pixels[i] != last[i] )
+			changed = qtrue;
+	}
+	if ( !changed )
+		return;
+	for ( int i = 0; i < 4; i++ ) {
+		char value[16];
+		Com_sprintf( value, sizeof( value ), "%d", pixels[i] );
+		Cvar_Set2( names[i], value, CVAR_ROM, qtrue );
+		last[i] = pixels[i];
+	}
+	Com_DPrintf( "Safe area (l,t,r,b): %d %d %d %d\n", pixels[0], pixels[1], pixels[2], pixels[3] );
+}
+
 // small-char glyph cells are 1:2; keep that aspect on screen, in 640x480 coords
 static void CL_DrawTouchLabel( float cx, float cy, float charH, const char *s ) {
 	float charW = charH * 0.5f * ( (float)SCREEN_WIDTH / cls.glconfig.vidWidth ) * ( (float)cls.glconfig.vidHeight / SCREEN_HEIGHT );
@@ -444,6 +473,9 @@ This will be called twice if rendering in stereo mode
 ==================
 */
 void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
+#ifdef OPENJK_IOS
+	SCR_PublishSafeArea();
+#endif
 	re->BeginFrame( stereoFrame );
 
 	qboolean uiFullscreen = (qboolean)(cls.uiStarted && UIVM_IsFullscreen());
