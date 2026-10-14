@@ -198,6 +198,37 @@ void Init_Display(displayContextDef_t *dc)
 	DC = dc;
 }
 
+void UI_RefreshLayout(displayContextDef_t *dc)
+{
+	const float enabled = trap_Cvar_VariableValue( "r_aspectCorrect" );
+	const float minRatio = trap_Cvar_VariableValue( "r_aspectCorrectMinRatio" );
+	trap_GetGlconfig( &dc->glconfig );
+	if ( dc->aspectLayout.W == dc->glconfig.vidWidth &&
+		dc->aspectLayout.H == dc->glconfig.vidHeight &&
+		dc->aspectCorrectValue == enabled && dc->aspectLayout.minRatio == minRatio ) {
+		return;
+	}
+	dc->aspectCorrectValue = enabled;
+	dc->aspectLayout = AspectLayout_Build( dc->glconfig.vidWidth, dc->glconfig.vidHeight,
+#ifdef JK2_MODE
+		0, minRatio, 0, 0, 0, 0 );
+#else
+		(int)enabled, minRatio, 0, 0, 0, 0 );
+#endif
+	if ( dc->aspectLayout.branch == ASPECT_CORRECTED ) {
+		dc->xscale = dc->yscale = dc->aspectLayout.s;
+		dc->bias = dc->aspectLayout.ox;
+	} else {
+		dc->yscale = dc->glconfig.vidHeight * (1.0/480.0);
+		dc->xscale = dc->glconfig.vidWidth * (1.0/640.0);
+		if ( dc->glconfig.vidWidth * 480 > dc->glconfig.vidHeight * 640 ) {
+			dc->bias = 0.5 * ( dc->glconfig.vidWidth - ( dc->glconfig.vidHeight * (640.0/480.0) ) );
+		} else {
+			dc->bias = 0;
+		}
+	}
+}
+
 /*
 ==================
 Window_Init
@@ -7295,10 +7326,19 @@ void Item_Model_Paint(itemDef_t *item)
 	w = item->window.rect.w-2;
 	h = item->window.rect.h-2;
 
-	refdef.x = x * DC->xscale;
-	refdef.y = y * DC->yscale;
-	refdef.width = w * DC->xscale;
-	refdef.height = h * DC->yscale;
+	if ( DC->aspectLayout.branch == ASPECT_CORRECTED ) {
+		const aspectPoint_t origin = AspectLayout_ToPixels( &DC->aspectLayout, x, y );
+		const aspectPoint_t size = AspectLayout_SizeToPixels( &DC->aspectLayout, w, h );
+		refdef.x = origin.x;
+		refdef.y = origin.y;
+		refdef.width = size.x;
+		refdef.height = size.y;
+	} else {
+		refdef.x = x * DC->xscale;
+		refdef.y = y * DC->yscale;
+		refdef.width = w * DC->xscale;
+		refdef.height = h * DC->yscale;
+	}
 
 	if (item->flags&ITF_G2VALID)
 	{ //ghoul2 models don't have bounds, so we have to parse them.

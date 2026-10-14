@@ -24,6 +24,8 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include "qcommon/aspect_layout.h"
+
 #include "qcommon/q_shared.h"
 #include "rd-common/tr_types.h"
 #include "keycodes.h"
@@ -473,6 +475,8 @@ typedef struct displayContextDef_s {
 	void			(*drawCinematic)					( int handle, float x, float y, float w, float h );
 	void			(*runCinematicFrame)				( int handle );
 
+	aspectLayout_t aspectLayout;
+	float aspectCorrectValue;
 	float			yscale;
 	float			xscale;
 	float			bias;
@@ -501,6 +505,7 @@ const char *String_Alloc(const char *p);
 void String_Init();
 void String_Report();
 void Init_Display(displayContextDef_t *dc);
+void UI_RefreshLayout(displayContextDef_t *dc);
 void Display_ExpandMacros(char * buff);
 void Menu_Init(menuDef_t *menu);
 void Item_Init(itemDef_t *item);

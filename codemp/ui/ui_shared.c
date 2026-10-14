@@ -628,6 +628,39 @@ void Init_Display(displayContextDef_t *dc) {
 	DC = dc;
 }
 
+void UI_RefreshLayout(displayContextDef_t *dc)
+{
+	float enabled, minRatio;
+#ifdef _CGAME
+	enabled = dc->getCVarValue( "r_aspectCorrect" );
+	minRatio = dc->getCVarValue( "r_aspectCorrectMinRatio" );
+#else
+	enabled = trap->Cvar_VariableValue( "r_aspectCorrect" );
+	minRatio = trap->Cvar_VariableValue( "r_aspectCorrectMinRatio" );
+#endif
+	trap->GetGlconfig( &dc->glconfig );
+	if ( dc->aspectLayout.W == dc->glconfig.vidWidth &&
+		dc->aspectLayout.H == dc->glconfig.vidHeight &&
+		dc->aspectCorrectValue == enabled && dc->aspectLayout.minRatio == minRatio ) {
+		return;
+	}
+	dc->aspectCorrectValue = enabled;
+	dc->aspectLayout = AspectLayout_Build( dc->glconfig.vidWidth, dc->glconfig.vidHeight,
+		(int)enabled, minRatio, 0, 0, 0, 0 );
+	if ( dc->aspectLayout.branch == ASPECT_CORRECTED ) {
+		dc->xscale = dc->yscale = dc->aspectLayout.s;
+		dc->bias = dc->aspectLayout.ox;
+	} else {
+		dc->yscale = dc->glconfig.vidHeight * (1.0/480.0);
+		dc->xscale = dc->glconfig.vidWidth * (1.0/640.0);
+		if ( dc->glconfig.vidWidth * 480 > dc->glconfig.vidHeight * 640 ) {
+			dc->bias = 0.5 * ( dc->glconfig.vidWidth - ( dc->glconfig.vidHeight * (640.0/480.0) ) );
+		} else {
+			dc->bias = 0;
+		}
+	}
+}
+
 // type and style painting
 
 void GradientBar_Paint(rectDef_t *rect, vec4_t color) {
@@ -5248,6 +5281,10 @@ void Item_Model_Paint(itemDef_t *item)
 	vec3_t			angles;
 	modelDef_t *modelPtr = item->typeData.model;
 
+#ifdef _CGAME
+	UI_RefreshLayout( DC );
+#endif
+
 	if (modelPtr == NULL)
 	{
 		return;
@@ -5333,10 +5370,19 @@ void Item_Model_Paint(itemDef_t *item)
 	w = item->window.rect.w-2;
 	h = item->window.rect.h-2;
 
-	refdef.x = x * DC->xscale;
-	refdef.y = y * DC->yscale;
-	refdef.width = w * DC->xscale;
-	refdef.height = h * DC->yscale;
+	if ( DC->aspectLayout.branch == ASPECT_CORRECTED ) {
+		const aspectPoint_t origin = AspectLayout_ToPixels( &DC->aspectLayout, x, y );
+		const aspectPoint_t size = AspectLayout_SizeToPixels( &DC->aspectLayout, w, h );
+		refdef.x = origin.x;
+		refdef.y = origin.y;
+		refdef.width = size.x;
+		refdef.height = size.y;
+	} else {
+		refdef.x = x * DC->xscale;
+		refdef.y = y * DC->yscale;
+		refdef.width = w * DC->xscale;
+		refdef.height = h * DC->yscale;
+	}
 
 	if (item->ghoul2)
 	{ //ghoul2 models don't have bounds, so we have to parse them.

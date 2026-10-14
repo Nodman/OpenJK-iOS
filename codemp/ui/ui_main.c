@@ -656,13 +656,17 @@ void AssetCache(void) {
 }
 
 void _UI_DrawSides(float x, float y, float w, float h, float size) {
-	size *= uiInfo.uiDC.xscale;
+	if ( uiInfo.uiDC.aspectLayout.branch == ASPECT_LEGACY ) {
+		size *= uiInfo.uiDC.xscale;
+	}
 	trap->R_DrawStretchPic( x, y, size, h, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
 	trap->R_DrawStretchPic( x + w - size, y, size, h, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
 }
 
 void _UI_DrawTopBottom(float x, float y, float w, float h, float size) {
-	size *= uiInfo.uiDC.yscale;
+	if ( uiInfo.uiDC.aspectLayout.branch == ASPECT_LEGACY ) {
+		size *= uiInfo.uiDC.yscale;
+	}
 	trap->R_DrawStretchPic( x, y, w, size, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
 	trap->R_DrawStretchPic( x, y + h - size, w, size, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
 }
@@ -9849,20 +9853,7 @@ void UI_Init( qboolean inGameLoad ) {
 	UI_RegisterCvars();
 	UI_InitMemory();
 
-	// cache redundant calulations
-	trap->GetGlconfig( &uiInfo.uiDC.glconfig );
-
-	// for 640x480 virtualized screen
-	uiInfo.uiDC.yscale = uiInfo.uiDC.glconfig.vidHeight * (1.0/480.0);
-	uiInfo.uiDC.xscale = uiInfo.uiDC.glconfig.vidWidth * (1.0/640.0);
-	if ( uiInfo.uiDC.glconfig.vidWidth * 480 > uiInfo.uiDC.glconfig.vidHeight * 640 ) {
-		// wide screen
-		uiInfo.uiDC.bias = 0.5 * ( uiInfo.uiDC.glconfig.vidWidth - ( uiInfo.uiDC.glconfig.vidHeight * (640.0/480.0) ) );
-	}
-	else {
-		// no wide screen
-		uiInfo.uiDC.bias = 0;
-	}
+	UI_RefreshLayout( &uiInfo.uiDC );
 
 	//UI_Load();
 	uiInfo.uiDC.registerShaderNoMip				= UI_RegisterShaderNoMip;
@@ -9997,6 +9988,8 @@ void UI_Refresh( int realtime )
 {
 	static int index;
 	static int	previousTimes[UI_FPS_FRAMES];
+
+	UI_RefreshLayout( &uiInfo.uiDC );
 
 	//if ( !( trap->Key_GetCatcher() & KEYCATCH_UI ) ) {
 	//	return;
@@ -10343,6 +10336,7 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 
 	menuDef_t *menu = Menus_FindByName("Connect");
 
+	UI_RefreshLayout( &uiInfo.uiDC );
 
 	if ( !overlay && menu ) {
 		Menu_Paint(menu, qtrue);

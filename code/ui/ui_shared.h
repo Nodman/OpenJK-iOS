@@ -24,6 +24,8 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #ifndef __UI_SHARED_H
 #define __UI_SHARED_H
 
+#include "qcommon/aspect_layout.h"
+
 enum {
 	SSF_JPEG = 0,
 	SSF_TGA,
@@ -228,6 +230,8 @@ typedef struct {
 	//Utility functions that don't immediately redirect to ghoul2 functions
 	int			(*g2hilev_SetAnim)(CGhoul2Info *ghlInfo, const char *boneName, int animNum, const qboolean freeze);
 
+	aspectLayout_t aspectLayout;
+	float aspectCorrectValue;
 	float		yscale;
 	float		xscale;
 	float		bias;
@@ -474,6 +478,7 @@ qboolean	Display_MouseMove(void *p, int x, int y);
 int			Display_VisibleMenuCount(void);
 qboolean	Int_Parse(const char **p, int *i);
 void		Init_Display(displayContextDef_t *dc);
+void UI_RefreshLayout(displayContextDef_t *dc);
 void		Menus_Activate(menuDef_t *menu);
 menuDef_t	*Menus_ActivateByName(const char *p);
 qboolean	Menus_AnyFullScreenVisible(void);
