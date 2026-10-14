@@ -29,6 +29,11 @@ static unsigned int runCount, runLoads;
 static double runSeconds;
 static float memPeakMB, memLimitMB;	// limit = footprint + os_proc_available_memory() at the peak sample
 
+static NSProcessInfoThermalState thermal = NSProcessInfoThermalStateNominal;
+static float lastW, lastH;		// size of the last applied vid_restart
+static float candW, candH;		// new size waiting to settle
+static CFTimeInterval candSince;
+
 static void Sys_IOS_SampleMemory( float *footMB, float *availMB ) {
 	task_vm_info_data_t info;
 	mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
@@ -46,12 +51,13 @@ void Sys_IOS_SetFramePaused( qboolean paused ) { framePaused = paused; lastCallb
 int Sys_IOS_MaxFramesPerSecond( void ) { return (int)[UIScreen mainScreen].maximumFramesPerSecond; }
 void Sys_IOS_NotePresent( float ms ) { framePresentMs += ms; }
 
-// P3 (T3.2) adds thermal caps here.
 static int Sys_IOS_TargetFPS( void ) {
 	int maxFPS = Sys_IOS_MaxFramesPerSecond();
 	int target = Cvar_VariableIntegerValue( "com_maxfps" );
 	if ( target <= 0 || target > maxFPS ) target = maxFPS;
 	if ( target < 30 ) target = 30;
+	if ( thermal == NSProcessInfoThermalStateSerious && target > 60 ) target = 60;
+	if ( thermal == NSProcessInfoThermalStateCritical ) target = 30;
 	return target;
 }
 
@@ -139,6 +145,28 @@ static void Sys_IOS_ApplyInterval( void ) {
 	}
 }
 
+// Only the frame-rate cap changes; no scale change and no vid_restart.
+static void Sys_IOS_SetThermal( NSProcessInfoThermalState s ) {
+	if ( s == NSProcessInfoThermalStateCritical && thermal != s )
+		Com_Printf( "Device is very hot: capped at 30 fps. Lower r_renderScale to help.\n" );
+	thermal = s;
+}
+
+static void Sys_IOS_CheckResize( void ) {
+	float w, h;
+	Sys_IOS_GetViewPointSize( GLimp_IOS_Window(), &w, &h );
+	if ( w <= 0 || ( w == lastW && h == lastH ) ) { candW = candH = 0; return; }
+	CFTimeInterval now = CACurrentMediaTime();
+	if ( w != candW || h != candH ) {	// still changing: restart the 500 ms wait
+		candW = w; candH = h; candSince = now;
+		return;
+	}
+	if ( now - candSince < 0.5 )
+		return;
+	lastW = w; lastH = h; candW = candH = 0;
+	Cbuf_ExecuteText( EXEC_APPEND, "vid_restart\n" );
+}
+
 static void Sys_IOS_Frame( void * ) {
 	if ( framePaused )
 		return;
@@ -156,6 +184,7 @@ static void Sys_IOS_Frame( void * ) {
 		presentSamples[cpuCount++] = framePresentMs;
 	}
 	Sys_IOS_ApplyInterval();
+	Sys_IOS_CheckResize();
 }
 
 void Sys_IOS_StartFrameLoop( void ) {
@@ -163,5 +192,12 @@ void Sys_IOS_StartFrameLoop( void ) {
 	ios_frameStatsRun = Cvar_Get( "ios_frameStatsRun", "0", 0 );
 	Cmd_AddCommand( "ios_frameStatsReset", Sys_IOS_FrameStatsReset_f );
 	framePaced = qtrue;
+	Sys_IOS_GetViewPointSize( GLimp_IOS_Window(), &lastW, &lastH );
+	Sys_IOS_SetThermal( [NSProcessInfo processInfo].thermalState );	// warn once if already critical at launch
+	// Runs on the main queue between display-link callbacks, never inside Com_Frame.
+	[[NSNotificationCenter defaultCenter] addObserverForName:NSProcessInfoThermalStateDidChangeNotification
+		object:nil queue:[NSOperationQueue mainQueue] usingBlock:^( NSNotification * ) {
+			Sys_IOS_SetThermal( [NSProcessInfo processInfo].thermalState );
+		}];
 	Sys_IOS_ApplyInterval();
 }
