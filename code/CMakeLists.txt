@@ -47,7 +47,7 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 
 	#    Dependencies
 
-	if (NOT WIN32)
+	if(NOT OPENJK_IOS AND NOT WIN32)
 		# OpenGL
 		find_package(OpenGL REQUIRED)
 		set(SPEngineIncludeDirectories ${SPEngineIncludeDirectories} ${OPENGL_INCLUDE_DIR})
@@ -78,34 +78,36 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 		set(SPEngineFiles ${SPEngineFiles} ${SPEngineEAXFiles})
 	endif()
 
-	if(UseInternalSDL2)
-		if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-			set(SPEngineLibraries
-				${SPEngineLibraries}
-				${OpenJKLibDir}/SDL2/lib/x86/SDL2main.lib
-				${OpenJKLibDir}/SDL2/lib/x86/SDL2.lib
+	if(NOT OPENJK_IOS)
+		if(UseInternalSDL2)
+			if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+				set(SPEngineLibraries
+					${SPEngineLibraries}
+					${OpenJKLibDir}/SDL2/lib/x86/SDL2main.lib
+					${OpenJKLibDir}/SDL2/lib/x86/SDL2.lib
+					)
+			else()
+				set(SPEngineLibraries
+					${SPEngineLibraries}
+					${OpenJKLibDir}/SDL2/lib/x64/SDL2main.lib
+					${OpenJKLibDir}/SDL2/lib/x64/SDL2.lib
+					)
+			endif()
+
+			set(SPEngineIncludeDirectories
+				${SPEngineIncludeDirectories}
+				${OpenJKLibDir}/SDL2/include
 				)
 		else()
-			set(SPEngineLibraries
-				${SPEngineLibraries}
-				${OpenJKLibDir}/SDL2/lib/x64/SDL2main.lib
-				${OpenJKLibDir}/SDL2/lib/x64/SDL2.lib
-				)
+			find_package(SDL2 REQUIRED CONFIG)
+			if (TARGET SDL2::SDL2)
+				set(SDL2_INCLUDE_DIRS "")
+				set(SDL2_LIBRARIES SDL2::SDL2)
+			endif()
+			string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES)
+			set(SPEngineIncludeDirectories ${SPEngineIncludeDirectories} ${SDL2_INCLUDE_DIRS})
+			set(SPEngineLibraries ${SPEngineLibraries} ${SDL2_LIBRARIES})
 		endif()
-
-		set(SPEngineIncludeDirectories
-			${SPEngineIncludeDirectories}
-			${OpenJKLibDir}/SDL2/include
-			)
-	else()
-		find_package(SDL2 REQUIRED CONFIG)
-		if (TARGET SDL2::SDL2)
-			set(SDL2_INCLUDE_DIRS "")
-			set(SDL2_LIBRARIES SDL2::SDL2)
-		endif()
-		string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES)
-		set(SPEngineIncludeDirectories ${SPEngineIncludeDirectories} ${SDL2_INCLUDE_DIRS})
-		set(SPEngineLibraries ${SPEngineLibraries} ${SDL2_LIBRARIES})
 	endif()
 
 	#    Source Files
@@ -364,6 +366,9 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 
 	source_group("sys" FILES ${SPEngineSysFiles})
 	set(SPEngineFiles ${SPEngineFiles} ${SPEngineSysFiles})
+	if(OPENJK_IOS)
+		set(SPEngineFiles ${SPEngineFiles} ${OPENJK_IOS_SOURCES})
+	endif()
 
     # Transparently use our bundled minizip.
     list(APPEND SPEngineIncludeDirectories ${MINIZIP_INCLUDE_DIRS})
@@ -375,7 +380,17 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 
 	# project macro so we can invoke it twice: for jk2 and for ja
 	function(add_sp_project ProjectName Label SPDirName InstallDir Component)
-		if(WIN32)
+		if(OPENJK_IOS)
+			add_executable(${ProjectName} MACOSX_BUNDLE ${SPEngineFiles})
+			openjk_ios_configure_app(${ProjectName} SP)
+			if(NOT OPENJK_STATIC_MODULES)
+				# signed with the app; loaded from .app/Frameworks only
+				set_target_properties(${ProjectName} PROPERTIES
+					XCODE_EMBED_FRAMEWORKS "${SPGame};${SPRDVanillaRenderer}"
+					XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES)
+				add_dependencies(${ProjectName} ${SPGame} ${SPRDVanillaRenderer})
+			endif()
+		elseif(WIN32)
 			set(SPEngineWin32Files
 				"${SPDirName}/win32/resource.h"
 				"${SPDirName}/win32/winquake.rc"
@@ -396,7 +411,7 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 						)
 				endif()
 			endif()
-		else(WIN32)
+		else()
 			if(MakeApplicationBundles)
 				set_source_files_properties(${SPDirName}/macosx/OpenJK.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 				set(SPEngineFiles ${SPEngineFiles} ${SPDirName}/macosx/OpenJK.icns)
@@ -408,30 +423,32 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 			else(MakeApplicationBundles)
 				add_executable(${ProjectName} ${SPEngineFiles})
 			endif(MakeApplicationBundles)
-		endif(WIN32)
+		endif()
 
-		if(MakeApplicationBundles)
-			install(CODE "
-				include(BundleUtilities)
-				set(BU_CHMOD_BUNDLE_ITEMS ON)
-				fixup_bundle(\"${CMAKE_BINARY_DIR}/${ProjectName}.app\" \"\" \"\")
-				"
-				COMPONENT Runtime)
-			install(TARGETS ${ProjectName}
-				BUNDLE
-				DESTINATION ${InstallDir}
-				COMPONENT ${Component})
-		else(MakeApplicationBundles)
-			install(TARGETS ${ProjectName}
-				RUNTIME
-				DESTINATION ${InstallDir}
-				COMPONENT ${Component})
-			if(SPEngineExtraInstallFiles)
-				install(FILES ${SPEngineExtraInstallFiles}
+		if(NOT OPENJK_IOS)
+			if(MakeApplicationBundles)
+				install(CODE "
+					include(BundleUtilities)
+					set(BU_CHMOD_BUNDLE_ITEMS ON)
+					fixup_bundle(\"${CMAKE_BINARY_DIR}/${ProjectName}.app\" \"\" \"\")
+					"
+					COMPONENT Runtime)
+				install(TARGETS ${ProjectName}
+					BUNDLE
 					DESTINATION ${InstallDir}
 					COMPONENT ${Component})
-			endif()
-		endif(MakeApplicationBundles)
+			else(MakeApplicationBundles)
+				install(TARGETS ${ProjectName}
+					RUNTIME
+					DESTINATION ${InstallDir}
+					COMPONENT ${Component})
+				if(SPEngineExtraInstallFiles)
+					install(FILES ${SPEngineExtraInstallFiles}
+						DESTINATION ${InstallDir}
+						COMPONENT ${Component})
+				endif()
+			endif(MakeApplicationBundles)
+		endif()
 
 		set_target_properties(${ProjectName} PROPERTIES COMPILE_DEFINITIONS "${SPEngineDefines}")
 
