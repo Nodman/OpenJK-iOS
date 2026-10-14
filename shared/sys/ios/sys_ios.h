@@ -1,4 +1,5 @@
 #pragma once
+#include "ios/touch/touch_atlas.h"
 #include "qcommon/q_shared.h"	// per-app copy (codemp/ or code/) via include path
 
 struct SDL_Window;
@@ -46,8 +47,8 @@ void IN_TouchFrame( void );
 void IN_TouchReleaseAll( void );
 void IN_TouchResetState( void );
 void IN_GamepadReleaseAll( void );
-typedef struct { float x, y, w, h; const char *label; int pressed; } touchDrawItem_t;	// 640x480 virtual
 int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems );
+float IN_TouchGetOpacity( void );
 void SCR_RegisterTouchMedia( void );
 
 // ios_gamepad.cpp (P4)

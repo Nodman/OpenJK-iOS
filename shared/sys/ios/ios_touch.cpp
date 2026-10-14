@@ -33,7 +33,7 @@ static qboolean layoutReady;
 static qboolean lastUIMode, lastHidden, lastCinematic;
 static int softKeyboardTarget;
 static qboolean lastHwKeyboard, lastTextDemand;
-static cvar_t *in_touchControls, *ui_touchState;
+static cvar_t *in_touchControls, *in_touchOpacity, *ui_touchState;
 static touchBridgeState_t bridgeState;
 static touchVisibility_t visibility;
 
@@ -188,6 +188,7 @@ static void IN_TouchTextInput( void ) {
 
 void IN_TouchInit( SDL_Window *window ) {
 	in_touchControls = Cvar_Get( "in_touchControls", "1", CVAR_ARCHIVE );
+	in_touchOpacity = Cvar_Get( "in_touchOpacity", "1.0", CVAR_ARCHIVE );
 	ui_touchState = Cvar_Get( "ui_touchState", "0", CVAR_ROM );
 	IN_TouchReleaseAll();	// in_restart calls IN_Init without IN_Shutdown
 	touchWindow = window;
@@ -216,14 +217,6 @@ static touchFinger_t *IN_TouchFind( SDL_FingerID id ) {
 			return &fingers[i];
 	}
 	return NULL;
-}
-
-static qboolean IN_TouchButtonHeld( int button ) {
-	for ( int i = 0; i < IOS_TOUCH_GESTURE_FINGERS; ++i ) {
-		if ( TouchGesture_IsButton( gestures.fingers[i].role ) && gestures.fingers[i].button == button )
-			return qtrue;
-	}
-	return qfalse;
 }
 
 static qboolean IN_TouchHasRole( int role ) {
@@ -391,17 +384,8 @@ void IN_TouchFrame( void ) {
 	IN_TouchStep( TOUCH_REFRESH, 0, TOUCH_TARGET_IGNORE, 0, 0, 0 );
 }
 
-static void IN_TouchAddItem( touchDrawItem_t *items, int *n, int maxItems, float x, float y, float w, float h, const char *label, int pressed ) {
-	if ( *n >= maxItems )
-		return;
-	touchDrawItem_t *it = &items[( *n )++];
-	const touchRect_t overlay = TouchLayout_RectToVirtual( &touchLayout, { x, y, w, h } );
-	it->x = overlay.x;
-	it->y = overlay.y;
-	it->w = overlay.w;
-	it->h = overlay.h;
-	it->label = label;
-	it->pressed = pressed;
+float IN_TouchGetOpacity( void ) {
+	return TouchDraw_Opacity( in_touchOpacity ? in_touchOpacity->value : 1.0f );
 }
 
 int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
@@ -410,34 +394,18 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	IN_TouchUpdateLayout();
 	IN_TouchSyncMode();
 	IN_TouchSyncVisibility();
-	if ( CL_TouchCinematic() )
-		return 0;
 	if ( !layoutReady )
 		return 0;
-
-	int n = 0;
-	qboolean conOnly = ( lastHidden || CL_TouchUIMode() ) ? qtrue : qfalse;
-	const unsigned int visible = IN_TouchVisibleButtons();
-	for ( int b = 0; b < TB_COUNT; b++ ) {
-		if ( !( visible & ( 1u << b ) ) )
-			continue;
-		int pressed = IN_TouchButtonHeld( b );
-		for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ ) {
-			if ( fingers[i].role == ROLE_CONSOLE && fingers[i].button == b )
-				pressed = 1;
-		}
-		IN_TouchAddItem( items, &n, maxItems, rects[b].x, rects[b].y, rects[b].w, rects[b].h, touchButtonDefs[b].label, pressed );
+	touchDrawInput_t input = {};
+	input.layout = &touchLayout;
+	input.rects = rects;
+	input.gestures = &gestures;
+	input.visibleButtons = IN_TouchVisibleButtons();
+	input.sticks = visibility.sticks;
+	input.styleColor = visibility.styleColor;
+	for ( int i = 0; i < MAX_TOUCH_FINGERS; ++i ) {
+		if ( fingers[i].role == ROLE_CONSOLE )
+			input.pressedButtons |= 1u << TB_CONSOLE;
 	}
-	if ( conOnly || !visibility.sticks )
-		return n;
-
-	if ( gestures.moveOwner >= 0 ) {
-		const touchGestureFinger_t *f = &gestures.fingers[gestures.moveOwner];
-		float r = f->radius, sx, sy;
-		TouchStick_Clamp( f->x - f->ox, f->y - f->oy, r, &sx, &sy );
-		float kx = f->ox + sx * r, ky = f->oy + sy * r;
-		IN_TouchAddItem( items, &n, maxItems, f->ox - r, f->oy - r, 2 * r, 2 * r, NULL, 0 );
-		IN_TouchAddItem( items, &n, maxItems, kx - 0.3f * r, ky - 0.3f * r, 0.6f * r, 0.6f * r, NULL, 1 );
-	}
-	return n;
+	return TouchDraw_Build( &input, items, maxItems );
 }
