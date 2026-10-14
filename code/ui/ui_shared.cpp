@@ -132,6 +132,7 @@ int openMenuCount = 0;
 
 #ifdef OPENJK_IOS
 static char iosVideoLabels[5][48];
+static char iosProMotionLabels[2][4] = { "Off", "On" };
 
 static qboolean UI_IOS_IsVideoMenu( const menuDef_t *menu )
 {
@@ -156,11 +157,32 @@ static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
 	for ( i = 0; i < menu->itemCount; ++i ) {
 		itemDef_t *item = menu->items[i];
 		multiDef_t *multi;
-		if ( !UI_IOS_IsVideoItem( item ) ) {
+		if ( !item || item->type != ITEM_TYPE_MULTI || !item->window.name || !item->cvar ||
+			!UI_IOS_IsVideoMenu( (const menuDef_t *)item->parent ) ) {
 			continue;
 		}
 		multi = (multiDef_t *)item->typeData;
 		if ( !multi ) {
+			continue;
+		}
+		if ( !Q_stricmp( item->window.name, "fullscreen" ) &&
+			( !Q_stricmp( item->cvar, "ui_r_fullscreen" ) || !Q_stricmp( item->cvar, "ui_iosProMotion" ) ) ) {
+			item->cvar = "ui_iosProMotion";
+			item->text = "120 Hz (ProMotion)";
+			item->descText = "iPad: 120 Hz. iPhone: needs the Metal path (coming)";
+			item->cvarTest = "r_iosMaxRefresh";
+			item->enableCvar = "120";
+			item->cvarFlags = CVAR_SHOW;
+			multi->strDef = qfalse;
+			multi->count = 2;
+			for ( id = 0; id < 2; ++id ) {
+				multi->cvarValue[id] = id;
+				multi->cvarList[id] = iosProMotionLabels[id];
+			}
+			item->textRect.w = item->textRect.h = 0;
+			continue;
+		}
+		if ( !UI_IOS_IsVideoItem( item ) ) {
 			continue;
 		}
 		multi->strDef = qfalse;
@@ -184,7 +206,7 @@ void UI_IOS_RefreshVideoMenus( qboolean force )
 	static float lastBase = -1, lastCustom = -1;
 	const int w = (int)DC->getCVarValue( "r_iosNativeWidth" );
 	const int h = (int)DC->getCVarValue( "r_iosNativeHeight" );
-	const int high = DC->getCVarValue( "com_maxfps" ) > 60;
+	const int high = DC->getCVarValue( "ui_iosProMotion" ) != 0;
 	const int preset = (int)DC->getCVarValue( "ui_r_mode" );
 	const float base = DC->getCVarValue( "r_iosBaseAutoScale" );
 	const float custom = DC->getCVarValue( "r_renderScale" );

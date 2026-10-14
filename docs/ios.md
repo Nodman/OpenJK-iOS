@@ -14,7 +14,7 @@
 - iPad 8th generation or later, Air 3 or later, mini 5 or later, and iPad Pro models from 2018 or later.
 - A11 and older, including A10 / A10X iPads, are outside the supported device list.
 - ProMotion screens: iPhone 13 Pro through 17 Pro Max, iPhone 17, iPhone Air, and iPad Pro models from 2018 or later. Screen refresh support does not guarantee the game's frame rate.
-- The default is 60 Hz. The GL renderer path does not provide 120 Hz on iPhone. On the measured iPhone 17 Pro Max with iOS 27.0.1, `com_maxfps 120` is accepted but shows 60 Hz.
+- The default is 60 Hz. Video → `120 Hz (ProMotion)` offers Off / On and appears only on 120 Hz panels. Apply restarts the video. iPhone on the GL path still shows 60 Hz until the P10 Metal path. On the measured iPhone 17 Pro Max with iOS 27.0.1, `com_maxfps 120` is accepted but shows 60 Hz.
 - ProMotion iPads can show 120 Hz. Measured on the 2018 iPad Pro with iPadOS 26.5 and on the M4 iPad Pro with iPadOS 27.0.1 (120.0 frames per second on the display). The 60 Hz limit is an iPhone policy on the OpenGL ES layer, not an iOS version issue.
 - The 2018 A12X iPad Pro passed a 20-minute MP run at 60 Hz and auto scale. Its median window p95 frame interval was 16.72 ms.
 - Memory was tested on a 4 GB iPad with `r_picmip 1` and `r_texturebits 32`. The MP map `mp/ctf1` peaked at 277 MB; the SP map `taspir2` peaked at 394 MB and loaded in 2.7 s. A real 3 GB device was not tested.
@@ -103,7 +103,7 @@
 - Video → Resolution offers Auto, Native, 3/4 and Native/2 with the predicted pixel size. Apply restarts the video. For custom menus, use `seta r_renderScale 0|1|0.75|0.5` (choose one value), then `vid_restart`. `r_mode` stays a desktop selector.
 - `r_renderScale 0`: auto scale. A value from `0.5` to `1.0` sets a fixed scale. Lower values reduce detail and GPU load. Run `vid_restart` to apply a change.
 - Auto scale: below Apple GPU family 7 uses `0.6`; families 7 / 8 use `0.75`; family 9 or later uses `1.0`. With `com_maxfps` above 60, auto scale is multiplied by `0.8`. Scale is clamped to `0.5`–`1.0`, then raised for a drawable at least 540 px tall, up to full scale.
-- `com_maxfps 60`: default. `com_maxfps 120`: opt in on ProMotion iPads. On the measured iPhone GL path it still shows 60 Hz. If using auto scale, run `vid_restart` after changing the frame rate to update the scale.
+- Video → `120 Hz (ProMotion)` stages `com_maxfps` 60 / 120 on 120 Hz panels. Auto resolution previews the staged choice. iPhone on GL still shows 60 Hz until P10. Console fallback: `seta com_maxfps 60|120` (choose one value), then `vid_restart`.
 - `in_touchControls 0`: hide touch controls except CON. `1`: default; hide them when a pad is connected, or a hardware keyboard and mouse/trackpad are both connected. A keyboard alone keeps touch look and buttons. `2`: keep them visible with these devices. Menus and the console show only CON. Full-screen cinematics and SP in-game videos hide all controls in every mode; camera cutscenes still show them.
 - `in_touchLookScale 1.0`: default touch look scale. Higher values turn faster.
 - `j_lookSpeed 1.5`: default pad look scale. Higher values turn faster.

@@ -15,6 +15,11 @@ typedef struct {
 	int height;
 } iosRenderScale_t;
 
+IOS_RS_INLINE int IOS_RenderScale_HighRefresh( int maxfps )
+{
+	return maxfps > 60;
+}
+
 IOS_RS_INLINE float IOS_RenderScale_Clamp( float scale )
 {
 	return scale < 0.5f ? 0.5f : ( scale > 1.0f ? 1.0f : scale );

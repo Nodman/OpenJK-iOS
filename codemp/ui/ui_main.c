@@ -4744,7 +4744,9 @@ static void UI_Update(const char *name) {
 		{
 		case 0:	// high quality
 
+#ifndef OPENJK_IOS
 			trap->Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 			trap->Cvar_SetValue( "ui_r_subdivisions", 4 );
 			trap->Cvar_SetValue( "ui_r_lodbias", 0 );
 			trap->Cvar_SetValue( "ui_r_colorbits", 32 );
@@ -4761,7 +4763,9 @@ static void UI_Update(const char *name) {
 			break;
 
 		case 1: // normal
+#ifndef OPENJK_IOS
 			trap->Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 			trap->Cvar_SetValue( "ui_r_subdivisions", 4 );
 			trap->Cvar_SetValue( "ui_r_lodbias", 0 );
 			trap->Cvar_SetValue( "ui_r_colorbits", 0 );
@@ -4779,7 +4783,9 @@ static void UI_Update(const char *name) {
 
 		case 2: // fast
 
+#ifndef OPENJK_IOS
 			trap->Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 			trap->Cvar_SetValue( "ui_r_subdivisions", 12 );
 			trap->Cvar_SetValue( "ui_r_lodbias", 1 );
 			trap->Cvar_SetValue( "ui_r_colorbits", 0 );
@@ -4797,7 +4803,9 @@ static void UI_Update(const char *name) {
 
 		case 3: // fastest
 
+#ifndef OPENJK_IOS
 			trap->Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 			trap->Cvar_SetValue( "ui_r_subdivisions", 20 );
 			trap->Cvar_SetValue( "ui_r_lodbias", 2 );
 			trap->Cvar_SetValue( "ui_r_colorbits", 16 );
@@ -4902,7 +4910,14 @@ void UI_UpdateVideoSetup ( void )
 #else
 	trap->Cvar_Set ( "r_mode", UI_Cvar_VariableString ( "ui_r_mode" ) );
 #endif
+#ifdef OPENJK_IOS
+	const int high = trap->Cvar_VariableValue( "ui_iosProMotion" ) != 0;
+	if ( high != IOS_RenderScale_HighRefresh( (int)trap->Cvar_VariableValue( "com_maxfps" ) ) ) {
+		trap->Cvar_Set( "com_maxfps", high ? "120" : "60" );
+	}
+#else
 	trap->Cvar_Set ( "r_fullscreen", UI_Cvar_VariableString ( "ui_r_fullscreen" ) );
+#endif
 	trap->Cvar_Set ( "r_colorbits", UI_Cvar_VariableString ( "ui_r_colorbits" ) );
 	trap->Cvar_Set ( "r_lodbias", UI_Cvar_VariableString ( "ui_r_lodbias" ) );
 	trap->Cvar_Set ( "r_picmip", UI_Cvar_VariableString ( "ui_r_picmip" ) );
@@ -4936,6 +4951,9 @@ void UI_GetVideoSetup ( void )
 	// Make sure the cvars are registered as read only.
 	trap->Cvar_Register ( NULL, "ui_r_mode",					"0", CVAR_ROM|CVAR_INTERNAL );
 	trap->Cvar_Register ( NULL, "ui_r_fullscreen",			"0", CVAR_ROM|CVAR_INTERNAL );
+#ifdef OPENJK_IOS
+	trap->Cvar_Register( NULL, "ui_iosProMotion", "0", CVAR_ROM|CVAR_INTERNAL );
+#endif
 	trap->Cvar_Register ( NULL, "ui_r_colorbits",				"0", CVAR_ROM|CVAR_INTERNAL );
 	trap->Cvar_Register ( NULL, "ui_r_lodbias",				"0", CVAR_ROM|CVAR_INTERNAL );
 	trap->Cvar_Register ( NULL, "ui_r_picmip",				"0", CVAR_ROM|CVAR_INTERNAL );
@@ -4954,6 +4972,7 @@ void UI_GetVideoSetup ( void )
 	// Copy over the real video cvars into their temporary counterparts
 #ifdef OPENJK_IOS
 	trap->Cvar_SetValue( "ui_r_mode", IOS_RenderScale_PresetFromScale( trap->Cvar_VariableValue( "r_renderScale" ) ) );
+	trap->Cvar_SetValue( "ui_iosProMotion", IOS_RenderScale_HighRefresh( (int)trap->Cvar_VariableValue( "com_maxfps" ) ) );
 	UI_IOS_RefreshVideoMenus( qtrue );
 #else
 	trap->Cvar_Set ( "ui_r_mode",						UI_Cvar_VariableString ( "r_mode" ) );

@@ -3490,7 +3490,9 @@ static void UI_Update(const char *name)
 		{
 			case 0:	// high quality
 
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 				Cvar_SetValue( "ui_r_subdivisions", 4 );
 				Cvar_SetValue( "ui_r_lodbias", 0 );
 				Cvar_SetValue( "ui_r_colorbits", 32 );
@@ -3507,7 +3509,9 @@ static void UI_Update(const char *name)
 				break;
 
 			case 1: // normal
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 				Cvar_SetValue( "ui_r_subdivisions", 4 );
 				Cvar_SetValue( "ui_r_lodbias", 0 );
 				Cvar_SetValue( "ui_r_colorbits", 0 );
@@ -3525,7 +3529,9 @@ static void UI_Update(const char *name)
 
 			case 2: // fast
 
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 				Cvar_SetValue( "ui_r_subdivisions", 12 );
 				Cvar_SetValue( "ui_r_lodbias", 1 );
 				Cvar_SetValue( "ui_r_colorbits", 0 );
@@ -3543,7 +3549,9 @@ static void UI_Update(const char *name)
 
 			case 3: // fastest
 
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_fullScreen", 1 );
+#endif
 				Cvar_SetValue( "ui_r_subdivisions", 20 );
 				Cvar_SetValue( "ui_r_lodbias", 2 );
 				Cvar_SetValue( "ui_r_colorbits", 16 );
@@ -4216,7 +4224,14 @@ void UI_UpdateVideoSetup ( void )
 #else
 	Cvar_Set ( "r_mode", Cvar_VariableString ( "ui_r_mode" ) );
 #endif
+#ifdef OPENJK_IOS
+	const int high = Cvar_VariableValue( "ui_iosProMotion" ) != 0;
+	if ( high != IOS_RenderScale_HighRefresh( (int)Cvar_VariableValue( "com_maxfps" ) ) ) {
+		Cvar_Set( "com_maxfps", high ? "120" : "60" );
+	}
+#else
 	Cvar_Set ( "r_fullscreen", Cvar_VariableString ( "ui_r_fullscreen" ) );
+#endif
 	Cvar_Set ( "r_colorbits", Cvar_VariableString ( "ui_r_colorbits" ) );
 	Cvar_Set ( "r_lodbias", Cvar_VariableString ( "ui_r_lodbias" ) );
 	Cvar_Set ( "r_picmip", Cvar_VariableString ( "ui_r_picmip" ) );
@@ -4250,6 +4265,9 @@ void UI_GetVideoSetup ( void )
 	// Make sure the cvars are registered as read only.
 	Cvar_Register ( NULL, "ui_r_mode",					"0", CVAR_ROM );
 	Cvar_Register ( NULL, "ui_r_fullscreen",			"0", CVAR_ROM );
+#ifdef OPENJK_IOS
+	Cvar_Register( NULL, "ui_iosProMotion", "0", CVAR_ROM );
+#endif
 	Cvar_Register ( NULL, "ui_r_colorbits",				"0", CVAR_ROM );
 	Cvar_Register ( NULL, "ui_r_lodbias",				"0", CVAR_ROM );
 	Cvar_Register ( NULL, "ui_r_picmip",				"0", CVAR_ROM );
@@ -4268,6 +4286,7 @@ void UI_GetVideoSetup ( void )
 	// Copy over the real video cvars into their temporary counterparts
 #ifdef OPENJK_IOS
 	Cvar_SetValue( "ui_r_mode", IOS_RenderScale_PresetFromScale( Cvar_VariableValue( "r_renderScale" ) ) );
+	Cvar_SetValue( "ui_iosProMotion", IOS_RenderScale_HighRefresh( (int)Cvar_VariableValue( "com_maxfps" ) ) );
 	UI_IOS_RefreshVideoMenus( qtrue );
 #else
 	Cvar_Set ( "ui_r_mode", Cvar_VariableString ( "r_mode" ) );

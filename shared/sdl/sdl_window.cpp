@@ -680,7 +680,7 @@ SDL_Window *GLimp_IOS_Window( void ) { return screen; }
 
 static float GLimp_IOS_RenderScale( void ) {
 	return IOS_RenderScale_Resolve( r_renderScale->value,
-		Cvar_VariableValue( "r_iosBaseAutoScale" ), Cvar_VariableIntegerValue( "com_maxfps" ) > 60,
+		Cvar_VariableValue( "r_iosBaseAutoScale" ), IOS_RenderScale_HighRefresh( Cvar_VariableIntegerValue( "com_maxfps" ) ),
 		Cvar_VariableIntegerValue( "r_iosNativeWidth" ), Cvar_VariableIntegerValue( "r_iosNativeHeight" ) ).scale;
 }
 
@@ -720,11 +720,13 @@ static rserr_t GLimp_IOS_SetMode( glconfig_t *glConfig )
 		Cvar_Get( "r_iosNativeWidth", "0", CVAR_ROM );
 		Cvar_Get( "r_iosNativeHeight", "0", CVAR_ROM );
 		Cvar_Get( "r_iosBaseAutoScale", "0", CVAR_ROM );
+		Cvar_Get( "r_iosMaxRefresh", "0", CVAR_ROM );
 		registered = qtrue;
 	}
 	Cvar_SetValue( "r_iosNativeWidth", (int)( w * nativeScale ) );
 	Cvar_SetValue( "r_iosNativeHeight", (int)( h * nativeScale ) );
 	Cvar_SetValue( "r_iosBaseAutoScale", Sys_IOS_DefaultRenderScale( qfalse ) );
+	Cvar_SetValue( "r_iosMaxRefresh", Sys_IOS_MaxFramesPerSecond() );
 	Sys_IOS_SetDrawableScale( screen, GLimp_IOS_RenderScale() );
 	SDL_GL_GetDrawableSize( screen, &glConfig->vidWidth, &glConfig->vidHeight );
 	glConfig->colorBits = 32;

@@ -25,6 +25,27 @@ BOOST_AUTO_TEST_CASE( auto_tiers_and_fixed_presets )
 	BOOST_CHECK_EQUAL( IOS_RenderScale_Resolve( -1, 0.75f, 0, 2868, 1320 ).scale, 0.75f );
 }
 
+BOOST_AUTO_TEST_CASE( staged_refresh_auto_prediction )
+{
+	const int rates[] = { 0, 60, 90, 120, 125 };
+	const int expected[] = { 0, 0, 1, 1, 1 };
+	for ( int i = 0; i < 5; ++i ) {
+		const int staged = IOS_RenderScale_HighRefresh( rates[i] );
+		BOOST_CHECK_EQUAL( staged, expected[i] );
+		const iosRenderScale_t current = IOS_RenderScale_Resolve( 0, 0.75f, staged, 2868, 1320 );
+		const iosRenderScale_t toggled = IOS_RenderScale_Resolve( 0, 0.75f, !staged, 2868, 1320 );
+		BOOST_CHECK_EQUAL( current.width, staged ? 1720 : 2151 );
+		BOOST_CHECK_EQUAL( current.height, staged ? 792 : 990 );
+		BOOST_CHECK_EQUAL( toggled.width, staged ? 2151 : 1720 );
+		BOOST_CHECK_EQUAL( toggled.height, staged ? 990 : 792 );
+		for ( int id = 1; id < 4; ++id ) {
+			const float fixed = IOS_RenderScale_ForPreset( id );
+			BOOST_CHECK_EQUAL( IOS_RenderScale_Resolve( fixed, 0.75f, staged, 2868, 1320 ).width,
+				IOS_RenderScale_Resolve( fixed, 0.75f, !staged, 2868, 1320 ).width );
+		}
+	}
+}
+
 BOOST_AUTO_TEST_CASE( minimum_drawable_height )
 {
 	const iosRenderScale_t raised = IOS_RenderScale_Resolve( 0, 0.5f, 0, 2000, 1000 );
