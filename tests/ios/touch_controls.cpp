@@ -274,20 +274,107 @@ BOOST_AUTO_TEST_CASE( capability_bits_style_counts_and_sp_progress )
 	BOOST_CHECK_EQUAL( TouchCaps_Pack( &facts, 1 ), 0 );
 }
 
-BOOST_AUTO_TEST_CASE( equipment_gate_preserves_restart_respawn_follow_and_ready )
+BOOST_AUTO_TEST_CASE( equipment_gate_preserves_basic_actions )
 {
-	for ( int scenario = 0; scenario < 4; ++scenario ) {
-		auto facts = Facts();
-		facts.equipmentAllowed = 0;
-		facts.legalStyleCount = facts.selectableForceCount = facts.ownedWeaponCount = 3;
-		facts.chatAvailable = 1;
-		for ( int mp : { 0, 1 } ) {
-			const auto v = TouchCaps_Visible( TouchCaps_Pack( &facts, mp ), mp );
-			BOOST_CHECK( v.menu && v.console && v.basic && v.sticks && v.pad );
-			BOOST_CHECK_EQUAL( v.chat, mp );
-			BOOST_CHECK( !v.saber && !v.style && !v.force && !v.forceCycle && !v.weapons );
-		}
+	auto facts = Facts();
+	facts.equipmentAllowed = 0;
+	facts.legalStyleCount = facts.selectableForceCount = facts.ownedWeaponCount = 3;
+	facts.chatAvailable = 1;
+	for ( int mp : { 0, 1 } ) {
+		const auto v = TouchCaps_Visible( TouchCaps_Pack( &facts, mp ), mp );
+		BOOST_CHECK( v.menu && v.console && v.basic && v.sticks && v.pad );
+		BOOST_CHECK_EQUAL( v.chat, mp );
+		BOOST_CHECK( !v.saber && !v.style && !v.force && !v.forceCycle && !v.weapons );
 	}
+}
+
+BOOST_AUTO_TEST_CASE( combined_batch_latches_source_at_send_and_uses_latest_touch )
+{
+	touchAxesState_t axes = {};
+	int engineAxes[4] = {};
+	const auto drain = [&]( const touchAxesBatch_t &batch ) {
+		if ( batch.send )
+			for ( int i = 0; i < 4; ++i ) engineAxes[i] = batch.values[i];
+	};
+	touchGestureState_t gestures;
+	TouchGesture_Reset( &gestures );
+	TouchGesture_Step( &gestures, Input( TOUCH_DOWN, 1, TOUCH_TARGET_AIM ) );
+	auto gesture = TouchGesture_Step( &gestures, Input( TOUCH_MOTION, 1, TOUCH_TARGET_AIM, 0, 100 ) );
+	axes.touch[0] = 32;
+	axes.touch[2] = gesture.lookX;
+	BOOST_CHECK_EQUAL( axes.lookTouch, 0 );
+	BOOST_CHECK_EQUAL( engineAxes[2], 0 );
+	auto batch = TouchAxes_Send( &axes );
+	BOOST_CHECK( batch.send );
+	BOOST_CHECK_EQUAL( batch.values[2], 127 );
+	BOOST_CHECK_EQUAL( axes.lookTouch, 1 );
+	drain( batch );
+	BOOST_CHECK_EQUAL( TouchAxes_NormalizeLook( engineAxes[2], axes.lookTouch, 2 ), 2 );
+	BOOST_TEST_MESSAGE( "touch: events -> pad poll -> touch(127,0) -> send(touch) -> drain -> joystick yaw=2" );
+	axes.pad[3] = -64;
+	BOOST_CHECK_EQUAL( axes.lookTouch, 1 );
+	batch = TouchAxes_Send( &axes );
+	BOOST_CHECK_EQUAL( batch.values[0], 32 );
+	BOOST_CHECK_EQUAL( batch.values[2], 0 );
+	BOOST_CHECK_EQUAL( batch.values[3], -64 );
+	BOOST_CHECK_EQUAL( axes.lookTouch, 0 );
+	drain( batch );
+	BOOST_CHECK_SMALL( TouchAxes_NormalizeLook( engineAxes[3], axes.lookTouch, 9 ) + 64.f / 127, 1e-6f );
+	BOOST_TEST_MESSAGE( "pad: poll(0,-64) -> touch held -> send(pad) -> drain -> joystick pitch=-64/127; touch move=32" );
+	axes.pad[3] = 0;
+	batch = TouchAxes_Send( &axes );
+	BOOST_CHECK_EQUAL( batch.values[2], 127 );
+	BOOST_CHECK_EQUAL( axes.lookTouch, 1 );
+	drain( batch );
+	gesture = TouchGesture_Step( &gestures, Input( TOUCH_UP ) );
+	axes.touch[0] = 0;
+	axes.touch[2] = gesture.lookX;
+	BOOST_CHECK_EQUAL( axes.lookTouch, 1 );
+	batch = TouchAxes_Send( &axes );
+	BOOST_CHECK( batch.send );
+	BOOST_CHECK_EQUAL( batch.values[2], 0 );
+	BOOST_CHECK_EQUAL( axes.lookTouch, 0 );
+	drain( batch );
+	BOOST_CHECK_EQUAL( TouchAxes_NormalizeLook( engineAxes[2], axes.lookTouch, 9 ), 0 );
+	BOOST_CHECK( !TouchAxes_Send( &axes ).send );
+	BOOST_TEST_MESSAGE( "zero: release -> touch(0,0) -> send(none) -> drain -> joystick yaw=0" );
+}
+
+BOOST_AUTO_TEST_CASE( same_frame_fire_tap_and_cinematic_reset_batch )
+{
+	touchAxesState_t axes = {};
+	touchGestureState_t gestures;
+	TouchGesture_Reset( &gestures );
+	const auto down = TouchGesture_Step( &gestures, Input( TOUCH_DOWN ) );
+	BOOST_REQUIRE_EQUAL( down.keyCount, 1 );
+	BOOST_CHECK_EQUAL( down.keys[0].down, 1 );
+	const auto moved = TouchGesture_Step( &gestures, Input( TOUCH_MOTION, 1, TOUCH_TARGET_FIRE, 0, 100 ) );
+	axes.touch[2] = moved.lookX;
+	const auto up = TouchGesture_Step( &gestures, Input( TOUCH_UP ) );
+	BOOST_REQUIRE_EQUAL( up.keyCount, 1 );
+	BOOST_CHECK_EQUAL( up.keys[0].down, 0 );
+	axes.touch[2] = up.lookX;
+	BOOST_CHECK_EQUAL( TouchAxes_Send( &axes ).values[2], 0 );
+	axes.pad[0] = 50;
+	axes.pad[2] = -80;
+	axes.touch[1] = 100;
+	axes.touch[3] = 90;
+	auto batch = TouchAxes_Send( &axes );
+	BOOST_CHECK_EQUAL( batch.values[0], 50 );
+	BOOST_CHECK_EQUAL( batch.values[1], 0 );
+	BOOST_CHECK_EQUAL( batch.values[2], -80 );
+	BOOST_CHECK_EQUAL( batch.values[3], 0 );
+	TouchAxes_Zero( &axes );
+	BOOST_CHECK_EQUAL( axes.lookTouch, 0 );
+	batch = TouchAxes_Send( &axes );
+	BOOST_CHECK( batch.send );
+	for ( int i = 0; i < 4; ++i ) {
+		BOOST_CHECK_EQUAL( batch.values[i], 0 );
+		BOOST_CHECK_EQUAL( axes.pad[i], 0 );
+		BOOST_CHECK_EQUAL( axes.touch[i], 0 );
+	}
+	BOOST_CHECK( !TouchAxes_Send( &axes ).send );
+	BOOST_CHECK_EQUAL( TouchGesture_Step( &gestures, Input( TOUCH_REFRESH ) ).lookX, 0 );
 }
 
 BOOST_AUTO_TEST_CASE( missing_bridge_grace_recovery_priority_and_epoch )

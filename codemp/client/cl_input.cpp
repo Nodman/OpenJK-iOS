@@ -26,6 +26,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "client.h"
 #include "cl_cgameapi.h"
 #include "cl_uiapi.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#include "sys/ios/ios_touch_math.h"
+#endif
 #ifndef _WIN32
 #include <cmath>
 #endif
@@ -987,6 +991,7 @@ void CL_JoystickEvent( int axis, int value, int time ) {
 #ifdef OPENJK_IOS
 static cvar_t *j_twinStick;
 static cvar_t *j_lookSpeed;
+static cvar_t *in_touchLookScale;
 #endif
 
 /*
@@ -1016,10 +1021,13 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 #ifdef OPENJK_IOS
 	if ( j_twinStick->integer ) {
 		float frameScale = 0.001f * cls.frametime * j_lookSpeed->value;
+		const qboolean touchLook = IN_GamepadTouchLookActive();
+		const float yaw = TouchAxes_NormalizeLook( cl.joystickAxis[AXIS_YAW], touchLook, in_touchLookScale->value );
+		const float pitch = TouchAxes_NormalizeLook( cl.joystickAxis[AXIS_PITCH], touchLook, in_touchLookScale->value );
 		cmd->rightmove = ClampChar( cmd->rightmove + cl.joystickAxis[AXIS_SIDE] );
 		cmd->forwardmove = ClampChar( cmd->forwardmove + cl.joystickAxis[AXIS_FORWARD] );
-		cl.viewangles[YAW] -= frameScale * cl_yawspeed->value * ( cl.joystickAxis[AXIS_YAW] / 127.0f );
-		cl.viewangles[PITCH] += frameScale * cl_pitchspeed->value * ( cl.joystickAxis[AXIS_PITCH] / 127.0f );
+		cl.viewangles[YAW] -= frameScale * cl_yawspeed->value * yaw;
+		cl.viewangles[PITCH] += frameScale * cl_pitchspeed->value * pitch;
 		return;
 	}
 #endif
@@ -1808,6 +1816,7 @@ void CL_InitInput( void ) {
 #ifdef OPENJK_IOS
 	j_twinStick = Cvar_Get( "j_twinStick", "0", CVAR_ARCHIVE_ND, "Left stick moves, right stick looks" );
 	j_lookSpeed = Cvar_Get( "j_lookSpeed", "1.5", CVAR_ARCHIVE_ND, "Gamepad look speed scale" );
+	in_touchLookScale = Cvar_Get( "in_touchLookScale", "1.0", CVAR_ARCHIVE );
 #endif
 }
 

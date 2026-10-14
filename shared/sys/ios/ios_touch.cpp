@@ -1,28 +1,27 @@
 #include "sys_ios.h"
 #include "ios_touch_layout.h"
+#include "ios_touch_state.h"
 #include "qcommon/qcommon.h"
 #include "sys/sys_local.h"
 #include "client/client.h"
 #include <SDL.h>
 
-enum { ROLE_NONE, ROLE_STICK, ROLE_LOOK, ROLE_BUTTON, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP, ROLE_IGNORED };
+enum { ROLE_NONE, ROLE_GAMEPLAY, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP };
 #define MAX_TOUCH_FINGERS 10
-#define STICK_RADIUS_FRAC 0.12f
 #define CONSOLE_HOLD_MS 500
-
-void IN_GamepadSetTouchMove( int side, int fwd );	// ios_gamepad.cpp sends the combined axes
 
 typedef struct {
 	SDL_FingerID id;
 	int role;
 	int button;
-	float ox, oy, x, y, remX, remY;
+	float ox, oy, x, y;
 	Uint32 downTime;
 	qboolean cancelled, longPressed;
 } touchFinger_t;
 
 static SDL_Window *touchWindow;
 static touchFinger_t fingers[MAX_TOUCH_FINGERS];
+static touchGestureState_t gestures = { {}, -1, -1 };
 static touchRect_t rects[TB_COUNT];
 static int viewW, viewH;
 static float safeL, safeT, safeR, safeB;
@@ -33,7 +32,7 @@ static qboolean layoutReady;
 static qboolean lastUIMode, lastHidden, lastCinematic;
 static int softKeyboardTarget;
 static qboolean lastHwKeyboard, lastTextDemand;
-static cvar_t *in_touchControls, *in_touchLookScale;
+static cvar_t *in_touchControls;
 
 static qboolean IN_TouchHidden( void ) {
 	return ( in_touchControls->integer == 0 || ( in_touchControls->integer == 1 &&
@@ -87,16 +86,32 @@ static unsigned int IN_TouchVisibleButtons( void ) {
 	return visible;
 }
 
+static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, float x, float y ) {
+	touchGestureInput_t input = {};
+	input.event = event;
+	input.finger = id;
+	input.target = target;
+	input.button = button;
+	input.x = x;
+	input.y = y;
+	input.radius = IOS_TOUCH_STICK_RADIUS * touchUnit;
+	input.slop = TouchLayout_FireSlop( touchUnit, pixelsPerPoint );
+	input.visibleButtons = IN_TouchVisibleButtons();
+	input.moveEnabled = input.lookEnabled = layoutReady && !lastHidden && !CL_TouchUIMode() && !CL_TouchCinematic();
+	const touchGestureActions_t actions = TouchGesture_Step( &gestures, input );
+	for ( int i = 0; i < actions.keyCount; ++i )
+		Sys_QueEvent( 0, SE_KEY, IN_TouchButtonKey( actions.keys[i].button ), actions.keys[i].down ? qtrue : qfalse, 0, NULL );
+	IN_GamepadSetTouchMove( actions.moveX, -actions.moveY );
+	IN_GamepadSetTouchLook( actions.lookX, actions.lookY );
+}
+
 static void IN_TouchRelease( touchFinger_t *f ) {
 	switch ( f->role ) {
-	case ROLE_BUTTON:
-		Sys_QueEvent( 0, SE_KEY, IN_TouchButtonKey( f->button ), qfalse, 0, NULL );
+	case ROLE_GAMEPLAY:
+		IN_TouchStep( TOUCH_CANCEL, f->id, TOUCH_TARGET_IGNORE, 0, f->x, f->y );
 		break;
 	case ROLE_UITAP:
 		Sys_QueEvent( 0, SE_KEY, A_MOUSE1, qfalse, 0, NULL );
-		break;
-	case ROLE_STICK:
-		IN_GamepadSetTouchMove( 0, 0 );
 		break;
 	default:
 		break;
@@ -107,7 +122,8 @@ static void IN_TouchRelease( touchFinger_t *f ) {
 void IN_TouchReleaseAll( void ) {
 	for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ )
 		IN_TouchRelease( &fingers[i] );
-	IN_GamepadSetTouchMove( 0, 0 );
+	IN_TouchStep( TOUCH_CANCEL_ALL, 0, TOUCH_TARGET_IGNORE, 0, 0, 0 );
+	IN_GamepadSendAxes();
 }
 
 static void IN_TouchSyncMode( void ) {
@@ -153,10 +169,10 @@ static void IN_TouchTextInput( void ) {
 
 void IN_TouchInit( SDL_Window *window ) {
 	in_touchControls = Cvar_Get( "in_touchControls", "1", CVAR_ARCHIVE );
-	in_touchLookScale = Cvar_Get( "in_touchLookScale", "1.0", CVAR_ARCHIVE );
 	IN_TouchReleaseAll();	// in_restart calls IN_Init without IN_Shutdown
 	touchWindow = window;
 	memset( fingers, 0, sizeof( fingers ) );
+	TouchGesture_Reset( &gestures );
 	viewW = viewH = 0;
 	pixelsPerPoint = touchUnit = 0;
 	layoutReady = qfalse;
@@ -182,8 +198,8 @@ static touchFinger_t *IN_TouchFind( SDL_FingerID id ) {
 }
 
 static qboolean IN_TouchButtonHeld( int button ) {
-	for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ ) {
-		if ( fingers[i].role == ROLE_BUTTON && fingers[i].button == button )
+	for ( int i = 0; i < IOS_TOUCH_GESTURE_FINGERS; ++i ) {
+		if ( TouchGesture_IsButton( gestures.fingers[i].role ) && gestures.fingers[i].button == button )
 			return qtrue;
 	}
 	return qfalse;
@@ -256,23 +272,19 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 	} else {
 		int hit = TouchLayout_Hit( rects, x, y, IN_TouchVisibleButtons() );
 		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
-		f->role = ROLE_IGNORED;
-		if ( hit >= 0 ) {
-			if ( !IN_TouchButtonHeld( hit ) ) {
-				Sys_QueEvent( 0, SE_KEY, IN_TouchButtonKey( hit ), qtrue, 0, NULL );
-				f->role = ROLE_BUTTON;
-				f->button = hit;
-			}
-		} else if ( zone == TOUCH_ZONE_MOVE && !IN_TouchHasRole( ROLE_STICK ) ) {
-			f->role = ROLE_STICK;
-		} else if ( zone == TOUCH_ZONE_AIM && !IN_TouchHasRole( ROLE_LOOK ) ) {
-			f->role = ROLE_LOOK;
-		}
+		int target = TOUCH_TARGET_IGNORE;
+		if ( hit >= 0 )
+			target = hit == TB_ATTACK || hit == TB_ALTATTACK ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
+		else if ( zone == TOUCH_ZONE_MOVE )
+			target = TOUCH_TARGET_MOVE;
+		else if ( zone == TOUCH_ZONE_AIM )
+			target = TOUCH_TARGET_AIM;
+		f->role = ROLE_GAMEPLAY;
+		IN_TouchStep( TOUCH_DOWN, tf->fingerId, target, hit, x, y );
 	}
 	f->id = tf->fingerId;
 	f->ox = f->x = x;
 	f->oy = f->y = y;
-	f->remX = f->remY = 0.0f;
 }
 
 static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
@@ -293,14 +305,8 @@ static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
 		int vx, vy;
 		TouchLayout_ToVirtual( &touchLayout, tf->x, tf->y, &vx, &vy );
 		Sys_QueEvent( 0, SE_MOUSE_ABS, vx, vy, 0, NULL );
-	} else if ( f->role == ROLE_LOOK ) {
-		float dx = tf->dx * viewW * in_touchLookScale->value + f->remX;
-		float dy = tf->dy * viewH * in_touchLookScale->value + f->remY;
-		int ix = (int)dx, iy = (int)dy;
-		f->remX = dx - ix;
-		f->remY = dy - iy;
-		if ( ix || iy )
-			Sys_QueEvent( 0, SE_MOUSE, ix, iy, 0, NULL );
+	} else if ( f->role == ROLE_GAMEPLAY ) {
+		IN_TouchStep( TOUCH_MOTION, f->id, TOUCH_TARGET_IGNORE, 0, f->x, f->y );
 	}
 }
 
@@ -358,12 +364,8 @@ void IN_TouchFrame( void ) {
 			IN_TouchKeyboardAction();
 			fingers[i].longPressed = qtrue;
 		}
-		if ( fingers[i].role == ROLE_STICK ) {
-			float sx, sy;
-			TouchLayout_Stick( fingers[i].ox, fingers[i].oy, fingers[i].x, fingers[i].y, STICK_RADIUS_FRAC * touchUnit, &sx, &sy );
-			IN_GamepadSetTouchMove( (int)( sx * 127 ), (int)( -sy * 127 ) );
-		}
 	}
+	IN_TouchStep( TOUCH_REFRESH, 0, TOUCH_TARGET_IGNORE, 0, 0, 0 );
 }
 
 static void IN_TouchAddItem( touchDrawItem_t *items, int *n, int maxItems, float x, float y, float w, float h, const char *label, int pressed ) {
@@ -395,9 +397,9 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	for ( int b = 0; b < TB_COUNT; b++ ) {
 		if ( !( visible & ( 1u << b ) ) )
 			continue;
-		int pressed = 0;
+		int pressed = IN_TouchButtonHeld( b );
 		for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ ) {
-			if ( ( fingers[i].role == ROLE_BUTTON || fingers[i].role == ROLE_CONSOLE ) && fingers[i].button == b )
+			if ( fingers[i].role == ROLE_CONSOLE && fingers[i].button == b )
 				pressed = 1;
 		}
 		IN_TouchAddItem( items, &n, maxItems, rects[b].x, rects[b].y, rects[b].w, rects[b].h, touchButtonDefs[b].label, pressed );
@@ -405,15 +407,13 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	if ( conOnly )
 		return n;
 
-	for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ ) {
-		if ( fingers[i].role != ROLE_STICK )
-			continue;
-		float r = STICK_RADIUS_FRAC * touchUnit, sx, sy;
-		TouchLayout_Stick( fingers[i].ox, fingers[i].oy, fingers[i].x, fingers[i].y, r, &sx, &sy );
-		float kx = fingers[i].ox + sx * r, ky = fingers[i].oy + sy * r;
-		IN_TouchAddItem( items, &n, maxItems, fingers[i].ox - r, fingers[i].oy - r, 2 * r, 2 * r, NULL, 0 );
+	if ( gestures.moveOwner >= 0 ) {
+		const touchGestureFinger_t *f = &gestures.fingers[gestures.moveOwner];
+		float r = f->radius, sx, sy;
+		TouchStick_Clamp( f->x - f->ox, f->y - f->oy, r, &sx, &sy );
+		float kx = f->ox + sx * r, ky = f->oy + sy * r;
+		IN_TouchAddItem( items, &n, maxItems, f->ox - r, f->oy - r, 2 * r, 2 * r, NULL, 0 );
 		IN_TouchAddItem( items, &n, maxItems, kx - 0.3f * r, ky - 0.3f * r, 0.6f * r, 0.6f * r, NULL, 1 );
-		break;
 	}
 	return n;
 }

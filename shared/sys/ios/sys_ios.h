@@ -49,6 +49,10 @@ typedef struct { float x, y, w, h; const char *label; int pressed; } touchDrawIt
 int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems );
 
 // ios_gamepad.cpp (P4)
+void IN_GamepadSetTouchMove( int side, int fwd );
+void IN_GamepadSetTouchLook( int yaw, int pitch );
+qboolean IN_GamepadTouchLookActive( void );
+void IN_GamepadSendAxes( void );
 void IN_GamepadZeroAxes( void );
 void IN_GamepadInit( void );
 void IN_GamepadShutdown( void );

@@ -1,4 +1,5 @@
 #include "sys_ios.h"
+#include "ios_touch_math.h"
 #include "qcommon/qcommon.h"
 #include "sys/sys_local.h"
 #include "client/client.h"
@@ -9,9 +10,7 @@ static SDL_GameController *pad;
 static SDL_JoystickID padId = -1;
 static int heldKey[SDL_CONTROLLER_BUTTON_MAX];	// key sent on press, 0 = not held
 static qboolean triggerHeld[2];
-static int padAxis[4];	// side, forward, yaw, pitch; 0 in UI mode or without a pad
-static int touchSide, touchFwd;
-static qboolean axesActive;	// last combined value sent was non-zero
+static touchAxesState_t axesState;
 static float cursorX = 320.0f, cursorY = 240.0f;
 static qboolean lastUIMode;
 static cvar_t *j_deadzone, *j_lookExponent;
@@ -24,31 +23,33 @@ static void IN_GamepadOpen( int index ) {
 	Com_Printf( "Gamepad opened: %s\n", SDL_GameControllerName( pad ) );
 }
 
-// The touch stick reports here, so one place owns the engine's move/look axes.
 void IN_GamepadSetTouchMove( int side, int fwd ) {
-	touchSide = side;
-	touchFwd = fwd;
+	axesState.touch[0] = side;
+	axesState.touch[1] = fwd;
+}
+
+void IN_GamepadSetTouchLook( int yaw, int pitch ) {
+	axesState.touch[2] = yaw;
+	axesState.touch[3] = pitch;
+}
+
+qboolean IN_GamepadTouchLookActive( void ) {
+	return axesState.lookTouch ? qtrue : qfalse;
 }
 
 // Resent every frame while non-zero: CL_ClearState zeroes the engine axes on a level change.
-static void IN_GamepadSendAxes( void ) {
+void IN_GamepadSendAxes( void ) {
 	static const int axes[4] = { AXIS_SIDE, AXIS_FORWARD, AXIS_YAW, AXIS_PITCH };
-	qboolean padMove = ( padAxis[0] || padAxis[1] ) ? qtrue : qfalse;
-	int v[4] = { padMove ? padAxis[0] : touchSide, padMove ? padAxis[1] : touchFwd, padAxis[2], padAxis[3] };
-	qboolean active = ( v[0] || v[1] || v[2] || v[3] ) ? qtrue : qfalse;
-	if ( !active && !axesActive )
+	const touchAxesBatch_t batch = TouchAxes_Send( &axesState );
+	if ( !batch.send )
 		return;
-	for ( int i = 0; i < 4; i++ )
-		Sys_QueEvent( 0, SE_JOYSTICK_AXIS, axes[i], v[i], 0, NULL );
-	axesActive = active;
+	for ( int i = 0; i < 4; ++i )
+		Sys_QueEvent( 0, SE_JOYSTICK_AXIS, axes[i], batch.values[i], 0, NULL );
 }
 
 void IN_GamepadZeroAxes( void ) {
-	static const int axes[4] = { AXIS_SIDE, AXIS_FORWARD, AXIS_YAW, AXIS_PITCH };
-	touchSide = touchFwd = 0;
-	for ( int i = 0; i < 4; i++ )
-		Sys_QueEvent( 0, SE_JOYSTICK_AXIS, axes[i], 0, 0, NULL );
-	axesActive = qfalse;
+	TouchAxes_Zero( &axesState );
+	IN_GamepadSendAxes();
 }
 
 void IN_GamepadReleaseAll( void ) {
@@ -64,7 +65,8 @@ void IN_GamepadReleaseAll( void ) {
 			triggerHeld[i] = qfalse;
 		}
 	}
-	memset( padAxis, 0, sizeof( padAxis ) );
+	memset( axesState.pad, 0, sizeof( axesState.pad ) );
+	IN_GamepadSendAxes();
 }
 
 static void IN_GamepadClose( void ) {
@@ -93,6 +95,7 @@ void IN_GamepadInit( void ) {
 
 void IN_GamepadShutdown( void ) {
 	IN_GamepadClose();
+	IN_GamepadZeroAxes();
 	if ( SDL_WasInit( SDL_INIT_GAMECONTROLLER ) )
 		SDL_QuitSubSystem( SDL_INIT_GAMECONTROLLER );
 }
@@ -184,7 +187,7 @@ static void IN_GamepadPoll( qboolean uiMode ) {
 
 	if ( uiMode ) {
 		// the left stick drives the cursor here, so it must not also move the player
-		memset( padAxis, 0, sizeof( padAxis ) );
+		memset( axesState.pad, 0, sizeof( axesState.pad ) );
 		if ( lx != 0.0f || ly != 0.0f ) {
 			float step = 8.0f * cls.frametime / 16.0f;
 			cursorX = Com_Clamp( 0.0f, 640.0f, cursorX + lx * step );
@@ -194,10 +197,10 @@ static void IN_GamepadPoll( qboolean uiMode ) {
 		return;
 	}
 
-	padAxis[0] = (int)( lx * 127 );
-	padAxis[1] = (int)( -ly * 127 );
-	padAxis[2] = (int)( rx * 127 );
-	padAxis[3] = (int)( ry * 127 );
+	axesState.pad[0] = (int)( lx * 127 );
+	axesState.pad[1] = (int)( -ly * 127 );
+	axesState.pad[2] = (int)( rx * 127 );
+	axesState.pad[3] = (int)( ry * 127 );
 }
 
 void IN_GamepadFrame( void ) {
@@ -206,7 +209,10 @@ void IN_GamepadFrame( void ) {
 		IN_GamepadReleaseAll();
 		lastUIMode = uiMode;
 	}
+	if ( CL_TouchCinematic() ) {
+		IN_GamepadReleaseAll();
+		return;
+	}
 	if ( pad )
 		IN_GamepadPoll( uiMode );
-	IN_GamepadSendAxes();
 }

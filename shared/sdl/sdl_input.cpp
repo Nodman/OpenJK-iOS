@@ -1187,9 +1187,7 @@ static void IN_JoyMove( void )
 void IN_Frame (void) {
 	qboolean loading;
 
-#ifdef OPENJK_IOS
-	IN_GamepadFrame( );
-#else
+#ifndef OPENJK_IOS
 	IN_JoyMove( );
 #endif
 
@@ -1216,7 +1214,9 @@ void IN_Frame (void) {
 
 	IN_ProcessEvents( );
 #ifdef OPENJK_IOS
+	IN_GamepadFrame( );
 	IN_TouchFrame( );
+	IN_GamepadSendAxes( );
 #endif
 }
 

@@ -55,3 +55,39 @@ IOS_TOUCH_INLINE touchAxisPair_t TouchAxes_Select( int padX, int padY, int touch
 	pair.touch = !pad && ( touchX != 0 || touchY != 0 );
 	return pair;
 }
+
+typedef struct {
+	int pad[4], touch[4];
+	int active, lookTouch, forceSend;
+} touchAxesState_t;
+
+typedef struct {
+	int values[4];
+	int send;
+} touchAxesBatch_t;
+
+IOS_TOUCH_INLINE touchAxesBatch_t TouchAxes_Send( touchAxesState_t *state )
+{
+	const touchAxisPair_t move = TouchAxes_Select( state->pad[0], state->pad[1], state->touch[0], state->touch[1] );
+	const touchAxisPair_t look = TouchAxes_Select( state->pad[2], state->pad[3], state->touch[2], state->touch[3] );
+	touchAxesBatch_t batch = { { move.x, move.y, look.x, look.y }, 0 };
+	const int active = move.x || move.y || look.x || look.y;
+	batch.send = active || state->active || state->forceSend;
+	state->lookTouch = look.touch;
+	state->active = active;
+	state->forceSend = 0;
+	return batch;
+}
+
+IOS_TOUCH_INLINE void TouchAxes_Zero( touchAxesState_t *state )
+{
+	int i;
+	for ( i = 0; i < 4; ++i ) state->pad[i] = state->touch[i] = 0;
+	state->active = state->lookTouch = 0;
+	state->forceSend = 1;
+}
+
+IOS_TOUCH_INLINE float TouchAxes_NormalizeLook( int value, int touch, float scale )
+{
+	return ( value / 127.0f ) * ( touch ? scale : 1.0f );
+}
