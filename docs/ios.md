@@ -15,7 +15,7 @@
 - A11 and older, including A10 / A10X iPads, are outside the supported device list.
 - ProMotion screens: iPhone 13 Pro through 17 Pro Max, iPhone 17, iPhone Air, and iPad Pro models from 2018 or later. Screen refresh support does not guarantee the game's frame rate.
 - The default is 60 Hz. The GL renderer path does not provide 120 Hz on iPhone. On the measured iPhone 17 Pro Max with iOS 27.0.1, `com_maxfps 120` is accepted but shows 60 Hz.
-- ProMotion iPads can show 120 Hz. This was measured on the 2018 iPad Pro with iPadOS 26.5.
+- ProMotion iPads can show 120 Hz. Measured on the 2018 iPad Pro with iPadOS 26.5 and on the M4 iPad Pro with iPadOS 27.0.1 (120.0 frames per second on the display). The 60 Hz limit is an iPhone policy on the OpenGL ES layer, not an iOS version issue.
 - The 2018 A12X iPad Pro passed a 20-minute MP run at 60 Hz and auto scale. Its median window p95 frame interval was 16.72 ms.
 - Memory was tested on a 4 GB iPad with `r_picmip 1` and `r_texturebits 32`. The MP map `mp/ctf1` peaked at 277 MB; the SP map `taspir2` peaked at 394 MB and loaded in 2.7 s. A real 3 GB device was not tested.
 
