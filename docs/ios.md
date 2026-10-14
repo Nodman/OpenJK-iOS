@@ -54,8 +54,9 @@
 
 - Touch: use the floating stick on the left to move. Drag on the right to look. Tap or drag in menus to use the cursor.
 - **MENU** sends Escape and opens the game menu.
-- Tap **CON** in a map or menu to open the console and keyboard. Tap it again to close both. Closing the console another way also closes its soft keyboard.
-- Hold **CON** for at least 500 ms, keeping your finger on the button, to toggle the soft keyboard for menu text fields or the open console; a console hold does nothing with a hardware keyboard. Leaving the button cancels the gesture. All touch controls, including CON, hide during full-screen cinematics and SP in-game videos. Tap anywhere to skip a video through the normal Escape path.
+- Tap the console button in a map or menu to open the console and keyboard. Tap it again to close both. Closing the console another way also closes its soft keyboard.
+- Hold the console button for at least 500 ms, keeping your finger on the button, to toggle the soft keyboard for menu text fields or the open console; a console hold does nothing with a hardware keyboard. Leaving the button cancels the gesture. All touch controls hide during full-screen cinematics and SP in-game videos. Tap anywhere to skip a video through the normal Escape path.
+- Pad sends TAB: datapad in SP, held scoreboard in MP. Chat sends Y in MP. Both use the game's defaults and your key rebinds.
 - Touch button binds:
 
 | Label | Key | Default bind | Action |
@@ -70,6 +71,9 @@
 | STYLE | `AUX23` | `saberAttackCycle` | Change saber style |
 | <W | `AUX24` | `weapprev` | Previous weapon |
 | W> | `AUX25` | `weapnext` | Next weapon |
+| SABER | `AUX26` | `weapon 1` | Select saber slot |
+| PAD | TAB | `datapad` (SP), `+scores` (MP) | Datapad / held scoreboard |
+| CHAT | Y | `messagemode` (MP) | Chat |
 
 - Gamepad: left stick moves; right stick looks. In menus, left stick moves the cursor, A / Cross selects, and B / Circle goes back.
 - SDL button `n` maps to `A_JOY0+n`. Console bind names are `JOY0`, `JOY1`, and so on. Start sends `A_ESCAPE`. LT sends `A_JOY21`; RT sends `A_JOY22`.
@@ -93,7 +97,7 @@
 | Start / Options | Escape | — | Menu / back |
 
 - Keep `in_joystick 1` for the touch stick and pad axes. Keep `j_twinStick 1` for pad look.
-- iPad keyboard and mouse use the normal key and mouse binds. Text input stays active for the console unless CON hid its soft keyboard, MP chat, menus with a hardware keyboard, and menus where CON requested the soft keyboard. It is off in gameplay and cinematics. Keyboard disconnect hands active text entry to the soft keyboard. Input and video restarts restore this state.
+- iPad keyboard and mouse use the normal key and mouse binds. Text input stays active for the console unless the console button hid its soft keyboard, MP chat, menus with a hardware keyboard, and menus where the console button requested the soft keyboard. It is off in gameplay and cinematics. Keyboard disconnect hands active text entry to the soft keyboard. Input and video restarts restore this state.
 - Rebind in the console. For example, `bind AUX16 +altattack` changes ATK. Use the same command with a `JOY` key to change a pad bind.
 - Real Xbox / DualSense, Smart Keyboard, and mouse checks remain release checks. The recorded touch checks used synthetic input.
 
@@ -108,7 +112,7 @@
 - Video → `120 Hz (ProMotion)` stages `com_maxfps` 60 / 120 on 120 Hz panels. On is the default on these panels; other panels default to 60. Auto resolution previews the staged choice. iPhone on GL still shows 60 Hz until P10. Console fallback: `seta com_maxfps 60|120` (choose one value), then `vid_restart`.
 - Existing saved configs keep their resolution and FPS values. To adopt the new defaults on a 120 Hz panel, enter `seta r_renderScale 1` and `seta com_maxfps 120`, then `vid_restart`.
 - Video → `FPS counter` offers Off / On. Apply shows a small gold frame-rate readout at the top right inside the safe area in a map. Off is the default.
-- `in_touchControls 0`: hide touch controls except CON. `1`: default; hide them when a pad is connected, or a hardware keyboard and mouse/trackpad are both connected. A keyboard alone keeps touch look and buttons. `2`: keep them visible with these devices. Menus and the console show only CON. Full-screen cinematics and SP in-game videos hide all controls in every mode; camera cutscenes still show them.
+- `in_touchControls 0`: hide touch controls except the console button. `1`: default; hide them when a pad is connected, or a hardware keyboard and mouse/trackpad are both connected. A keyboard alone keeps touch look and buttons. `2`: keep them visible with these devices. Menus and the console show only the console button. Full-screen cinematics and SP in-game videos hide all controls in every mode; camera cutscenes still show them.
 - `in_touchLookScale 1.0`: default touch look scale. Higher values turn faster.
 - `j_lookSpeed 1.5`: default pad look scale. Higher values turn faster.
 - `j_deadzone 0.15`: default stick dead zone. Raise it if a stick drifts.

@@ -5,9 +5,9 @@
 #include "client/client.h"
 #include <SDL.h>
 
-enum { ROLE_NONE, ROLE_STICK, ROLE_LOOK, ROLE_BUTTON, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP };
+enum { ROLE_NONE, ROLE_STICK, ROLE_LOOK, ROLE_BUTTON, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP, ROLE_IGNORED };
 #define MAX_TOUCH_FINGERS 10
-#define STICK_RADIUS_FRAC 0.12f	// of the safe height
+#define STICK_RADIUS_FRAC 0.12f
 #define CONSOLE_HOLD_MS 500
 
 void IN_GamepadSetTouchMove( int side, int fwd );	// ios_gamepad.cpp sends the combined axes
@@ -28,6 +28,8 @@ static int viewW, viewH;
 static float safeL, safeT, safeR, safeB;
 static aspectLayout_t touchLayout;
 static float safeH;
+static float pixelsPerPoint, touchUnit;
+static qboolean layoutReady;
 static qboolean lastUIMode, lastHidden, lastCinematic;
 static int softKeyboardTarget;
 static qboolean lastHwKeyboard, lastTextDemand;
@@ -48,11 +50,15 @@ static void IN_TouchUpdateLayout( void ) {
 	SDL_GL_GetDrawableSize( touchWindow, &w, &h );
 	float l, t, r, b;
 	Sys_IOS_GetSafeAreaPixels( touchWindow, &l, &t, &r, &b );
+	float pointW, pointH;
+	Sys_IOS_GetViewPointSize( touchWindow, &pointW, &pointH );
+	const float p = TouchLayout_PixelsPerPoint( (float)w, (float)h, pointW, pointH );
 	touchLayout = AspectLayout_Build( w, h, (int)Cvar_VariableValue( "r_aspectCorrect" ) != 0,
 		Cvar_VariableValue( "r_aspectCorrectMinRatio" ), (int)l, (int)t, (int)r, (int)b );
-	if ( w == viewW && h == viewH && l == safeL && t == safeT && r == safeR && b == safeB )
+	if ( w == viewW && h == viewH && l == safeL && t == safeT && r == safeR && b == safeB && p == pixelsPerPoint )
 		return;
-	TouchLayout_Build( (float)w, (float)h, l, t, r, b, rects );
+	IN_TouchReleaseAll();
+	TouchLayout_Build( (float)w, (float)h, l, t, r, b, p, rects );
 	viewW = w;
 	viewH = h;
 	safeL = l;
@@ -60,10 +66,25 @@ static void IN_TouchUpdateLayout( void ) {
 	safeR = r;
 	safeB = b;
 	safeH = h - t - b;
+	pixelsPerPoint = p;
+	touchUnit = TouchLayout_Unit( w - l - r, safeH, p );
+	layoutReady = touchUnit > 0 ? qtrue : qfalse;
 }
 
 static int IN_TouchButtonKey( int button ) {
-	return button == TB_MENU ? A_ESCAPE : A_AUX16 + button;
+	return TouchLayout_Key( button, A_AUX16, A_ESCAPE, A_TAB );
+}
+
+static unsigned int IN_TouchVisibleButtons( void ) {
+	if ( CL_TouchCinematic() )
+		return 0;
+	if ( lastHidden || CL_TouchUIMode() )
+		return 1u << TB_CONSOLE;
+	unsigned int visible = IOS_TOUCH_ALL_BUTTONS;
+#ifdef _JK2EXE
+	visible &= ~( 1u << TB_CHAT );
+#endif
+	return visible;
 }
 
 static void IN_TouchRelease( touchFinger_t *f ) {
@@ -137,6 +158,8 @@ void IN_TouchInit( SDL_Window *window ) {
 	touchWindow = window;
 	memset( fingers, 0, sizeof( fingers ) );
 	viewW = viewH = 0;
+	pixelsPerPoint = touchUnit = 0;
+	layoutReady = qfalse;
 	lastUIMode = CL_TouchUIMode();
 	lastHidden = IN_TouchHidden();
 	lastCinematic = CL_TouchCinematic();
@@ -190,6 +213,8 @@ static void IN_TouchKeyboardAction( void ) {
 }
 
 static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
+	if ( !layoutReady )
+		return;
 	float x = tf->x * viewW, y = tf->y * viewH;
 
 	touchFinger_t *f = NULL;
@@ -229,16 +254,18 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 	} else if ( lastHidden ) {
 		return;
 	} else {
-		int hit = TouchLayout_Hit( rects, x, y, 0 );
+		int hit = TouchLayout_Hit( rects, x, y, IN_TouchVisibleButtons() );
+		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
+		f->role = ROLE_IGNORED;
 		if ( hit >= 0 ) {
-			if ( IN_TouchButtonHeld( hit ) )
-				return;	// one finger owns a button, so lifting a second one sends no early key-up
-			Sys_QueEvent( 0, SE_KEY, IN_TouchButtonKey( hit ), qtrue, 0, NULL );
-			f->role = ROLE_BUTTON;
-			f->button = hit;
-		} else if ( x < viewW / 2 && !IN_TouchHasRole( ROLE_STICK ) ) {
+			if ( !IN_TouchButtonHeld( hit ) ) {
+				Sys_QueEvent( 0, SE_KEY, IN_TouchButtonKey( hit ), qtrue, 0, NULL );
+				f->role = ROLE_BUTTON;
+				f->button = hit;
+			}
+		} else if ( zone == TOUCH_ZONE_MOVE && !IN_TouchHasRole( ROLE_STICK ) ) {
 			f->role = ROLE_STICK;
-		} else {
+		} else if ( zone == TOUCH_ZONE_AIM && !IN_TouchHasRole( ROLE_LOOK ) ) {
 			f->role = ROLE_LOOK;
 		}
 	}
@@ -333,7 +360,7 @@ void IN_TouchFrame( void ) {
 		}
 		if ( fingers[i].role == ROLE_STICK ) {
 			float sx, sy;
-			TouchLayout_Stick( fingers[i].ox, fingers[i].oy, fingers[i].x, fingers[i].y, STICK_RADIUS_FRAC * safeH, &sx, &sy );
+			TouchLayout_Stick( fingers[i].ox, fingers[i].oy, fingers[i].x, fingers[i].y, STICK_RADIUS_FRAC * touchUnit, &sx, &sy );
 			IN_GamepadSetTouchMove( (int)( sx * 127 ), (int)( -sy * 127 ) );
 		}
 	}
@@ -359,13 +386,14 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	IN_TouchSyncMode();
 	if ( CL_TouchCinematic() )
 		return 0;
-	if ( viewW <= 0 || viewH <= 0 )
+	if ( !layoutReady )
 		return 0;
 
 	int n = 0;
 	qboolean conOnly = ( lastHidden || CL_TouchUIMode() ) ? qtrue : qfalse;
+	const unsigned int visible = IN_TouchVisibleButtons();
 	for ( int b = 0; b < TB_COUNT; b++ ) {
-		if ( conOnly && b != TB_CONSOLE )
+		if ( !( visible & ( 1u << b ) ) )
 			continue;
 		int pressed = 0;
 		for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ ) {
@@ -380,7 +408,7 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ ) {
 		if ( fingers[i].role != ROLE_STICK )
 			continue;
-		float r = STICK_RADIUS_FRAC * safeH, sx, sy;
+		float r = STICK_RADIUS_FRAC * touchUnit, sx, sy;
 		TouchLayout_Stick( fingers[i].ox, fingers[i].oy, fingers[i].x, fingers[i].y, r, &sx, &sy );
 		float kx = fingers[i].ox + sx * r, ky = fingers[i].oy + sy * r;
 		IN_TouchAddItem( items, &n, maxItems, fingers[i].ox - r, fingers[i].oy - r, 2 * r, 2 * r, NULL, 0 );

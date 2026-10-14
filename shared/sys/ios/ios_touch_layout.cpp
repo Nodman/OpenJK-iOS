@@ -4,35 +4,46 @@
 #include <math.h>
 
 const touchButtonDef_t touchButtonDefs[TB_COUNT] = {
-	{ "ATK",   0.90f, 0.72f, 0.20f, 1 },
-	{ "ALT",   0.78f, 0.82f, 0.15f, 1 },
-	{ "JUMP",  0.90f, 0.45f, 0.15f, 1 },
-	{ "DUCK",  0.78f, 0.58f, 0.13f, 1 },
-	{ "USE",   0.66f, 0.82f, 0.13f, 1 },
-	{ "FORCE", 0.78f, 0.33f, 0.13f, 1 },
-	{ "F>>",   0.66f, 0.33f, 0.11f, 1 },
-	{ "STYLE", 0.66f, 0.58f, 0.11f, 1 },
-	{ "<W",    0.40f, 0.10f, 0.11f, 1 },
-	{ "W>",    0.52f, 0.10f, 0.11f, 1 },
-	{ "MENU",  0.05f, 0.08f, 0.11f, 1 },
-	{ "CON",   IOS_TOUCH_CONSOLE_CX, IOS_TOUCH_CONSOLE_CY, IOS_TOUCH_CONSOLE_SIZE, 0 }
+	{ "ATK",   TOUCH_ANCHOR_BR, .413f, .590f, .14f, TG_ATTACK, 16 },
+	{ "ALT",   TOUCH_ANCHOR_BR, .510f, .438f, .14f, TG_ALTATTACK, 17 },
+	{ "JUMP",  TOUCH_ANCHOR_BR, .246f, .659f, .14f, TG_JUMP, 18 },
+	{ "DUCK",  TOUCH_ANCHOR_BR, .40f, .08f, .12f, TG_CROUCH, 19 },
+	{ "USE",   TOUCH_ANCHOR_BL, .12f, .08f, .12f, TG_USE, 20 },
+	{ "FORCE", TOUCH_ANCHOR_TR, .49f, .26f, .12f, TG_FORCE, 21 },
+	{ "F>>",   TOUCH_ANCHOR_TR, .65f, .26f, .12f, TG_FORCENEXT, 22 },
+	{ "STYLE", TOUCH_ANCHOR_BR, .12f, .08f, .12f, TG_STYLE, 23 },
+	{ "<W",    TOUCH_ANCHOR_TR, .65f, .10f, .12f, TG_WEAPPREV, 24 },
+	{ "W>",    TOUCH_ANCHOR_TR, .33f, .10f, .12f, TG_WEAPNEXT, 25 },
+	{ "MENU",  TOUCH_ANCHOR_TL, .12f, .10f, .12f, TG_MENU, TOUCH_KEY_ESCAPE },
+	{ 0,    TOUCH_ANCHOR_TL, IOS_TOUCH_CONSOLE_CX, IOS_TOUCH_CONSOLE_CY, IOS_TOUCH_CONSOLE_SIZE, TG_CONSOLE, TOUCH_KEY_NONE },
+	{ "SABER", TOUCH_ANCHOR_TR, .49f, .10f, .12f, TG_SABER_SELECT, 26 },
+	{ "CHAT",  TOUCH_ANCHOR_TL, .28f, .10f, .12f, TG_CHAT, TOUCH_KEY_CHAT },
+	{ "PAD",   TOUCH_ANCHOR_TL, .12f, .26f, .12f, TG_PAD, TOUCH_KEY_TAB }
 };
 
-void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, touchRect_t out[TB_COUNT] )
+void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT] )
 {
+	const float unit = TouchLayout_Unit( viewW - safeL - safeR, viewH - safeT - safeB, p );
 	for ( int i = 0; i < TB_COUNT; ++i ) {
-		IOS_TouchButtonRectPixels( viewW, viewH, safeL, safeT, safeR, safeB,
-			touchButtonDefs[i].cx, touchButtonDefs[i].cy, touchButtonDefs[i].size,
-			&out[i].x, &out[i].y, &out[i].w, &out[i].h );
+		out[i] = { 0, 0, 0, 0 };
+		if ( unit <= 0 )
+			continue;
+		if ( i == TB_CONSOLE ) {
+			IOS_TouchConsoleRectPixels( viewW, viewH, safeL, safeT, safeR, safeB,
+				&out[i].x, &out[i].y, &out[i].w, &out[i].h );
+		} else {
+			TouchLayout_AnchorRect( viewW, viewH, safeL, safeT, safeR, safeB, p, touchButtonDefs[i].anchor,
+				touchButtonDefs[i].cx, touchButtonDefs[i].cy, touchButtonDefs[i].size,
+				&out[i].x, &out[i].y, &out[i].w, &out[i].h );
+		}
 	}
 }
 
-int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, int uiMode )
+int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons )
 {
 	for ( int i = 0; i < TB_COUNT; ++i ) {
-		if ( uiMode && touchButtonDefs[i].gameplayOnly ) {
+		if ( !( visibleButtons & ( 1u << i ) ) || rects[i].w <= 0 || rects[i].h <= 0 )
 			continue;
-		}
 		if ( x >= rects[i].x && x <= rects[i].x + rects[i].w &&
 			y >= rects[i].y && y <= rects[i].y + rects[i].h ) {
 			return i;
