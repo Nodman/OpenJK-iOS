@@ -167,6 +167,16 @@ ASPECT_INLINE aspectPoint_t AspectLayout_ToVirtualCursor( const aspectLayout_t *
 	return point;
 }
 
+ASPECT_INLINE float AspectLayout_SharpTextScale( const aspectLayout_t *layout, float glyphTexelHeight, float targetPixelHeight )
+{
+	float scale;
+	if ( !layout || layout->H <= 0 || glyphTexelHeight <= 0 ) {
+		return 1.0f;
+	}
+	scale = targetPixelHeight / ( glyphTexelHeight * ( layout->H / 480.0f ) );
+	return scale < 0.2f ? 0.2f : scale > 1.0f ? 1.0f : scale;
+}
+
 ASPECT_INLINE double AspectLayout_HorizontalFov( double h4, int refdefW, int refdefH )
 {
 	double radians, aspect;

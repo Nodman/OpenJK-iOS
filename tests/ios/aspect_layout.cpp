@@ -268,6 +268,24 @@ BOOST_AUTO_TEST_CASE( size_round_trips )
 	BOOST_CHECK_EQUAL( heightSize.y, 0 );
 }
 
+BOOST_AUTO_TEST_CASE( sharp_text_scale )
+{
+	const int dimensions[][2] = { { 2868, 1320 }, { 1434, 660 }, { 1024, 768 } };
+	const float expected[] = { 0.5f, 1.0f, 0.859375f };
+	for ( int enabled = 0; enabled <= 1; ++enabled ) {
+		for ( int i = 0; i < 3; ++i ) {
+			const aspectLayout_t layout = AspectLayout_Build( dimensions[i][0], dimensions[i][1], enabled, 1.5f, 0, 0, 0, 0 );
+			BOOST_CHECK_SMALL( AspectLayout_SharpTextScale( &layout, 16, 22 ) - expected[i], 1e-6f );
+		}
+	}
+	const aspectLayout_t invalid = AspectLayout_Build( 640, 0, 1, 1.5f, 0, 0, 0, 0 );
+	BOOST_CHECK_EQUAL( AspectLayout_SharpTextScale( &invalid, 16, 22 ), 1 );
+	const aspectLayout_t tall = AspectLayout_Build( 6400, 4800, 1, 1.5f, 0, 0, 0, 0 );
+	BOOST_CHECK_EQUAL( AspectLayout_SharpTextScale( &tall, 16, 22 ), 0.2f );
+	BOOST_CHECK_EQUAL( AspectLayout_SharpTextScale( &tall, 0, 22 ), 1 );
+	BOOST_CHECK_EQUAL( AspectLayout_SharpTextScale( NULL, 16, 22 ), 1 );
+}
+
 BOOST_AUTO_TEST_CASE( fov_conversion )
 {
 	const double pi = acos( -1.0 );

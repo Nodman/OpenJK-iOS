@@ -3152,13 +3152,17 @@ CG_DrawFPS
 #define	FPS_FRAMES	16
 static float CG_DrawFPS( float y ) {
 	char		*s;
+#ifndef OPENJK_IOS
 	int			w;
+#endif
 	static unsigned short previousTimes[FPS_FRAMES];
 	static unsigned short index;
 	static int	previous, lastupdate;
 	int		t, i, fps, total;
 	unsigned short frameTime;
+#ifndef OPENJK_IOS
 	const int		xOffset = 0;
+#endif
 
 
 	// don't use serverTime, because that will be drifting to
@@ -3183,11 +3187,25 @@ static float CG_DrawFPS( float y ) {
 	fps = 1000 * FPS_FRAMES / total;
 
 	s = va( "%ifps", fps );
+#ifdef OPENJK_IOS
+	const aspectLayout_t *layout = CG_AspectLayout();
+	const int font = cgDC.Assets.qhSmallFont;
+	const float glyphHeight = trap->R_Font_HeightPixels( font, 1.0f );
+	const float scale = AspectLayout_SharpTextScale( layout, glyphHeight, 22.0f );
+	const float height = glyphHeight * scale;
+	const aspectPoint_t safe = AspectLayout_SizeToVirtual( layout, layout->safeR, layout->safeT );
+	const float right = layout->fullRect.x + layout->fullRect.w - safe.x - 4;
+	const int width = trap->R_Font_StrLenPixels( s, font, scale );
+	y = layout->fullRect.y + safe.y + 2;
+	trap->R_Font_DrawString( right - width, y, s, colorTable[CT_LTGOLD1], font, -1, scale );
+	return y + height;
+#else
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 
 	CG_DrawBigString( 635 - w + xOffset, y + 2, s, 1.0F);
 
 	return y + BIGCHAR_HEIGHT + 4;
+#endif
 }
 
 // nmckenzie: DUEL_HEALTH

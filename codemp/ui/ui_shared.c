@@ -162,6 +162,20 @@ static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
 			item->textRect.w = item->textRect.h = 0;
 			continue;
 		}
+		if ( !Q_stricmp( item->window.name, "color_depth" ) &&
+			( !Q_stricmp( item->cvar, "ui_r_colorbits" ) || !Q_stricmp( item->cvar, "ui_iosDrawFPS" ) ) ) {
+			item->cvar = "ui_iosDrawFPS";
+			item->text = "FPS counter";
+			item->descText = "Show the frame rate at the top right";
+			multi->strDef = qfalse;
+			multi->count = 2;
+			for ( id = 0; id < 2; ++id ) {
+				multi->cvarValue[id] = id;
+				multi->cvarList[id] = iosProMotionLabels[id];
+			}
+			item->textRect.w = item->textRect.h = 0;
+			continue;
+		}
 		if ( !UI_IOS_IsVideoItem( item ) ) {
 			continue;
 		}

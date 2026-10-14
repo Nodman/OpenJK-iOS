@@ -134,6 +134,7 @@ int openMenuCount = 0;
 static char iosVideoLabels[5][48];
 static char iosProMotionLabels[2][4] = { "Off", "On" };
 static char iosProMotionCaption[] = "120 Hz (ProMotion)";
+static char iosDrawFPSCaption[] = "FPS counter";
 
 static qboolean UI_IOS_IsVideoMenu( const menuDef_t *menu )
 {
@@ -174,6 +175,20 @@ static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
 			item->cvarTest = "r_iosMaxRefresh";
 			item->enableCvar = "120";
 			item->cvarFlags = CVAR_SHOW;
+			multi->strDef = qfalse;
+			multi->count = 2;
+			for ( id = 0; id < 2; ++id ) {
+				multi->cvarValue[id] = id;
+				multi->cvarList[id] = iosProMotionLabels[id];
+			}
+			item->textRect.w = item->textRect.h = 0;
+			continue;
+		}
+		if ( !Q_stricmp( item->window.name, "color_depth" ) &&
+			( !Q_stricmp( item->cvar, "ui_r_colorbits" ) || !Q_stricmp( item->cvar, "ui_iosDrawFPS" ) ) ) {
+			item->cvar = "ui_iosDrawFPS";
+			item->text = iosDrawFPSCaption;
+			item->descText = "Show the frame rate at the top right";
 			multi->strDef = qfalse;
 			multi->count = 2;
 			for ( id = 0; id < 2; ++id ) {

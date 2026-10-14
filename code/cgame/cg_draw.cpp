@@ -3443,7 +3443,9 @@ static float CG_DrawFPS( float y ) {
 	static int	previous, lastupdate;
 	int		t, i, fps, total;
 	unsigned short frameTime;
+#ifndef OPENJK_IOS
 	const int		xOffset = 0;
+#endif
 
 	// don't use serverTime, because that will be drifting to
 	// correct for internet lag changes, timescales, timedemos, etc
@@ -3467,10 +3469,24 @@ static float CG_DrawFPS( float y ) {
 	fps = 1000 * FPS_FRAMES / total;
 
 	s = va( "%ifps", fps );
+#ifdef OPENJK_IOS
+	const aspectLayout_t *layout = CG_AspectLayout();
+	const int font = cgs.media.qhFontSmall;
+	const float glyphHeight = cgi_R_Font_HeightPixels( font, 1.0f );
+	const float scale = AspectLayout_SharpTextScale( layout, glyphHeight, 22.0f );
+	const float height = glyphHeight * scale;
+	const aspectPoint_t safe = AspectLayout_SizeToVirtual( layout, layout->safeR, layout->safeT );
+	const float right = layout->fullRect.x + layout->fullRect.w - safe.x - 4;
+	const int width = cgi_R_Font_StrLenPixels( s, font, scale );
+	y = layout->fullRect.y + safe.y + 2;
+	cgi_R_Font_DrawString( right - width, y, s, colorTable[CT_LTGOLD1], font, -1, scale );
+	return y + height;
+#else
 	const int w = cgi_R_Font_StrLenPixels(s, cgs.media.qhFontMedium, 1.0f);
 	cgi_R_Font_DrawString(635-xOffset - w, y+2, s, colorTable[CT_LTGOLD1], cgs.media.qhFontMedium, -1, 1.0f);
 
 	return y + BIGCHAR_HEIGHT + 10;
+#endif
 }
 
 /*
