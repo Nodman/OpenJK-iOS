@@ -70,6 +70,7 @@ typedef enum {
 	SE_MOUSE,	// evValue and evValue2 are reletive signed x / y moves
 	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
 	SE_CONSOLE,	// evPtr is a char*
+	SE_MOUSE_ABS,	// evValue/evValue2 are absolute 640x480 virtual coords
 	SE_MAX
 } sysEventType_t;
 

@@ -455,6 +455,18 @@ void CL_MouseEvent( int dx, int dy, int time ) {
 	}
 }
 
+// UI/cgame take only clamped deltas: park the cursor at 0,0, then move to the target
+void CL_MouseAbsEvent( int x, int y, int time ) {
+	if ( Key_GetCatcher() & KEYCATCH_UI ) {
+		_UI_MouseEvent( -2 * SCREEN_WIDTH, -2 * SCREEN_HEIGHT );
+		_UI_MouseEvent( x, y );
+	}
+}
+
+qboolean CL_TouchUIMode( void ) {
+	return ( Key_GetCatcher() & ( KEYCATCH_UI | KEYCATCH_CONSOLE ) ) ? qtrue : qfalse;
+}
+
 /*
 =================
 CL_JoystickEvent

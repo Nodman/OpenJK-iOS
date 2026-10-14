@@ -736,6 +736,8 @@ void CL_CharEvent( int key );
 // char events are for field typing, not game control
 
 void CL_MouseEvent( int dx, int dy, int time );
+void CL_MouseAbsEvent( int x, int y, int time );
+qboolean CL_TouchUIMode( void );
 
 void CL_JoystickEvent( int axis, int value, int time );
 
