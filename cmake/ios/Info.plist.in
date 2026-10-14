@@ -21,5 +21,16 @@
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>
 	<key>CADisableMinimumFrameDurationOnPhone</key><true/>
+	<key>UIRequiredDeviceCapabilities</key><array><string>arm64</string></array>
+	<key>UIViewControllerBasedStatusBarAppearance</key><false/>
+	<key>UIRequiresFullScreen</key><true/>
+	<key>UIRequiresFullScreenIgnoredStartingWithVersion</key><string>27</string>
+	<key>UIFileSharingEnabled</key><true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key><true/>
+	<key>GCSupportedGameControllers</key>
+	<array><dict><key>ProfileName</key><string>ExtendedGamepad</string></dict></array>
+	<key>GCSupportsControllerUserInteraction</key><true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key><true/>
+	<key>NSLocalNetworkUsageDescription</key><string>Connects to multiplayer servers on your local network.</string>
 </dict>
 </plist>
