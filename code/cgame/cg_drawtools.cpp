@@ -25,6 +25,26 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "cg_media.h"
 
+const aspectLayout_t *CG_AspectLayout( void ) {
+	static aspectLayout_t layout;
+	static qboolean initialized = qfalse;
+	char value[64];
+	int enabled;
+	float minRatio;
+
+	gi.Cvar_VariableStringBuffer( "r_aspectCorrect", value, sizeof( value ) );
+	enabled = atoi( value );
+	gi.Cvar_VariableStringBuffer( "r_aspectCorrectMinRatio", value, sizeof( value ) );
+	minRatio = atof( value );
+	if ( !initialized || layout.W != cgs.glconfig.vidWidth || layout.H != cgs.glconfig.vidHeight ||
+		layout.enabled != enabled || layout.minRatio != minRatio ) {
+		layout = AspectLayout_Build( cgs.glconfig.vidWidth, cgs.glconfig.vidHeight,
+			enabled, minRatio, 0, 0, 0, 0 );
+		initialized = qtrue;
+	}
+	return &layout;
+}
+
 /*
 ================
 CG_DrawSides
@@ -289,7 +309,14 @@ static void CG_TileClearBox( int x, int y, int w, int h, qhandle_t hShader ) {
 	t1 = y/64.0;
 	s2 = (x+w)/64.0;
 	t2 = (y+h)/64.0;
-	cgi_R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, hShader );
+	const aspectLayout_t *layout = CG_AspectLayout();
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		const aspectPoint_t origin = AspectLayout_ToVirtual( layout, x, y );
+		const aspectPoint_t size = AspectLayout_SizeToVirtual( layout, w, h );
+		cgi_R_DrawStretchPic( origin.x, origin.y, size.x, size.y, s1, t1, s2, t2, hShader );
+	} else {
+		cgi_R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, hShader );
+	}
 }
 
 
