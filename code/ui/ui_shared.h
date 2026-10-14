@@ -515,4 +515,8 @@ itemDef_t *Menu_GetMatchingItemByNumber(menuDef_t *menu, int index, const char *
 
 extern displayContextDef_t *DC;
 
+#ifdef OPENJK_IOS
+void UI_IOS_RefreshVideoMenus( qboolean force );
+#endif
+
 #endif

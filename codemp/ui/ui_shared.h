@@ -569,3 +569,7 @@ Ghoul2 Insert End
 */
 
 extern const char *HolocronIcons[NUM_FORCE_POWERS];
+
+#ifdef OPENJK_IOS
+void UI_IOS_RefreshVideoMenus( qboolean force );
+#endif

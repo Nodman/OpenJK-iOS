@@ -32,6 +32,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #include "ui_shared.h"
+#ifdef OPENJK_IOS
+#include "qcommon/ios_render_scale.h"
+#endif
 #include "game/bg_public.h"
 #include "game/anims.h"
 #include "ghoul2/G2.h"
@@ -106,6 +109,89 @@ int menuCount = 0;               // how many
 
 menuDef_t *menuStack[MAX_OPEN_MENUS];
 int openMenuCount = 0;
+
+#ifdef OPENJK_IOS
+static char iosVideoLabels[5][48];
+
+static qboolean UI_IOS_IsVideoMenu( const menuDef_t *menu )
+{
+	const char *name = menu ? menu->window.name : NULL;
+	return name && ( !Q_stricmp( name, "setupMenu" ) || !Q_stricmp( name, "ingameSetupMenu" ) ||
+		!Q_stricmp( name, "setup_menu" ) || !Q_stricmp( name, "ingame_setup" ) );
+}
+
+static qboolean UI_IOS_IsVideoItem( const itemDef_t *item )
+{
+	return item && item->type == ITEM_TYPE_MULTI && item->window.name && item->cvar &&
+		!Q_stricmp( item->window.name, "video_mode" ) && !Q_stricmp( item->cvar, "ui_r_mode" ) &&
+		UI_IOS_IsVideoMenu( (const menuDef_t *)item->parent );
+}
+
+static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
+{
+	int i, id;
+	if ( !UI_IOS_IsVideoMenu( menu ) ) {
+		return;
+	}
+	for ( i = 0; i < menu->itemCount; ++i ) {
+		itemDef_t *item = menu->items[i];
+		multiDef_t *multi;
+		if ( !UI_IOS_IsVideoItem( item ) ) {
+			continue;
+		}
+		multi = item->typeData.multi;
+		if ( !multi ) {
+			continue;
+		}
+		multi->strDef = qfalse;
+		multi->count = DC->getCVarValue( "ui_r_mode" ) == 4 ? 5 : 4;
+		for ( id = 0; id < 5; ++id ) {
+			char *suffix = strstr( iosVideoLabels[id], " (min)" );
+			float available = item->window.rect.w - item->textalignx - 8;
+			multi->cvarValue[id] = id;
+			multi->cvarList[id] = iosVideoLabels[id];
+			if ( suffix && DC->textWidth( iosVideoLabels[id], item->textscale, item->iMenuFont ) > available ) {
+				*suffix = '\0';
+			}
+		}
+		item->textRect.w = item->textRect.h = 0;
+	}
+}
+
+void UI_IOS_RefreshVideoMenus( qboolean force )
+{
+	static int lastW = -1, lastH = -1, lastHigh = -1, lastPreset = -1;
+	static float lastBase = -1, lastCustom = -1;
+	const int w = (int)DC->getCVarValue( "r_iosNativeWidth" );
+	const int h = (int)DC->getCVarValue( "r_iosNativeHeight" );
+	const int high = DC->getCVarValue( "com_maxfps" ) > 60;
+	const int preset = (int)DC->getCVarValue( "ui_r_mode" );
+	const float base = DC->getCVarValue( "r_iosBaseAutoScale" );
+	const float custom = DC->getCVarValue( "r_renderScale" );
+	const char *names[] = { "Auto", "Native", "3/4", "Native/2", "Custom" };
+	int id, i;
+	if ( !force && w == lastW && h == lastH && high == lastHigh && preset == lastPreset &&
+		base == lastBase && custom == lastCustom ) {
+		return;
+	}
+	lastW = w;
+	lastH = h;
+	lastHigh = high;
+	lastPreset = preset;
+	lastBase = base;
+	lastCustom = custom;
+	for ( id = 0; id < 5; ++id ) {
+		const iosRenderScale_t resolved = IOS_RenderScale_Resolve(
+			id == 4 ? custom : IOS_RenderScale_ForPreset( id ), base, high, w, h );
+		snprintf( iosVideoLabels[id], sizeof( iosVideoLabels[id] ), id == 0 ? "%s (%dx%d)%s" : "%s %dx%d%s",
+			names[id], resolved.width, resolved.height, resolved.floorRaised ? " (min)" : "" );
+	}
+	for ( i = 0; i < menuCount; ++i ) {
+		UI_IOS_PatchVideoMenu( &Menus[i] );
+	}
+}
+#endif
+
 
 static qboolean debugMode = qfalse;
 
@@ -3408,6 +3494,11 @@ const char *Item_Multi_Setting(itemDef_t *item) {
 
 qboolean Item_Multi_HandleKey(itemDef_t *item, int key)
 {
+#ifdef OPENJK_IOS
+	if ( UI_IOS_IsVideoItem( item ) ) {
+		UI_IOS_RefreshVideoMenus( qfalse );
+	}
+#endif
 	multiDef_t *multiPtr = item->typeData.multi;
 	if (multiPtr)
 	{
@@ -3452,6 +3543,11 @@ qboolean Item_Multi_HandleKey(itemDef_t *item, int key)
 						DC->setCVar(item->cvar, va("%f", value ));
 					}
 				}
+#ifdef OPENJK_IOS
+				if ( UI_IOS_IsVideoItem( item ) ) {
+					UI_IOS_RefreshVideoMenus( qfalse );
+				}
+#endif
 				if (item->special)
 				{//its a feeder?
 					DC->feederSelection(item->special, current, item);
@@ -4184,6 +4280,11 @@ void  Menus_Activate(menuDef_t *menu) {
 		DC->startBackgroundTrack(menu->soundName, menu->soundName, qfalse);
 	}
 
+#ifdef OPENJK_IOS
+	if ( UI_IOS_IsVideoMenu( menu ) ) {
+		UI_IOS_RefreshVideoMenus( qtrue );
+	}
+#endif
 	menu->appearanceTime = 0;
 	Display_CloseCinematics();
 
@@ -6763,6 +6864,12 @@ void Menu_HandleMouseMove(menuDef_t *menu, float x, float y) {
 
 void Menu_Paint(menuDef_t *menu, qboolean forcePaint) {
 	int i;
+
+#ifdef OPENJK_IOS
+	if ( UI_IOS_IsVideoMenu( menu ) ) {
+		UI_IOS_RefreshVideoMenus( qfalse );
+	}
+#endif
 
 	if (menu == NULL) {
 		return;
@@ -9415,6 +9522,10 @@ void Menu_New(int handle) {
 		Menu_Init(menu);
 		if (Menu_Parse(handle, menu)) {
 			Menu_PostParse(menu);
+#ifdef OPENJK_IOS
+			UI_IOS_RefreshVideoMenus( qtrue );
+			UI_IOS_PatchVideoMenu( menu );
+#endif
 			menuCount++;
 		}
 	}
