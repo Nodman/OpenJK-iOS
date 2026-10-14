@@ -23,6 +23,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include "qcommon/aspect_layout.h"
 #include "qcommon/qfiles.h"
 #include "rd-common/tr_public.h"
 #include "rd-common/tr_common.h"
@@ -1151,6 +1152,13 @@ extern cvar_t	*r_fastsky;				// controls whether sky should be cleared or drawn
 extern cvar_t	*r_drawSun;				// controls drawing of sun quad
 extern cvar_t	*r_dynamiclight;		// dynamic lights enabled/disabled
 // rjr - removed for hacking extern cvar_t	*r_dlightBacks;			// dlight non-facing surfaces for continuity
+
+extern cvar_t *r_aspectCorrect;
+extern cvar_t *r_aspectCorrectMinRatio;
+extern cvar_t *r_aspectStretchBackdrops;
+
+#define HAVE_R_ASPECT_LAYOUT 1
+const aspectLayout_t *R_AspectLayout( void );
 
 extern	cvar_t	*r_norefresh;			// bypasses the ref rendering
 extern	cvar_t	*r_drawentities;		// disable/enable entity rendering

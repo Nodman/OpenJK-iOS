@@ -88,6 +88,10 @@ cvar_t	*r_dynamiclight;
 cvar_t	*r_lodbias;
 cvar_t	*r_lodscale;
 
+cvar_t *r_aspectCorrect;
+cvar_t *r_aspectCorrectMinRatio;
+cvar_t *r_aspectStretchBackdrops;
+
 cvar_t	*r_norefresh;
 cvar_t	*r_drawentities;
 cvar_t	*r_drawworld;
@@ -1566,6 +1570,15 @@ R_Register
 */
 void R_Register( void )
 {
+#ifdef OPENJK_IOS
+	r_aspectCorrect = ri.Cvar_Get( "r_aspectCorrect", "1", CVAR_ARCHIVE );
+	r_aspectStretchBackdrops = ri.Cvar_Get( "r_aspectStretchBackdrops", "1", CVAR_ARCHIVE );
+#else
+	r_aspectCorrect = ri.Cvar_Get( "r_aspectCorrect", "0", CVAR_ARCHIVE );
+	r_aspectStretchBackdrops = ri.Cvar_Get( "r_aspectStretchBackdrops", "0", CVAR_ARCHIVE );
+#endif
+	r_aspectCorrectMinRatio = ri.Cvar_Get( "r_aspectCorrectMinRatio", "1.5", CVAR_ARCHIVE );
+
 	//
 	// latched and archived variables
 	//

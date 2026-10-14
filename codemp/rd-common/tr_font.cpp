@@ -1421,6 +1421,16 @@ CFontInfo *GetFont(int index)
 	return pFont;
 }
 
+static float R_FontAspectCoefficient( void ) {
+#ifdef HAVE_R_ASPECT_LAYOUT
+	// Rend2 shares this font source but keeps its own projection.
+	if ( R_AspectLayout()->branch == ASPECT_CORRECTED ) {
+		return 1.0f;
+	}
+#endif
+	return ((float)(SCREEN_WIDTH * glConfig.vidHeight) / (float)(SCREEN_HEIGHT * glConfig.vidWidth));
+}
+
 float RE_Font_StrLenPixelsNew( const char *psText, const int iFontHandle, const float fScaleIn ) {
 	float fScale = fScaleIn;
 	CFontInfo *curfont = GetFont(iFontHandle);
@@ -1459,11 +1469,11 @@ float RE_Font_StrLenPixelsNew( const char *psText, const int iFontHandle, const 
 			float fValue = iPixelAdvance * ((uiLetter > (unsigned)g_iNonScaledCharRange) ? fScaleAsian : fScale);
 
 			if ( r_aspectCorrectFonts->integer == 1 ) {
-				fValue *= ((float)(SCREEN_WIDTH * glConfig.vidHeight) / (float)(SCREEN_HEIGHT * glConfig.vidWidth));
+				fValue *= R_FontAspectCoefficient();
 			}
 			else if ( r_aspectCorrectFonts->integer == 2 ) {
 				fValue = ceilf(
-					fValue * ((float)(SCREEN_WIDTH * glConfig.vidHeight) / (float)(SCREEN_HEIGHT * glConfig.vidWidth))
+					fValue * R_FontAspectCoefficient()
 				);
 			}
 			thisLineWidth += curfont->mbRoundCalcs
@@ -1732,11 +1742,11 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 								);
 				if ( r_aspectCorrectFonts->integer == 1 ) {
 					fx += fAdvancePixels
-						* ((float)(SCREEN_WIDTH * glConfig.vidHeight) / (float)(SCREEN_HEIGHT * glConfig.vidWidth));
+						* R_FontAspectCoefficient();
 				}
 				else if ( r_aspectCorrectFonts->integer == 2 ) {
 					fx += ceilf( fAdvancePixels
-						* ((float)(SCREEN_WIDTH * glConfig.vidHeight) / (float)(SCREEN_HEIGHT * glConfig.vidWidth)) );
+						* R_FontAspectCoefficient() );
 				}
 				else {
 					fx += fAdvancePixels;

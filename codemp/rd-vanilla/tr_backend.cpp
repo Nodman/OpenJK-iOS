@@ -1180,6 +1180,23 @@ RENDER BACK END FUNCTIONS
 ============================================================================
 */
 
+const aspectLayout_t *R_AspectLayout( void ) {
+	static aspectLayout_t layout;
+	static int correctModificationCount = -1;
+	static int minRatioModificationCount = -1;
+
+	if ( layout.W != glConfig.vidWidth || layout.H != glConfig.vidHeight ||
+		correctModificationCount != r_aspectCorrect->modificationCount ||
+		minRatioModificationCount != r_aspectCorrectMinRatio->modificationCount ) {
+		layout = AspectLayout_Build( glConfig.vidWidth, glConfig.vidHeight,
+			r_aspectCorrect->integer, r_aspectCorrectMinRatio->value, 0, 0, 0, 0 );
+		correctModificationCount = r_aspectCorrect->modificationCount;
+		minRatioModificationCount = r_aspectCorrectMinRatio->modificationCount;
+	}
+	return &layout;
+}
+
+
 /*
 ================
 RB_SetGL2D
@@ -1187,6 +1204,7 @@ RB_SetGL2D
 ================
 */
 void	RB_SetGL2D (void) {
+	const aspectLayout_t *layout = R_AspectLayout();
 	backEnd.projection2D = qtrue;
 
 	// set 2D virtual screen size
@@ -1194,7 +1212,11 @@ void	RB_SetGL2D (void) {
 	qglScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
 	qglMatrixMode(GL_PROJECTION);
     qglLoadIdentity ();
-	qglOrtho (0, 640, 480, 0, 0, 1);
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		qglOrtho( layout->left, layout->right, layout->bottom, layout->top, 0, 1 );
+	} else {
+		qglOrtho (0, 640, 480, 0, 0, 1);
+	}
 	qglMatrixMode(GL_MODELVIEW);
     qglLoadIdentity ();
 
