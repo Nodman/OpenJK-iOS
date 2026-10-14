@@ -125,7 +125,19 @@ END";
 #define GL_PROGRAM_ERROR_STRING_ARB						0x8874
 #define GL_PROGRAM_ERROR_POSITION_ARB					0x864B
 
+#ifdef OPENJK_GLES
+extern bool g_bDynamicGlowSupported;
+#endif
+
 void ARB_InitGPUShaders(void) {
+#ifdef OPENJK_GLES
+	// gl4es rejects the RECT samplers and the gamma vertex program
+	g_bDynamicGlowSupported = false;
+	ri.Cvar_Set( "r_DynamicGlow", "0" );
+	glConfigExt.doGammaCorrectionWithShaders = qfalse;
+	return;
+#endif
+
 	if ( !qglGenProgramsARB )
 	{
 		return;
