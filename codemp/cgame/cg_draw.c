@@ -455,10 +455,20 @@ void CG_Draw3DModel( float x, float y, float w, float h, qhandle_t model, void *
 	refdef.fov_x = 30;
 	refdef.fov_y = 30;
 
-	refdef.x = x;
-	refdef.y = y;
-	refdef.width = w;
-	refdef.height = h;
+	const aspectLayout_t *layout = CG_AspectLayout();
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		const aspectPoint_t origin = AspectLayout_ToPixels( layout, x, y );
+		const aspectPoint_t size = AspectLayout_SizeToPixels( layout, w, h );
+		refdef.x = origin.x;
+		refdef.y = origin.y;
+		refdef.width = size.x;
+		refdef.height = size.y;
+	} else {
+		refdef.x = x;
+		refdef.y = y;
+		refdef.width = w;
+		refdef.height = h;
+	}
 
 	refdef.time = cg.time;
 
@@ -509,10 +519,12 @@ void CG_DrawFlagModel( float x, float y, float w, float h, int team, qboolean fo
 	qhandle_t		handle;
 
 	if ( !force2D && cg_draw3DIcons.integer ) {
-		x *= cgs.screenXScale;
-		y *= cgs.screenYScale;
-		w *= cgs.screenXScale;
-		h *= cgs.screenYScale;
+		if ( CG_AspectLayout()->branch == ASPECT_LEGACY ) {
+			x *= cgs.screenXScale;
+			y *= cgs.screenYScale;
+			w *= cgs.screenXScale;
+			h *= cgs.screenYScale;
+		}
 
 		VectorClear( angles );
 
@@ -5223,6 +5235,19 @@ static void CG_DrawCrosshair( vec3_t worldPoint, int chEntValid ) {
 		y = cg_crosshairY.integer;
 	}
 
+	const aspectLayout_t *layout = CG_AspectLayout();
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		if ( !worldPoint || !VectorLength( worldPoint ) ) {
+			const aspectPoint_t center = AspectLayout_ToVirtual( layout,
+				cg.refdef.x + cg.refdef.width / 2.0, cg.refdef.y + cg.refdef.height / 2.0 );
+			x += center.x - 320;
+			y += center.y - 240;
+		}
+		// Corrected positions already include the pixel viewport origin.
+		x -= cg.refdef.x;
+		y -= cg.refdef.y;
+	}
+
 	if ( !hShader )
 	{
 		hShader = cgs.media.crosshairShader[Com_Clampi( 1, NUM_CROSSHAIRS, cg_drawCrosshair.integer ) - 1];
@@ -5311,8 +5336,19 @@ qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y)
     if (z <= 0.001)
         return qfalse;
 
+	const aspectLayout_t *layout = CG_AspectLayout();
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		const double halfWidth = cg.refdef.width / 2.0;
+		const double halfHeight = cg.refdef.height / 2.0;
+		const double pixelX = cg.refdef.x + halfWidth - DotProduct(trans, cg.refdef.viewaxis[1])*halfWidth/(z*px);
+		const double pixelY = cg.refdef.y + halfHeight - DotProduct(trans, cg.refdef.viewaxis[2])*halfHeight/(z*py);
+		const aspectPoint_t point = AspectLayout_ToVirtual( layout, pixelX, pixelY );
+		*x = point.x;
+		*y = point.y;
+	} else {
     *x = xc - DotProduct(trans, cg.refdef.viewaxis[1])*xc/(z*px);
     *y = yc - DotProduct(trans, cg.refdef.viewaxis[2])*yc/(z*py);
+	}
 
     return qtrue;
 }

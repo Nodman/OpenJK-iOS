@@ -25,6 +25,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define	__CG_LOCAL_H__
 
 #include "../qcommon/q_shared.h"
+#include "qcommon/aspect_layout.h"
 
 // define GAME_INCLUDE so that g_public.h does not define the
 // short, server-visible gclient_t and gentity_t structures,
@@ -704,6 +705,8 @@ Ghoul2 Insert End
 //
 // cg_drawtools.c
 //
+const aspectLayout_t *CG_AspectLayout( void );
+
 
 #define CG_LEFT			0x00000000	// default
 #define CG_CENTER		0x00000001
