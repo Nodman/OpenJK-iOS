@@ -365,6 +365,14 @@ BOOST_AUTO_TEST_CASE( same_frame_fire_tap_and_cinematic_reset_batch )
 	BOOST_CHECK_EQUAL( batch.values[1], 0 );
 	BOOST_CHECK_EQUAL( batch.values[2], -80 );
 	BOOST_CHECK_EQUAL( batch.values[3], 0 );
+	TouchGesture_Step( &gestures, Input( TOUCH_DOWN ) );
+	const auto promoted = TouchGesture_Step( &gestures, Input( TOUCH_MOTION, 1, TOUCH_TARGET_FIRE, 0, 100 ) );
+	BOOST_CHECK_EQUAL( promoted.lookX, 127 );
+	const auto cancelled = TouchGesture_Step( &gestures, Input( TOUCH_CANCEL_ALL ) );
+	BOOST_REQUIRE_EQUAL( cancelled.keyCount, 1 );
+	BOOST_CHECK_EQUAL( cancelled.keys[0].down, 0 );
+	BOOST_CHECK_EQUAL( cancelled.keys[0].button, 0 );
+	BOOST_CHECK_EQUAL( cancelled.lookX, 0 );
 	TouchAxes_Zero( &axes );
 	BOOST_CHECK_EQUAL( axes.lookTouch, 0 );
 	batch = TouchAxes_Send( &axes );
@@ -375,7 +383,15 @@ BOOST_AUTO_TEST_CASE( same_frame_fire_tap_and_cinematic_reset_batch )
 		BOOST_CHECK_EQUAL( axes.touch[i], 0 );
 	}
 	BOOST_CHECK( !TouchAxes_Send( &axes ).send );
-	BOOST_CHECK_EQUAL( TouchGesture_Step( &gestures, Input( TOUCH_REFRESH ) ).lookX, 0 );
+	const auto refreshed = TouchGesture_Step( &gestures, Input( TOUCH_REFRESH ) );
+	BOOST_CHECK_EQUAL( refreshed.keyCount, 0 );
+	BOOST_CHECK_EQUAL( refreshed.lookX, 0 );
+	axes.touch[2] = refreshed.lookX;
+	axes.touch[3] = refreshed.lookY;
+	batch = TouchAxes_Send( &axes );
+	BOOST_CHECK_EQUAL( batch.values[2], 0 );
+	BOOST_CHECK_EQUAL( batch.values[3], 0 );
+	BOOST_CHECK_EQUAL( axes.lookTouch, 0 );
 }
 
 BOOST_AUTO_TEST_CASE( distinct_local_equipment_predicates )

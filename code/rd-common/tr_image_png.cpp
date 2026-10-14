@@ -312,3 +312,94 @@ void LoadPNG ( const char *filename, byte **data, int *width, int *height )
 	PNGFileReader reader (buf);
 	reader.Read (data, width, height);
 }
+
+#ifdef OPENJK_IOS
+#include <limits.h>
+
+struct PNGMemoryState {
+	const byte *bytes;
+	size_t length, offset;
+	byte *pixels;
+	png_bytep *rows;
+};
+
+static void PNGMemoryRead( png_structp png, png_bytep output, png_size_t count ) {
+	PNGMemoryState *state = (PNGMemoryState *)png_get_io_ptr( png );
+	if ( state->offset > state->length || count > state->length - state->offset )
+		png_error( png, "Truncated memory PNG" );
+	memcpy( output, state->bytes + state->offset, count );
+	state->offset += count;
+}
+
+static void PNGMemoryFree( PNGMemoryState *state ) {
+	if ( state->rows ) R_Free( state->rows );
+	if ( state->pixels ) R_Free( state->pixels );
+	R_Free( state );
+}
+
+int LoadPNGFromMemory( const byte *bytes, size_t length, byte **data, int *width, int *height ) {
+	if ( data ) *data = NULL;
+	if ( width ) *width = 0;
+	if ( height ) *height = 0;
+	if ( !data || !width || !height || !bytes || length < 8 || png_sig_cmp( bytes, 0, 8 ) )
+		return 0;
+	// Cleanup storage must survive libpng's longjmp.
+	PNGMemoryState *state = (PNGMemoryState *)R_Malloc( (int)(sizeof( PNGMemoryState )), TAG_TEMP_PNG, qtrue );
+	if ( !state ) return 0;
+	state->bytes = bytes;
+	state->length = length;
+	state->offset = 8;
+	png_structp png = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, png_print_error, png_print_warning );
+	if ( !png ) {
+		PNGMemoryFree( state );
+		return 0;
+	}
+	png_infop info = png_create_info_struct( png );
+	if ( !info ) {
+		png_destroy_read_struct( &png, NULL, NULL );
+		PNGMemoryFree( state );
+		return 0;
+	}
+	if ( setjmp( png_jmpbuf( png ) ) ) {
+		png_destroy_read_struct( &png, &info, NULL );
+		PNGMemoryFree( state );
+		return 0;
+	}
+	png_set_read_fn( png, state, PNGMemoryRead );
+	png_set_sig_bytes( png, 8 );
+	png_set_crc_action( png, PNG_CRC_ERROR_QUIT, PNG_CRC_ERROR_QUIT );
+#ifdef PNG_SET_USER_LIMITS_SUPPORTED
+	png_set_user_limits( png, 4096, 4096 );
+	png_set_chunk_malloc_max( png, 1024 * 1024 );
+#endif
+	png_read_info( png, info );
+	png_uint_32 w, h;
+	int depth, colour, interlace;
+	png_get_IHDR( png, info, &w, &h, &depth, &colour, &interlace, NULL, NULL );
+	if ( !w || !h || w > 4096 || h > 4096 || ( w & ( w - 1 ) ) || ( h & ( h - 1 ) ) ||
+		depth != 8 || ( colour != PNG_COLOR_TYPE_RGB && colour != PNG_COLOR_TYPE_RGBA ) || interlace != PNG_INTERLACE_NONE )
+		png_error( png, "Unsupported memory PNG format" );
+	if ( (size_t)w > (size_t)INT_MAX / 4 / h || (size_t)h > (size_t)INT_MAX / sizeof( png_bytep ) )
+		png_error( png, "Memory PNG allocation overflow" );
+	if ( colour == PNG_COLOR_TYPE_RGB )
+		png_set_add_alpha( png, 255, PNG_FILLER_AFTER );
+	png_read_update_info( png, info );
+	if ( png_get_bit_depth( png, info ) != 8 || png_get_channels( png, info ) != 4 || png_get_rowbytes( png, info ) != (size_t)w * 4 )
+		png_error( png, "Invalid memory PNG rows" );
+	state->pixels = (byte *)R_Malloc( (int)((size_t)w * h * 4), TAG_TEMP_PNG, qfalse );
+	if ( !state->pixels ) png_error( png, "Memory PNG pixel allocation failed" );
+	state->rows = (png_bytep *)R_Malloc( (int)(sizeof( png_bytep ) * h), TAG_TEMP_PNG, qfalse );
+	if ( !state->rows ) png_error( png, "Memory PNG row allocation failed" );
+	for ( png_uint_32 row = 0; row < h; ++row )
+		state->rows[row] = state->pixels + (size_t)row * w * 4;
+	png_read_image( png, state->rows );
+	png_read_end( png, NULL );
+	*data = state->pixels;
+	*width = (int)w;
+	*height = (int)h;
+	state->pixels = NULL;
+	png_destroy_read_struct( &png, &info, NULL );
+	PNGMemoryFree( state );
+	return 1;
+}
+#endif

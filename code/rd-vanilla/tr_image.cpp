@@ -28,6 +28,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "tr_local.h"
 #include "../rd-common/tr_common.h"
+#ifdef OPENJK_IOS
+#include "ios/touch/touch_atlas.h"
+#include "ios/touch/touch-v2.inc"
+#endif
 #include <png.h>
 #include <map>
 
@@ -563,6 +567,14 @@ static void Upload32( unsigned *data,
 						  int *pformat,
 						  word *pUploadWidth, word *pUploadHeight )
 {
+#ifdef OPENJK_IOS
+	if ( format == GL_RGBA8 ) {
+		*pformat = GL_RGBA8;
+		qglTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, *pUploadWidth, *pUploadHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+		goto done;
+	}
+#endif
+
 	if (format == GL_RGBA)
 	{
 	    int			samples;
@@ -1077,6 +1089,14 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 		return NULL;
 	}
 
+#ifdef OPENJK_IOS
+	const qboolean touchAtlas = strcmp( name, IOS_TOUCH_ATLAS_NAME ) == 0 ? qtrue : qfalse;
+	if ( touchAtlas ) {
+		mipmap = allowPicmip = allowTC = qfalse;
+		glWrapClampMode = GL_CLAMP_TO_EDGE;
+	}
+#endif
+
 	// need to do this here as well as in R_CreateImage, or R_FindImageFile_NoLoad() may complain about
 	//	different clamp parms used...
 	//
@@ -1088,6 +1108,20 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 	if (image) {
 		return image;
 	}
+
+#ifdef OPENJK_IOS
+	if ( touchAtlas ) {
+		if ( !LoadPNGFromMemory( iosTouchPNG, iosTouchPNGSize, &pic, &width, &height ) )
+			return NULL;
+		if ( width != IOS_TOUCH_ATLAS_SIZE || height != IOS_TOUCH_ATLAS_SIZE ) {
+			R_Free( pic );
+			return NULL;
+		}
+		image = R_CreateImage( name, pic, width, height, GL_RGBA8, qfalse, qfalse, qfalse, GL_CLAMP_TO_EDGE );
+		R_Free( pic );
+		return image;
+	}
+#endif
 
 	//
 	// load the pic from disk

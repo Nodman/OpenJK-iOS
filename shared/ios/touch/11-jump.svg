@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+<polygon points="128,46 194,100 194,134 128,80 62,134 62,100" fill="#fff"/><polygon points="128,104 180,146 180,174 128,132 76,174 76,146" fill="#fff"/><line x1="76" y1="198" x2="180" y2="198" stroke="#fff" stroke-width="20" stroke-linecap="round"/>
+</svg>

@@ -29,6 +29,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "client.h"
 #ifdef OPENJK_IOS
 #include "sys/ios/sys_ios.h"
+#include "ios/touch/touch_atlas.h"
 #endif
 #include "client_ui.h"
 
@@ -556,6 +557,12 @@ static void SCR_PublishSafeArea( void ) {
 		last[i] = pixels[i];
 	}
 	Com_DPrintf( "Safe area (l,t,r,b): %d %d %d %d\n", pixels[0], pixels[1], pixels[2], pixels[3] );
+}
+
+static qhandle_t touchShader;
+
+void SCR_RegisterTouchMedia( void ) {
+	touchShader = re.RegisterShaderNoMip( IOS_TOUCH_ATLAS_NAME );
 }
 
 // small-char glyph cells are 1:2; keep that aspect on screen, in 640x480 coords

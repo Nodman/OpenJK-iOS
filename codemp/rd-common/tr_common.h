@@ -68,6 +68,9 @@ void LoadJPG( const char *filename, byte **pic, int *width, int *height );
 
 // Load raw image data from PNG image.
 void LoadPNG( const char *filename, byte **data, int *width, int *height );
+#ifdef OPENJK_IOS
+int LoadPNGFromMemory( const byte *bytes, size_t length, byte **data, int *width, int *height );
+#endif
 
 
 /*

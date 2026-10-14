@@ -693,6 +693,9 @@ void CL_FirstSnapshot( void ) {
 		return;
 	}
 
+#ifdef OPENJK_IOS
+	SCR_RegisterTouchMedia();
+#endif
 	re->RegisterMedia_LevelLoadEnd();
 
 	cls.state = CA_ACTIVE;

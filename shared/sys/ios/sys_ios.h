@@ -48,6 +48,7 @@ void IN_TouchResetState( void );
 void IN_GamepadReleaseAll( void );
 typedef struct { float x, y, w, h; const char *label; int pressed; } touchDrawItem_t;	// 640x480 virtual
 int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems );
+void SCR_RegisterTouchMedia( void );
 
 // ios_gamepad.cpp (P4)
 void IN_GamepadSetTouchMove( int side, int fwd );
