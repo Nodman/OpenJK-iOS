@@ -27,6 +27,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../server/exe_headers.h"
 
 #include "client.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 #include "client_ui.h"
 
 extern console_t con;
@@ -404,6 +407,32 @@ void UI_SetActiveMenu( const char* menuname,const char *menuID );
 void _UI_Refresh( int realtime );
 void UI_DrawConnect( const char *servername, const char * updateInfoString );
 
+#ifdef OPENJK_IOS
+// small-char glyph cells are 1:2; keep that aspect on screen, in 640x480 coords
+static void CL_DrawTouchLabel( float cx, float cy, float charH, const char *s ) {
+	float charW = charH * 0.5f * ( (float)SCREEN_WIDTH / cls.glconfig.vidWidth ) * ( (float)cls.glconfig.vidHeight / SCREEN_HEIGHT );
+	float x = cx - strlen( s ) * charW * 0.5f, y = cy - charH * 0.5f;
+	re.SetColor( colorWhite );
+	for ( ; *s; s++, x += charW ) {
+		int ch = *s & 255;
+		float frow = ( ch >> 4 ) * 0.0625f, fcol = ( ch & 15 ) * 0.0625f;
+		re.DrawStretchPic( x, y, charW, charH, fcol, frow, fcol + 0.03125f, frow + 0.0625f, cls.charSetShader );
+	}
+	re.SetColor( NULL );
+}
+
+static void CL_DrawTouchControls( void ) {
+	touchDrawItem_t items[16];
+	int n = IN_TouchGetDrawList( items, 16 );
+	for ( int i = 0; i < n; i++ ) {
+		vec4_t c = { 1.0f, 1.0f, 1.0f, items[i].pressed ? 0.45f : 0.2f };
+		SCR_FillRect( items[i].x, items[i].y, items[i].w, items[i].h, c );
+		if ( items[i].label )
+			CL_DrawTouchLabel( items[i].x + items[i].w * 0.5f, items[i].y + items[i].h * 0.5f, items[i].h * 0.3f, items[i].label );
+	}
+}
+#endif
+
 /*
 ==================
 SCR_DrawScreenField
@@ -464,6 +493,10 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 
 	// console draws next
 	Con_DrawConsole ();
+
+#ifdef OPENJK_IOS
+	CL_DrawTouchControls();	// after the console, so CON stays visible to close it
+#endif
 
 	// debug graph can be drawn on top of anything
 	if ( cl_debuggraph->integer || cl_timegraph->integer ) {

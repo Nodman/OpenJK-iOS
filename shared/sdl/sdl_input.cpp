@@ -637,7 +637,14 @@ void IN_Init( void *windowData )
 	in_mouse = Cvar_Get( "in_mouse", "1", CVAR_ARCHIVE );
 	in_nograb = Cvar_Get( "in_nograb", "0", CVAR_ARCHIVE_ND );
 
+#ifdef OPENJK_IOS
+	// text input shows the soft keyboard; the CON touch button opens it on demand
+	if ( Sys_IOS_HardwareKeyboardConnected() )
+		SDL_StartTextInput( );
+	IN_TouchInit( SDL_window );
+#else
 	SDL_StartTextInput( );
+#endif
 
 	mouseAvailable = (qboolean)( in_mouse->value != 0 );
 	if ( in_mouse->integer == 2 ) {
@@ -933,6 +940,12 @@ static void IN_ProcessEvents( void )
 			case SDL_CONTROLLERBUTTONUP:
 				IN_GamepadHandleEvent( &e );
 				break;
+
+			case SDL_FINGERDOWN:
+			case SDL_FINGERUP:
+			case SDL_FINGERMOTION:
+				IN_TouchHandleEvent( &e );
+				break;
 #endif
 
 			case SDL_QUIT:
@@ -1205,6 +1218,9 @@ void IN_Frame (void) {
 		IN_ActivateMouse( );
 
 	IN_ProcessEvents( );
+#ifdef OPENJK_IOS
+	IN_TouchFrame( );
+#endif
 }
 
 #ifndef OPENJK_IOS	// iOS uses ios_gamepad.cpp
@@ -1236,6 +1252,7 @@ void IN_Shutdown( void ) {
 
 #ifdef OPENJK_IOS
 	IN_GamepadShutdown( );
+	IN_TouchShutdown( );
 #else
 	IN_ShutdownJoystick( );
 #endif
