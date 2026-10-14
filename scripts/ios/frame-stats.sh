@@ -42,3 +42,11 @@ if [ -n "$frames" ]; then
 else
 	echo "frames: no frameStats: lines (set ios_frameStats 1)"
 fi
+# run_loads comes from the last complete window; stalls after it are only in the load lines
+printf '%s\n' "$run" | gawk '
+	/^frameStats: load / { n++; t++; ms = $3 + 0; if (ms > max) max = ms; list = list " " ms }
+	/^frameStats: n=/ { t = 0 }
+	END {
+		printf "loads: after_marker=%d max_ms=%.0f trailing=%d%s\n", n, max, t, n ? " ms:" list : ""
+		if (t) printf "WARNING: %d stall(s) after the last complete window; not in run_loads\n", t
+	}'
