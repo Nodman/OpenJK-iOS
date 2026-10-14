@@ -1,5 +1,7 @@
 #pragma once
 
+#include "qcommon/aspect_layout.h"
+
 typedef enum {
 	TB_ATTACK, TB_ALTATTACK, TB_JUMP, TB_CROUCH, TB_USE, TB_FORCE, TB_FORCENEXT,
 	TB_SABER, TB_WEAPPREV, TB_WEAPNEXT, TB_MENU, TB_CONSOLE, TB_COUNT
@@ -18,4 +20,5 @@ extern const touchButtonDef_t touchButtonDefs[TB_COUNT];
 void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, touchRect_t out[TB_COUNT] );
 int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, int uiMode );
 void TouchLayout_Stick( float ox, float oy, float x, float y, float radius, float *outX, float *outY );
-void TouchLayout_ToVirtual( float nx, float ny, int *vx, int *vy );
+void TouchLayout_ToVirtual( const aspectLayout_t *layout, float nx, float ny, int *vx, int *vy );
+touchRect_t TouchLayout_RectToVirtual( const aspectLayout_t *layout, const touchRect_t &rect );
