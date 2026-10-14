@@ -34,6 +34,9 @@ extern qboolean tr_distortionPrePost; //tr_shadows.cpp
 extern qboolean tr_distortionNegate; //tr_shadows.cpp
 extern void RB_CaptureScreenImage(void); //tr_shadows.cpp
 extern void RB_DistortionFill(void); //tr_shadows.cpp
+#ifdef OPENJK_GLES
+extern void (*R_NativeDiscardFramebuffer)( GLenum target, GLsizei count, const GLenum *attachments );
+#endif
 static void RB_DrawGlowOverlay();
 static void RB_BlurGlowTexture();
 
@@ -1405,6 +1408,15 @@ const void	*RB_DrawBuffer( const void *data ) {
 
 	qglDrawBuffer( cmd->buffer );
 
+#ifdef OPENJK_GLES
+	// tile GPU: clear every attachment at frame start so nothing is loaded from memory
+	GL_State( GLS_DEFAULT );
+	qglScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+	qglClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
+	qglClearStencil( 0 );
+	qglClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+#endif
+
 		// clear screen for debugging
 	if (!( backEnd.refdef.rdflags & RDF_NOWORLDMODEL ) && tr.world && tr.refdef.rdflags & RDF_doLAGoggles)
 	{
@@ -1522,6 +1534,48 @@ void RB_ShowImages( void ) {
 }
 
 
+#ifdef OPENJK_IOS_PERF
+#include <time.h>
+#include <stdlib.h>
+static float perfSamples[600], perfPresent[600];
+static int perfCount;
+static uint64_t perfFrameNs, perfExcludeNs;
+static qboolean perfFrameDone;
+static double perfBatches, perfDraws, perfTris;
+static cvar_t *perfRunVar;	// engine's ios_frameStatsRun; ios_frameStatsReset bumps it
+static int perfRunSeen;
+static uint64_t R_PerfNow( void ) { return clock_gettime_nsec_np( CLOCK_UPTIME_RAW ); }
+static int R_PerfCompare( const void *a, const void *b ) {
+	float d = *(const float *)a - *(const float *)b;
+	return d < 0 ? -1 : d > 0 ? 1 : 0;
+}
+static void R_PerfRecord( uint64_t ns, uint64_t presentNs ) {
+	if ( !perfRunVar )
+		perfRunVar = ri.Cvar_Get( "ios_frameStatsRun", "0", 0 );
+	if ( perfRunVar->integer != perfRunSeen ) {	// new measured run: drop the partial window
+		perfRunSeen = perfRunVar->integer;
+		perfCount = 0;
+		perfBatches = perfDraws = perfTris = 0;
+	}
+	perfPresent[perfCount] = presentNs / 1.0e6f;
+	perfSamples[perfCount++] = ns / 1.0e6f;
+	perfBatches += backEnd.pc.c_shaders;
+	if ( backEnd.pc.c_indexes )
+		perfDraws += (double)backEnd.pc.c_shaders * backEnd.pc.c_totalIndexes / backEnd.pc.c_indexes;
+	perfTris += backEnd.pc.c_totalIndexes / 3.0;
+	if ( perfCount < 600 )
+		return;
+	float sum = 0, presentSum = 0;
+	for ( int i = 0; i < 600; i++ ) { sum += perfSamples[i]; presentSum += perfPresent[i]; }
+	qsort( perfSamples, 600, sizeof( float ), R_PerfCompare );
+	qsort( perfPresent, 600, sizeof( float ), R_PerfCompare );
+	ri.Printf( PRINT_ALL, "perf: n=600 backend_avg=%.2f backend_p95=%.2f present_avg=%.2f present_p95=%.2f batches=%.0f draws_est=%.0f tris=%.0f\n",
+		sum / 600, perfSamples[570], presentSum / 600, perfPresent[570], perfBatches / 600, perfDraws / 600, perfTris / 600 );
+	perfCount = 0;
+	perfBatches = perfDraws = perfTris = 0;
+}
+#endif
+
 /*
 =============
 RB_SwapBuffers
@@ -1562,6 +1616,24 @@ const void	*RB_SwapBuffers( const void *data ) {
 		R_Free( stencilReadback );
 	}
 
+#ifdef OPENJK_GLES
+	{
+		qglFlush();	// gl4es submission work stays inside the measured time
+		if ( R_NativeDiscardFramebuffer ) {	// depth/stencil are cleared next frame; do not store them
+			static const GLenum attachments[] = { 0x8D00 /* GL_DEPTH_ATTACHMENT */, 0x8D20 /* GL_STENCIL_ATTACHMENT */ };
+			R_NativeDiscardFramebuffer( 0x8D40 /* GL_FRAMEBUFFER */, 2, attachments );
+		}
+#ifdef OPENJK_IOS_PERF
+		uint64_t presentStart = R_PerfNow();
+#endif
+		GLimp_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
+		ri.WIN_Present(&window);
+#ifdef OPENJK_IOS_PERF
+		perfExcludeNs += R_PerfNow() - presentStart;
+		perfFrameDone = qtrue;
+#endif
+	}
+#else
     if ( !glState.finishCalled ) {
         qglFinish();
 	}
@@ -1569,6 +1641,7 @@ const void	*RB_SwapBuffers( const void *data ) {
     GLimp_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
 
 	ri.WIN_Present(&window);
+#endif
 
 	backEnd.projection2D = qfalse;
 
@@ -1603,6 +1676,9 @@ RB_ExecuteRenderCommands
 */
 void RB_ExecuteRenderCommands( const void *data ) {
 	int		t1, t2;
+#ifdef OPENJK_IOS_PERF
+	uint64_t perfStart = R_PerfNow();
+#endif
 
 	t1 = ri.Milliseconds ();
 
@@ -1642,6 +1718,14 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			// stop rendering
 			t2 = ri.Milliseconds ();
 			backEnd.pc.msec = t2 - t1;
+#ifdef OPENJK_IOS_PERF
+			perfFrameNs += R_PerfNow() - perfStart;
+			if ( perfFrameDone ) {	// frame ends with the swap command
+				R_PerfRecord( perfFrameNs - perfExcludeNs, perfExcludeNs );
+				perfFrameNs = perfExcludeNs = 0;
+				perfFrameDone = qfalse;
+			}
+#endif
 			return;
 		}
 	}

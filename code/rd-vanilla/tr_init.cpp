@@ -36,6 +36,37 @@ glconfig_t	glConfig;
 glstate_t	glState;
 window_t	window;
 
+#ifdef OPENJK_GLES
+#include <gl4esinit.h>
+static void *(*R_NativeGetProcAddress)( const char *name );
+static void *R_GLES_NativeProcAddress( const char *name ) { return R_NativeGetProcAddress( name ); }
+static void R_GLES_MainFBSize( int *width, int *height ) { *width = glConfig.vidWidth; *height = glConfig.vidHeight; }
+static qboolean R_GLES_ExtensionSupported( const char *extension ) {
+	const char *list = (const char *)qglGetString( GL_EXTENSIONS );
+	size_t len = strlen( extension );
+	for ( const char *p = list; p && ( p = strstr( p, extension ) ); p += len ) {
+		if ( ( p == list || p[-1] == ' ' ) && ( p[len] == ' ' || p[len] == '\0' ) )
+			return qtrue;
+	}
+	return qfalse;
+}
+// e.g. +set r_gl4esEnv LIBGL_USEVBO=3,LIBGL_NOHIGHP=1; gl4es reads env only in initialize_gl4es()
+static void R_GLES_ApplyEnv( void ) {
+	char buf[256];
+	Q_strncpyz( buf, ri.Cvar_Get( "r_gl4esEnv", "LIBGL_USEVBO=3", 0 )->string, sizeof( buf ) );
+	for ( char *tok = strtok( buf, " ," ); tok; tok = strtok( NULL, " ," ) ) {
+		char *eq = strchr( tok, '=' );
+		if ( !eq || strncmp( tok, "LIBGL_", 6 ) )
+			continue;
+		*eq = '\0';
+		setenv( tok, eq + 1, 1 );
+		ri.Printf( PRINT_ALL, "gl4es env %s=%s\n", tok, eq + 1 );
+	}
+}
+// native entry point; gl4es does not expose it, and it must act on SDL's bound view FBO
+void (*R_NativeDiscardFramebuffer)( GLenum target, GLsizei count, const GLenum *attachments );
+#endif
+
 static void GfxInfo_f( void );
 
 cvar_t	*r_verbose;
@@ -708,9 +739,31 @@ static void InitOpenGL( void )
 	if ( glConfig.vidWidth == 0 )
 	{
 		windowDesc_t windowDesc = { GRAPHICS_API_OPENGL };
+#ifdef OPENJK_GLES
+		windowDesc.gl.majorVersion = 2;
+		windowDesc.gl.minorVersion = 0;
+		windowDesc.gl.profile = GLPROFILE_ES;
+#endif
 		memset(&glConfig, 0, sizeof(glConfig));
 
 		window = ri.WIN_Init(&windowDesc, &glConfig);
+#ifdef OPENJK_GLES
+		GLint sdlFbo = 0;
+		{
+			void (*nativeGetIntegerv)( GLenum, GLint * ) = (void (*)( GLenum, GLint * ))R_NativeGetProcAddress( "glGetIntegerv" );
+			nativeGetIntegerv( 0x8CA6 /* GL_FRAMEBUFFER_BINDING */, &sdlFbo );
+		}
+		static qboolean gl4esStarted = qfalse;	// context persists, so init once
+		if ( !gl4esStarted ) {
+			R_GLES_ApplyEnv();
+			set_getprocaddress( R_GLES_NativeProcAddress );
+			set_getmainfbsize( R_GLES_MainFBSize );
+			initialize_gl4es();
+			gl4esStarted = qtrue;
+		}
+		R_NativeDiscardFramebuffer = (void (*)( GLenum, GLsizei, const GLenum * ))R_NativeGetProcAddress( "glDiscardFramebufferEXT" );
+		gl4es_setBorrowedMainFramebuffer( (unsigned int)sdlFbo );	// EAGL's drawable is not FBO 0
+#endif
 
 		// get our config strings
 		glConfig.vendor_string = (const char *)qglGetString (GL_VENDOR);
@@ -1846,6 +1899,10 @@ void RE_Shutdown( qboolean destroyWindow, qboolean restarting ) {
 	// shut down platform specific OpenGL stuff
 	if ( destroyWindow ) {
 		ri.WIN_Shutdown();
+#if defined( OPENJK_STATIC_MODULES ) || defined( OPENJK_IOS )
+		// InitOpenGL re-runs WIN_Init only when vidWidth == 0; a DLL reload used to zero this
+		memset( &glConfig, 0, sizeof( glConfig ) );
+#endif
 	}
 	tr.registered = qfalse;
 }
@@ -1985,6 +2042,12 @@ extern "C" Q_EXPORT refexport_t* QDECL GetRefAPI ( int apiVersion, refimport_t *
 	static refexport_t	re;
 
 	ri = *refimp;
+#ifdef OPENJK_GLES
+	// extension lookups must see gl4es, not the native GLES driver
+	R_NativeGetProcAddress = refimp->GL_GetProcAddress;
+	ri.GL_GetProcAddress = gl4es_GetProcAddress;
+	ri.GL_ExtensionSupported = R_GLES_ExtensionSupported;
+#endif
 
 	memset( &re, 0, sizeof( re ) );
 
