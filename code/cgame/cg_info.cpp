@@ -720,6 +720,9 @@ static void CG_DrawLoadingScreen( qhandle_t	levelshot ,const char *mapName)
 	vec4_t	color;
 	qhandle_t	background;
 	int weapons=0, forcepowers=0;
+	const aspectLayout_t *layout = CG_AspectLayout();
+	char stretchValue[16];
+	gi.Cvar_VariableStringBuffer( "r_aspectStretchBackdrops", stretchValue, sizeof( stretchValue ) );
 
 	// Get mission briefing for load screen
 	if (cgi_SP_GetStringTextString( va("BRIEFINGS_%s",mapName), NULL, 0 ) == 0)
@@ -742,8 +745,19 @@ static void CG_DrawLoadingScreen( qhandle_t	levelshot ,const char *mapName)
 		color,
 		&background))
 	{
-		cgi_R_SetColor( color );
-		CG_DrawPic( xPos, yPos, width, height, background );
+		if ( layout->branch == ASPECT_CORRECTED ) {
+			const aspectRect_t *full = &layout->fullRect;
+			CG_FillRect( full->x, full->y, full->w, full->h, colorTable[CT_BLACK] );
+			cgi_R_SetColor( color );
+			if ( atoi( stretchValue ) ) {
+				CG_DrawPic( full->x, full->y, full->w, full->h, background );
+			} else {
+				CG_DrawPic( xPos, yPos, width, height, background );
+			}
+		} else {
+			cgi_R_SetColor( color );
+			CG_DrawPic( xPos, yPos, width, height, background );
+		}
 	}
 
 	// Print level pic
@@ -826,7 +840,8 @@ void CG_DrawInformation( void ) {
 
 		//
 		cgi_R_SetColor( colorTable[CT_BLACK] );
-		CG_DrawPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, cgs.media.whiteShader );
+		const aspectRect_t *full = &CG_AspectLayout()->fullRect;
+		CG_DrawPic( full->x, full->y, full->w, full->h, cgs.media.whiteShader );
 
 		cgi_SP_GetStringTextString( "SP_INGAME_ALONGTIME", text, sizeof(text) );
 

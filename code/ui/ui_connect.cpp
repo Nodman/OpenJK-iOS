@@ -78,7 +78,19 @@ void UI_DrawConnect( const char *servername, const char *updateInfoString ) {
 		UI_DrawThumbNail(0,0, SCREEN_WIDTH, SCREEN_HEIGHT, levelPic );
 	}
 #else
-	UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
+	UI_RefreshLayout( &uiInfo.uiDC );
+	if ( uiInfo.uiDC.aspectLayout.branch == ASPECT_CORRECTED ) {
+		const aspectRect_t *full = &uiInfo.uiDC.aspectLayout.fullRect;
+		const vec4_t black = { 0, 0, 0, 1 };
+		UI_FillRect( full->x, full->y, full->w, full->h, black );
+		if ( uiInfo.uiDC.getCVarValue( "r_aspectStretchBackdrops" ) != 0 ) {
+			UI_DrawHandlePic( full->x, full->y, full->w, full->h, uis.menuBackShader );
+		} else {
+			UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
+		}
+	} else {
+		UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
+	}
 #endif
 }
 

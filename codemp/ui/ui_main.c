@@ -10243,7 +10243,12 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 
 	vec4_t colorLtGreyAlpha = {0, 0, 0, .5};
 
-	UI_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, colorLtGreyAlpha );
+	if ( uiInfo.uiDC.aspectLayout.branch == ASPECT_CORRECTED ) {
+		const aspectRect_t *full = &uiInfo.uiDC.aspectLayout.fullRect;
+		UI_FillRect( full->x, full->y, full->w, full->h, colorLtGreyAlpha );
+	} else {
+		UI_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, colorLtGreyAlpha );
+	}
 
 	s = GetCRDelineatedString("MENUS","DOWNLOAD_STUFF", 0);	// "Downloading:"
 	Q_strncpyz(sDownLoading,s?s:"", sizeof(sDownLoading));
@@ -10339,7 +10344,27 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 	UI_RefreshLayout( &uiInfo.uiDC );
 
 	if ( !overlay && menu ) {
-		Menu_Paint(menu, qtrue);
+		itemDef_t *background = Menu_FindItemByName( menu, "miniFrame" );
+		if ( uiInfo.uiDC.aspectLayout.branch == ASPECT_CORRECTED ) {
+			const aspectRect_t *full = &uiInfo.uiDC.aspectLayout.fullRect;
+			UI_FillRect( full->x, full->y, full->w, full->h, colorBlack );
+			if ( background && background->window.style == WINDOW_STYLE_SHADER &&
+				background->window.rect.x == 0 && background->window.rect.y == 0 &&
+				background->window.rect.w == SCREEN_WIDTH && background->window.rect.h == SCREEN_HEIGHT &&
+				uiInfo.uiDC.getCVarValue( "r_aspectStretchBackdrops" ) != 0 ) {
+				const rectDef_t savedRect = background->window.rect;
+				background->window.rect.x = full->x;
+				background->window.rect.y = full->y;
+				background->window.rect.w = full->w;
+				background->window.rect.h = full->h;
+				Menu_Paint( menu, qtrue );
+				background->window.rect = savedRect;
+			} else {
+				Menu_Paint( menu, qtrue );
+			}
+		} else {
+			Menu_Paint( menu, qtrue );
+		}
 	}
 
 	if (!overlay) {

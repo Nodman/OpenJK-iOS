@@ -602,6 +602,14 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 
 	qboolean uiFullscreen = _UI_IsFullscreen();
 
+	if ( SCR_GetAspectLayout().branch == ASPECT_CORRECTED &&
+		( uiFullscreen || cls.state != CA_ACTIVE ||
+		CL_IsRunningInGameCinematic() || CL_InGameCinematicOnStandBy() ) ) {
+		const aspectRect_t &full = SCR_GetAspectLayout().fullRect;
+		const vec4_t black = { 0, 0, 0, 1 };
+		SCR_FillRect( full.x, full.y, full.w, full.h, black );
+	}
+
 	// if the menu is going to cover the entire screen, we
 	// don't need to render anything under it
 	if ( !uiFullscreen ) {

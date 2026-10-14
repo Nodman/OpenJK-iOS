@@ -3587,6 +3587,7 @@ static void CG_UseIcon()
 
 static void CG_Draw2DScreenTints( void )
 {
+	const aspectRect_t *full = &CG_AspectLayout()->fullRect;
 	float	rageTime, rageRecTime, absorbTime, protectTime;
 	vec4_t	hcolor;
 	//force effects
@@ -3617,7 +3618,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if (!cg.renderingThirdPerson)
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 
 		cgRageFadeTime = 0;
@@ -3672,7 +3673,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if (!cg.renderingThirdPerson && rageTime)
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 		else
 		{
@@ -3682,7 +3683,7 @@ static void CG_Draw2DScreenTints( void )
 				hcolor[0] = 0.2f;
 				hcolor[1] = 0.2f;
 				hcolor[2] = 0.2f;
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 			}
 			cgRageTime = 0;
 		}
@@ -3714,7 +3715,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if ( !cg.renderingThirdPerson )
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 
 		cgRageRecFadeTime = 0;
@@ -3748,7 +3749,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if (!cg.renderingThirdPerson && rageRecTime)
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 		else
 		{
@@ -3783,7 +3784,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if ( !cg.renderingThirdPerson )
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 
 		cgAbsorbFadeTime = 0;
@@ -3817,7 +3818,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if ( !cg.renderingThirdPerson && absorbTime )
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 		else
 		{
@@ -3852,7 +3853,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if ( !cg.renderingThirdPerson )
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 
 		cgProtectFadeTime = 0;
@@ -3886,7 +3887,7 @@ static void CG_Draw2DScreenTints( void )
 
 		if ( !cg.renderingThirdPerson && protectTime )
 		{
-			CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+			CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 		}
 		else
 		{
@@ -3902,7 +3903,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0;
 		hcolor[2] = 0;
 
-		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+		CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 	}
 	else if ( (cg.refdef.viewContents&CONTENTS_SLIME) )
 	{//tint screen green
@@ -3912,7 +3913,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0.7f;
 		hcolor[2] = 0;
 
-		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+		CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 	}
 	else if ( (cg.refdef.viewContents&CONTENTS_WATER) )
 	{//tint screen light blue -- FIXME: check to see if in fog?
@@ -3922,7 +3923,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0.2f;
 		hcolor[2] = 0.8f;
 
-		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor  );
+		CG_FillRect( full->x, full->y, full->w, full->h, hcolor  );
 	}
 }
 /*

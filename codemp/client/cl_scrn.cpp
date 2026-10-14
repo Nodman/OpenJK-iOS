@@ -600,6 +600,13 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 		return;
 	}
 
+	if ( SCR_GetAspectLayout().branch == ASPECT_CORRECTED &&
+		( uiFullscreen || cls.state != CA_ACTIVE ) ) {
+		const aspectRect_t &full = SCR_GetAspectLayout().fullRect;
+		const vec4_t black = { 0, 0, 0, 1 };
+		SCR_FillRect( full.x, full.y, full.w, full.h, black );
+	}
+
 	// if the menu is going to cover the entire screen, we
 	// don't need to render anything under it
 	//actually, yes you do, unless you want clients to cycle out their reliable
