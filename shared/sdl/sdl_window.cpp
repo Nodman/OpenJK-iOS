@@ -721,12 +721,14 @@ static rserr_t GLimp_IOS_SetMode( glconfig_t *glConfig )
 		Cvar_Get( "r_iosNativeHeight", "0", CVAR_ROM );
 		Cvar_Get( "r_iosBaseAutoScale", "0", CVAR_ROM );
 		Cvar_Get( "r_iosMaxRefresh", "0", CVAR_ROM );
+		Cvar_Get( "r_iosDynamicGlow", "0", CVAR_ROM );
 		registered = qtrue;
 	}
 	Cvar_SetValue( "r_iosNativeWidth", w * nativeScale );
 	Cvar_SetValue( "r_iosNativeHeight", h * nativeScale );
 	Cvar_SetValue( "r_iosBaseAutoScale", Sys_IOS_DefaultRenderScale( qfalse ) );
 	Cvar_SetValue( "r_iosMaxRefresh", Sys_IOS_MaxFramesPerSecond() );
+	Cvar_SetValue( "r_iosDynamicGlow", 0 );
 	Sys_IOS_SetDrawableScale( screen, GLimp_IOS_RenderScale() );
 	SDL_GL_GetDrawableSize( screen, &glConfig->vidWidth, &glConfig->vidHeight );
 	glConfig->colorBits = 32;

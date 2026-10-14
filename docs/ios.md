@@ -99,6 +99,8 @@
 
 ## Settings
 
+- Dynamic glow is unavailable on the GL path, so its More Video row is hidden. Light flares can be enabled in More Video and persist. Flares use a depth read-back each frame and may cost frame time on tile GPUs.
+
 - Enter commands in the console, or put `seta` lines in that app's autoexec (`base/autoexec.cfg` for MP, `base/autoexec_sp.cfg` for SP).
 - Video → Resolution offers Auto, Native, 3/4 and Native/2 with the predicted pixel size. Native is the default. Apply restarts the video. For custom menus, use `seta r_renderScale 0|1|0.75|0.5` (choose one value), then `vid_restart`. `r_mode` stays a desktop selector.
 - `r_renderScale 1`: default Native resolution. `r_renderScale 0` selects Auto. A value from `0.5` to `1.0` sets a fixed scale. Lower values reduce detail and GPU load. Run `vid_restart` to apply a change.
@@ -143,7 +145,7 @@
 
 - **Game files needed:** check the app's own `base` folder and copy all four retail pk3 files. Tap **Check again**. A cfg inside a retail pk3 does not need to be extracted.
 - **Stutter:** lower `r_renderScale`, then run `vid_restart`. Use `com_maxfps 60`.
-- **Shadows:** keep `cg_shadows 1`. Stencil shadows with `cg_shadows 2` read back the full screen every frame. Keep `r_flares 0` and `r_measureOverdraw 0`; their depth / stencil readbacks are not supported on GLES2.
+- **Shadows:** keep `cg_shadows 1`. Stencil shadows with `cg_shadows 2` read back the full screen every frame. Keep `r_measureOverdraw 0`; its stencil readbacks are not supported on GLES2.
 - **Refraction:** keep `cg_renderToTextureFX 0` and `cg_saberTrail 1`. `cg_renderToTextureFX 1` and `cg_saberTrail 2` enable refraction. It copies the screen mid-frame and costs frames on mobile GPUs.
 - **Pure server rejects a join:** extra pk3 files in `base` can block `sv_pure` joins. Check that folder for added files.
 - **Hot device:** the message is “Device is very hot: capped at 30 fps. Lower r_renderScale to help.” The thermal cap changes the frame rate. It does not lower scale for you.

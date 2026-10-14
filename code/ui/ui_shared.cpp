@@ -167,6 +167,13 @@ static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
 		if ( !multi ) {
 			continue;
 		}
+		if ( !Q_stricmp( item->window.name, "dynamic_glow" ) && !Q_stricmp( item->cvar, "r_dynamicglow" ) ) {
+			item->cvarTest = "r_iosDynamicGlow";
+			item->enableCvar = "1";
+			item->cvarFlags = CVAR_SHOW;
+			continue;
+		}
+
 		if ( !Q_stricmp( item->window.name, "fullscreen" ) &&
 			( !Q_stricmp( item->cvar, "ui_r_fullscreen" ) || !Q_stricmp( item->cvar, "ui_iosProMotion" ) ) ) {
 			item->cvar = "ui_iosProMotion";
