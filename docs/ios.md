@@ -112,6 +112,7 @@
 - `r_surfaceSprites` and `r_texturebits` use `CVAR_ARCHIVE_ND`. A value equal to the engine default is not saved. For example, `seta r_surfaceSprites 1` on A12 is lost at restart. Put such overrides in the app's autoexec file.
 - `r_gl4esEnv` defaults to `LIBGL_USEVBO=3`. gl4es reads it once at renderer init. Changes after init are ignored, including across `vid_restart`. Fully relaunch with the setting supplied at startup, for example `+set r_gl4esEnv LIBGL_USEVBO=3`.
 - `ios_frameStats 1` logs frame intervals, frame and present times, and memory use. `ios_frameStats 0` stops the log. `ios_frameStatsReset` starts a new measurement window.
+- `cg_drawFPS 1` shows the engine frame rate in a map. For frames the display actually showed, plug the device in by USB and run `scripts/ios/shown-fps.py --device <name, OS version or id>`. It records a 3 second Metal System Trace and counts the app's displayed frames. Apple's Metal Performance HUD does not draw over the GL layer.
 - Frame-stats CPU counters measure wall time. They can include driver waits. They are not pure CPU work counters.
 
 ### Lifecycle
