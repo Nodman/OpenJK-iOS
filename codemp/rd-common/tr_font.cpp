@@ -926,7 +926,10 @@ CFontInfo::CFontInfo(const char *_fontName)
 	}
 	else
 	{
+		mPointSize = 0;
 		mHeight = 0;
+		mAscender = 0;
+		mDescender = 0;
 		mShader = 0;
 	}
 
