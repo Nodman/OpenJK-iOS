@@ -20,6 +20,7 @@ float Sys_IOS_GetNativeScale( struct SDL_Window *window );	// pixels per point o
 #define IOS_MIN_DRAWABLE_HEIGHT 540.0f	// Slide Over / small windows: render and lay out for at least this
 void Sys_IOS_GetSafeAreaPixels( struct SDL_Window *window, float *left, float *top, float *right, float *bottom );
 qboolean Sys_IOS_HardwareKeyboardConnected( void );
+qboolean Sys_IOS_PointerConnected( void );
 
 // sdl_window.cpp (P0b)
 struct SDL_Window *GLimp_IOS_Window( void );
@@ -47,6 +48,7 @@ typedef struct { float x, y, w, h; const char *label; int pressed; } touchDrawIt
 int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems );
 
 // ios_gamepad.cpp (P4)
+void IN_GamepadZeroAxes( void );
 void IN_GamepadInit( void );
 void IN_GamepadShutdown( void );
 void IN_GamepadHandleEvent( const union SDL_Event *e );

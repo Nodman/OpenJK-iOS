@@ -848,10 +848,6 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 
 	// This depends on SDL_INIT_VIDEO, hence having it here
 	IN_Init( screen );
-#ifdef OPENJK_IOS
-	if ( !Sys_IOS_HardwareKeyboardConnected() )
-		SDL_StopTextInput();	// IN_Init starts text input unconditionally; keep this guard (P4 gates it at the source too)
-#endif
 
 	// window_t is only really useful for Windows if the renderer wants to create a D3D context.
 	window_t window = {};

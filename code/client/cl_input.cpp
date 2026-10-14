@@ -467,6 +467,12 @@ qboolean CL_TouchUIMode( void ) {
 	return ( Key_GetCatcher() & ( KEYCATCH_UI | KEYCATCH_CONSOLE ) ) ? qtrue : qfalse;
 }
 
+#ifdef OPENJK_IOS
+qboolean CL_TouchCinematic( void ) {
+	return ( cls.state == CA_CINEMATIC || CL_IsRunningInGameCinematic() ) ? qtrue : qfalse;
+}
+#endif
+
 /*
 =================
 CL_JoystickEvent

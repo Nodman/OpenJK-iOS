@@ -638,9 +638,6 @@ void IN_Init( void *windowData )
 	in_nograb = Cvar_Get( "in_nograb", "0", CVAR_ARCHIVE_ND );
 
 #ifdef OPENJK_IOS
-	// text input shows the soft keyboard; the CON touch button opens it on demand
-	if ( Sys_IOS_HardwareKeyboardConnected() )
-		SDL_StartTextInput( );
 	IN_TouchInit( SDL_window );
 #else
 	SDL_StartTextInput( );

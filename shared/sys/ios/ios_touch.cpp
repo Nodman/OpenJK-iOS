@@ -5,9 +5,10 @@
 #include "client/client.h"
 #include <SDL.h>
 
-enum { ROLE_NONE, ROLE_STICK, ROLE_LOOK, ROLE_BUTTON, ROLE_UITAP };
+enum { ROLE_NONE, ROLE_STICK, ROLE_LOOK, ROLE_BUTTON, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP };
 #define MAX_TOUCH_FINGERS 10
 #define STICK_RADIUS_FRAC 0.12f	// of the safe height
+#define CONSOLE_HOLD_MS 500
 
 void IN_GamepadSetTouchMove( int side, int fwd );	// ios_gamepad.cpp sends the combined axes
 
@@ -16,6 +17,8 @@ typedef struct {
 	int role;
 	int button;
 	float ox, oy, x, y, remX, remY;
+	Uint32 downTime;
+	qboolean cancelled, longPressed;
 } touchFinger_t;
 
 static SDL_Window *touchWindow;
@@ -23,14 +26,19 @@ static touchFinger_t fingers[MAX_TOUCH_FINGERS];
 static touchRect_t rects[TB_COUNT];
 static int viewW, viewH;
 static float safeH;
-static qboolean lastUIMode, lastHidden;
-static int keyboardOwner;	// catcher the CON button opened the soft keyboard for, 0 = none
-static qboolean keyboardArmed;	// owner catcher seen; toggleconsole runs later via Cbuf
-static qboolean lastHwKeyboard;
+static qboolean lastUIMode, lastHidden, lastCinematic;
+static int softKeyboardTarget;
+static qboolean lastHwKeyboard, lastTextDemand;
 static cvar_t *in_touchControls, *in_touchLookScale;
 
 static qboolean IN_TouchHidden( void ) {
-	return ( in_touchControls->integer == 0 || ( in_touchControls->integer == 1 && IN_GamepadActive() ) ) ? qtrue : qfalse;
+	return ( in_touchControls->integer == 0 || ( in_touchControls->integer == 1 &&
+		( IN_GamepadActive() || ( Sys_IOS_HardwareKeyboardConnected() && Sys_IOS_PointerConnected() ) ) ) ) ? qtrue : qfalse;
+}
+
+static qboolean IN_TouchOnConsole( float x, float y ) {
+	const touchRect_t *con = &rects[TB_CONSOLE];
+	return ( x >= con->x && x <= con->x + con->w && y >= con->y && y <= con->y + con->h ) ? qtrue : qfalse;
 }
 
 static void IN_TouchUpdateLayout( void ) {
@@ -73,6 +81,47 @@ void IN_TouchReleaseAll( void ) {
 	IN_GamepadSetTouchMove( 0, 0 );
 }
 
+static void IN_TouchSyncMode( void ) {
+	qboolean uiMode = CL_TouchUIMode(), hidden = IN_TouchHidden(), cinematic = CL_TouchCinematic();
+	if ( uiMode != lastUIMode || hidden != lastHidden || cinematic != lastCinematic ) {
+		IN_TouchReleaseAll();
+		if ( cinematic && !lastCinematic ) {
+			IN_GamepadZeroAxes();
+			SDL_StopTextInput();
+		}
+		lastUIMode = uiMode;
+		lastHidden = hidden;
+		lastCinematic = cinematic;
+	}
+}
+
+static void IN_TouchTextInput( void ) {
+	int catcher = Key_GetCatcher();
+	qboolean hwKeyboard = Sys_IOS_HardwareKeyboardConnected();
+	qboolean disconnected = ( lastHwKeyboard && !hwKeyboard ) ? qtrue : qfalse;
+	qboolean cinematic = CL_TouchCinematic();
+	if ( softKeyboardTarget && !( catcher & softKeyboardTarget ) )
+		softKeyboardTarget = 0;
+	if ( disconnected && lastTextDemand && ( catcher & KEYCATCH_UI ) && !( catcher & KEYCATCH_CONSOLE ) && !cinematic )
+		softKeyboardTarget = KEYCATCH_UI;
+	qboolean demand = ( !cinematic && ( ( ( catcher & KEYCATCH_CONSOLE ) &&
+		( hwKeyboard || softKeyboardTarget != KEYCATCH_CONSOLE ) ) ||
+#ifndef _JK2EXE
+		( catcher & KEYCATCH_MESSAGE ) ||
+#endif
+		( ( catcher & KEYCATCH_UI ) && ( hwKeyboard || softKeyboardTarget == KEYCATCH_UI ) ) ) ) ? qtrue : qfalse;
+	if ( demand ) {
+		if ( disconnected )
+			SDL_StopTextInput();
+		if ( !SDL_IsTextInputActive() )
+			SDL_StartTextInput();
+	} else if ( SDL_IsTextInputActive() ) {
+		SDL_StopTextInput();
+	}
+	lastHwKeyboard = hwKeyboard;
+	lastTextDemand = demand;
+}
+
 void IN_TouchInit( SDL_Window *window ) {
 	in_touchControls = Cvar_Get( "in_touchControls", "1", CVAR_ARCHIVE );
 	in_touchLookScale = Cvar_Get( "in_touchLookScale", "1.0", CVAR_ARCHIVE );
@@ -82,7 +131,10 @@ void IN_TouchInit( SDL_Window *window ) {
 	viewW = viewH = 0;
 	lastUIMode = CL_TouchUIMode();
 	lastHidden = IN_TouchHidden();
-	lastHwKeyboard = Sys_IOS_HardwareKeyboardConnected();
+	lastCinematic = CL_TouchCinematic();
+	if ( lastCinematic )
+		IN_GamepadZeroAxes();
+	IN_TouchTextInput();
 }
 
 void IN_TouchShutdown( void ) {
@@ -115,37 +167,22 @@ static qboolean IN_TouchHasRole( int role ) {
 }
 
 static void IN_TouchConsoleAction( void ) {
+	Cbuf_ExecuteText( EXEC_APPEND, "toggleconsole\n" );
+}
+
+static void IN_TouchKeyboardAction( void ) {
 	int catcher = Key_GetCatcher();
-	qboolean hwKeyboard = Sys_IOS_HardwareKeyboardConnected();
-	if ( ( catcher & KEYCATCH_CONSOLE ) || !( catcher & KEYCATCH_UI ) ) {
-		qboolean opening = ( catcher & KEYCATCH_CONSOLE ) ? qfalse : qtrue;
-		Cbuf_ExecuteText( EXEC_APPEND, "toggleconsole\n" );
-		if ( opening ) {
-			SDL_StartTextInput();
-			keyboardOwner = KEYCATCH_CONSOLE;
-			keyboardArmed = qfalse;
-		} else {
-			if ( !hwKeyboard )
-				SDL_StopTextInput();
-			keyboardOwner = 0;
-		}
-	} else if ( SDL_IsTextInputActive() && !hwKeyboard ) {
-		SDL_StopTextInput();
-		keyboardOwner = 0;
-	} else {
-		SDL_StartTextInput();
-		keyboardOwner = KEYCATCH_UI;
-		keyboardArmed = qfalse;
-	}
+	if ( !( catcher & ( KEYCATCH_CONSOLE | KEYCATCH_UI ) ) )
+		return;
+	if ( ( catcher & KEYCATCH_CONSOLE ) && Sys_IOS_HardwareKeyboardConnected() )
+		return;
+	int target = ( catcher & KEYCATCH_CONSOLE ) ? KEYCATCH_CONSOLE : KEYCATCH_UI;
+	softKeyboardTarget = softKeyboardTarget == target ? 0 : target;
+	IN_TouchTextInput();
 }
 
 static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 	float x = tf->x * viewW, y = tf->y * viewH;
-	const touchRect_t *con = &rects[TB_CONSOLE];
-	if ( x >= con->x && x <= con->x + con->w && y >= con->y && y <= con->y + con->h ) {
-		IN_TouchConsoleAction();
-		return;
-	}
 
 	touchFinger_t *f = NULL;
 	for ( int i = 0; i < MAX_TOUCH_FINGERS && !f; i++ ) {
@@ -155,7 +192,25 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 	if ( !f || IN_TouchFind( tf->fingerId ) )
 		return;
 
-	if ( CL_TouchUIMode() ) {
+	if ( CL_TouchCinematic() ) {
+		if ( IN_TouchHasRole( ROLE_CINEMATIC_TAP ) ) {
+			for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ ) {
+				if ( fingers[i].role == ROLE_CINEMATIC_TAP )
+					fingers[i].cancelled = qtrue;
+			}
+			return;
+		}
+		f->role = ROLE_CINEMATIC_TAP;
+		f->downTime = tf->timestamp;
+		f->cancelled = qfalse;
+	} else if ( IN_TouchOnConsole( x, y ) ) {
+		if ( IN_TouchHasRole( ROLE_CONSOLE ) )
+			return;
+		f->role = ROLE_CONSOLE;
+		f->button = TB_CONSOLE;
+		f->downTime = tf->timestamp;
+		f->cancelled = f->longPressed = qfalse;
+	} else if ( CL_TouchUIMode() ) {
 		if ( IN_TouchHasRole( ROLE_UITAP ) )
 			return;
 		int vx, vy;
@@ -163,7 +218,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		Sys_QueEvent( 0, SE_MOUSE_ABS, vx, vy, 0, NULL );
 		Sys_QueEvent( 0, SE_KEY, A_MOUSE1, qtrue, 0, NULL );
 		f->role = ROLE_UITAP;
-	} else if ( IN_TouchHidden() ) {
+	} else if ( lastHidden ) {
 		return;
 	} else {
 		int hit = TouchLayout_Hit( rects, x, y, 0 );
@@ -191,7 +246,15 @@ static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
 		return;
 	f->x = tf->x * viewW;
 	f->y = tf->y * viewH;
-	if ( f->role == ROLE_UITAP ) {
+	if ( f->role == ROLE_CONSOLE ) {
+		if ( !IN_TouchOnConsole( f->x, f->y ) )
+			f->cancelled = qtrue;
+	} else if ( f->role == ROLE_CINEMATIC_TAP ) {
+		float dx = f->x - f->ox, dy = f->y - f->oy;
+		float slop = 0.02f * safeH;
+		if ( dx * dx + dy * dy > slop * slop )
+			f->cancelled = qtrue;
+	} else if ( f->role == ROLE_UITAP ) {
 		int vx, vy;
 		TouchLayout_ToVirtual( tf->x, tf->y, &vx, &vy );
 		Sys_QueEvent( 0, SE_MOUSE_ABS, vx, vy, 0, NULL );
@@ -210,6 +273,7 @@ void IN_TouchHandleEvent( const SDL_Event *e ) {
 	if ( !touchWindow )
 		return;
 	IN_TouchUpdateLayout();
+	IN_TouchSyncMode();
 	switch ( e->type ) {
 	case SDL_FINGERDOWN:
 		IN_TouchFingerDown( &e->tfinger );
@@ -219,8 +283,24 @@ void IN_TouchHandleEvent( const SDL_Event *e ) {
 		break;
 	case SDL_FINGERUP: {
 		touchFinger_t *f = IN_TouchFind( e->tfinger.fingerId );
-		if ( f )
+		if ( f ) {
+			if ( f->role == ROLE_CINEMATIC_TAP && !f->cancelled && e->tfinger.timestamp - f->downTime < CONSOLE_HOLD_MS ) {
+				float dx = e->tfinger.x * viewW - f->ox, dy = e->tfinger.y * viewH - f->oy;
+				float slop = 0.02f * safeH;
+				if ( dx * dx + dy * dy <= slop * slop ) {
+					Sys_QueEvent( 0, SE_KEY, A_ESCAPE, qtrue, 0, NULL );
+					Sys_QueEvent( 0, SE_KEY, A_ESCAPE, qfalse, 0, NULL );
+				}
+			}
+			if ( f->role == ROLE_CONSOLE && !f->cancelled && !f->longPressed &&
+				IN_TouchOnConsole( e->tfinger.x * viewW, e->tfinger.y * viewH ) ) {
+				if ( e->tfinger.timestamp - f->downTime >= CONSOLE_HOLD_MS )
+					IN_TouchKeyboardAction();
+				else
+					IN_TouchConsoleAction();
+			}
 			IN_TouchRelease( f );
+		}
 		break;
 	}
 	default:
@@ -233,42 +313,20 @@ void IN_TouchFrame( void ) {
 		return;
 	IN_TouchUpdateLayout();
 
-	qboolean uiMode = CL_TouchUIMode(), hidden = IN_TouchHidden();
-	if ( uiMode != lastUIMode || hidden != lastHidden ) {
-		IN_TouchReleaseAll();
-		lastUIMode = uiMode;
-		lastHidden = hidden;
-	}
+	IN_TouchSyncMode();
 
-	// a hardware keyboard can come and go at any time; text input follows it
-	qboolean hwKeyboard = Sys_IOS_HardwareKeyboardConnected();
-	if ( hwKeyboard != lastHwKeyboard ) {
-		lastHwKeyboard = hwKeyboard;
-		if ( hwKeyboard ) {
-			SDL_StartTextInput();
-		} else if ( Key_GetCatcher() & KEYCATCH_CONSOLE ) {
-			keyboardOwner = KEYCATCH_CONSOLE;	// keep typing on the soft keyboard
-			keyboardArmed = qtrue;
-		} else if ( !keyboardOwner ) {
-			SDL_StopTextInput();
-		}
-	}
-
-	// the console or menu closed some other way: drop the keyboard the CON button opened
-	if ( keyboardOwner && ( Key_GetCatcher() & keyboardOwner ) ) {
-		keyboardArmed = qtrue;
-	} else if ( keyboardOwner && keyboardArmed ) {
-		if ( !hwKeyboard )
-			SDL_StopTextInput();
-		keyboardOwner = 0;
-	}
+	IN_TouchTextInput();
 
 	for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ ) {
+		if ( fingers[i].role == ROLE_CONSOLE && !fingers[i].cancelled && !fingers[i].longPressed &&
+			SDL_GetTicks() - fingers[i].downTime >= CONSOLE_HOLD_MS ) {
+			IN_TouchKeyboardAction();
+			fingers[i].longPressed = qtrue;
+		}
 		if ( fingers[i].role == ROLE_STICK ) {
 			float sx, sy;
 			TouchLayout_Stick( fingers[i].ox, fingers[i].oy, fingers[i].x, fingers[i].y, STICK_RADIUS_FRAC * safeH, &sx, &sy );
 			IN_GamepadSetTouchMove( (int)( sx * 127 ), (int)( -sy * 127 ) );
-			break;
 		}
 	}
 }
@@ -289,17 +347,20 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	if ( !touchWindow )
 		return 0;
 	IN_TouchUpdateLayout();
+	IN_TouchSyncMode();
+	if ( CL_TouchCinematic() )
+		return 0;
 	if ( viewW <= 0 || viewH <= 0 )
 		return 0;
 
 	int n = 0;
-	qboolean conOnly = ( IN_TouchHidden() || CL_TouchUIMode() ) ? qtrue : qfalse;
+	qboolean conOnly = ( lastHidden || CL_TouchUIMode() ) ? qtrue : qfalse;
 	for ( int b = 0; b < TB_COUNT; b++ ) {
 		if ( conOnly && b != TB_CONSOLE )
 			continue;
 		int pressed = 0;
 		for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ ) {
-			if ( fingers[i].role == ROLE_BUTTON && fingers[i].button == b )
+			if ( ( fingers[i].role == ROLE_BUTTON || fingers[i].role == ROLE_CONSOLE ) && fingers[i].button == b )
 				pressed = 1;
 		}
 		IN_TouchAddItem( items, &n, maxItems, rects[b].x, rects[b].y, rects[b].w, rects[b].h, touchButtonDefs[b].label, pressed );

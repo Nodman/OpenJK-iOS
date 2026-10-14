@@ -54,8 +54,8 @@
 
 - Touch: use the floating stick on the left to move. Drag on the right to look. Tap or drag in menus to use the cursor.
 - **MENU** sends Escape and opens the game menu.
-- In game, **CON** opens the console and keyboard. Tap it again to close both. Closing the console another way also closes its soft keyboard.
-- In menus, **CON** toggles the keyboard for text fields.
+- Tap **CON** in a map or menu to open the console and keyboard. Tap it again to close both. Closing the console another way also closes its soft keyboard.
+- Hold **CON** for at least 500 ms, keeping your finger on the button, to toggle the soft keyboard for menu text fields or the open console; a console hold does nothing with a hardware keyboard. Leaving the button cancels the gesture. All touch controls, including CON, hide during full-screen cinematics and SP in-game videos. Tap anywhere to skip a video through the normal Escape path.
 - Touch button binds:
 
 | Label | Key | Default bind | Action |
@@ -93,7 +93,7 @@
 | Start / Options | Escape | — | Menu / back |
 
 - Keep `in_joystick 1` for the touch stick and pad axes. Keep `j_twinStick 1` for pad look.
-- iPad keyboard and mouse use the normal key and mouse binds. Keyboard connect and disconnect are handled while the app runs. A connected hardware keyboard keeps text input active. If it disconnects with the console open, the soft keyboard takes over.
+- iPad keyboard and mouse use the normal key and mouse binds. Text input stays active for the console unless CON hid its soft keyboard, MP chat, menus with a hardware keyboard, and menus where CON requested the soft keyboard. It is off in gameplay and cinematics. Keyboard disconnect hands active text entry to the soft keyboard. Input and video restarts restore this state.
 - Rebind in the console. For example, `bind AUX16 +altattack` changes ATK. Use the same command with a `JOY` key to change a pad bind.
 - Real Xbox / DualSense, Smart Keyboard, and mouse checks remain release checks. The recorded touch checks used synthetic input.
 
@@ -103,7 +103,7 @@
 - `r_renderScale 0`: auto scale. A value from `0.5` to `1.0` sets a fixed scale. Lower values reduce detail and GPU load. Run `vid_restart` to apply a change.
 - Auto scale: below Apple GPU family 7 uses `0.6`; families 7 / 8 use `0.75`; family 9 or later uses `1.0`. With `com_maxfps` above 60, auto scale is multiplied by `0.8`. Scale is clamped to `0.5`–`1.0`, then raised for a drawable at least 540 px tall, up to full scale.
 - `com_maxfps 60`: default. `com_maxfps 120`: opt in on ProMotion iPads. On the measured iPhone GL path it still shows 60 Hz. If using auto scale, run `vid_restart` after changing the frame rate to update the scale.
-- `in_touchControls 0`: hide touch controls except CON. `1`: default; hide them when a pad is connected. `2`: keep them visible with a pad.
+- `in_touchControls 0`: hide touch controls except CON. `1`: default; hide them when a pad is connected, or a hardware keyboard and mouse/trackpad are both connected. A keyboard alone keeps touch look and buttons. `2`: keep them visible with these devices. Menus and the console show only CON. Full-screen cinematics and SP in-game videos hide all controls in every mode; camera cutscenes still show them.
 - `in_touchLookScale 1.0`: default touch look scale. Higher values turn faster.
 - `j_lookSpeed 1.5`: default pad look scale. Higher values turn faster.
 - `j_deadzone 0.15`: default stick dead zone. Raise it if a stick drifts.

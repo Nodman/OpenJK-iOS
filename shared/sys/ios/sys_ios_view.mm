@@ -46,3 +46,7 @@ void Sys_IOS_GetSafeAreaPixels( SDL_Window *window, float *left, float *top, flo
 qboolean Sys_IOS_HardwareKeyboardConnected( void ) {
 	return [GCKeyboard coalescedKeyboard] != nil ? qtrue : qfalse;
 }
+
+qboolean Sys_IOS_PointerConnected( void ) {
+	return [GCMouse mice].count > 0 ? qtrue : qfalse;
+}

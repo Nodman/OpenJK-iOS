@@ -427,6 +427,9 @@ qboolean CL_InitCGameVM( void *gameLibrary );
 void CL_InitCGame( void );
 void CL_ShutdownCGame( void );
 qboolean CL_GameCommand( void );
+#ifdef OPENJK_IOS
+qboolean CL_TouchCinematic( void );
+#endif
 void CL_CGameRendering( stereoFrame_t stereo );
 void CL_SetCGameTime( void );
 void CL_FirstSnapshot( void );

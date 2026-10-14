@@ -43,6 +43,14 @@ static void IN_GamepadSendAxes( void ) {
 	axesActive = active;
 }
 
+void IN_GamepadZeroAxes( void ) {
+	static const int axes[4] = { AXIS_SIDE, AXIS_FORWARD, AXIS_YAW, AXIS_PITCH };
+	touchSide = touchFwd = 0;
+	for ( int i = 0; i < 4; i++ )
+		Sys_QueEvent( 0, SE_JOYSTICK_AXIS, axes[i], 0, 0, NULL );
+	axesActive = qfalse;
+}
+
 void IN_GamepadReleaseAll( void ) {
 	for ( int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++ ) {
 		if ( heldKey[i] ) {
