@@ -1049,7 +1049,12 @@ void R_TakeScreenshotPNG( int x, int y, int width, int height, char *fileName ) 
 	int padlen=0;
 
 	buffer = RB_ReadPixels( x, y, width, height, &offset, &padlen );
-	RE_SavePNG( fileName, buffer, width, height, 3 );
+	if ( padlen ) {
+		const int linelen = width * 3;
+		for ( int i = 1; i < height; i++ )
+			memmove( buffer + offset + i * linelen, buffer + offset + i * ( linelen + padlen ), linelen );
+	}
+	RE_SavePNG( fileName, buffer + offset, width, height, 3 );
 	ri.Hunk_FreeTempMemory( buffer );
 }
 
