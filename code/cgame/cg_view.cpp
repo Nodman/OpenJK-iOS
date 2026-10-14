@@ -1264,13 +1264,7 @@ qboolean CG_CalcFOVFromX( float fov_x )
 	qboolean	inwater;
 
 	if ( cg_fovAspectAdjust.integer ) {
-		// Based on LordHavoc's code for Darkplaces
-		// http://www.quakeworld.nu/forum/topic/53/what-does-your-qw-look-like/page/30
-		const float baseAspect = 0.75f; // 3/4
-		const float aspect = (float)cgs.glconfig.vidWidth/(float)cgs.glconfig.vidHeight;
-		const float desiredFov = fov_x;
-
-		fov_x = atan( tan( desiredFov*M_PI / 360.0f ) * baseAspect*aspect )*360.0f / M_PI;
+		fov_x = AspectLayout_HorizontalFov( fov_x, cg.refdef.width, cg.refdef.height );
 	}
 
 	x = cg.refdef.width / tan( fov_x / 360 * M_PI );
@@ -1314,6 +1308,11 @@ qboolean CG_CalcFOVFromX( float fov_x )
 	// set it
 	cg.refdef.fov_x = fov_x;
 	cg.refdef.fov_y = fov_y;
+#ifdef P11_FOV_DIAG
+	Com_Printf( "P11 FOV SP %s %dx%d adjust=%d fov_x=%.5f fov_y=%.5f\n",
+		in_camera ? "camera" : (cg.zoomMode && cg.zoomMode < 3 ? "zoom" : "normal"),
+		cg.refdef.width, cg.refdef.height, cg_fovAspectAdjust.integer, fov_x, fov_y );
+#endif
 
 	return (inwater);
 }
