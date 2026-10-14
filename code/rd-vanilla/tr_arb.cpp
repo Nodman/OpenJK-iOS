@@ -112,7 +112,18 @@ const unsigned char g_strGlowPShaderARB[] =
 #define GL_PROGRAM_ERROR_STRING_ARB						0x8874
 #define GL_PROGRAM_ERROR_POSITION_ARB					0x864B
 
+#ifdef OPENJK_GLES
+extern bool g_bDynamicGlowSupported;
+#endif
+
 void ARB_InitGlowShaders(void) {
+#ifdef OPENJK_GLES
+	// gl4es rejects the RECT samplers in the glow programs
+	g_bDynamicGlowSupported = false;
+	ri.Cvar_Set( "r_DynamicGlow", "0" );
+	return;
+#endif
+
 	// Allocate and Load the global 'Glow' Vertex Program. - AReis
 	if ( qglGenProgramsARB )
 	{
