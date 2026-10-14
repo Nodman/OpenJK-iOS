@@ -4241,6 +4241,7 @@ void UI_UpdateVideoSetup ( void )
 	Cvar_Set ( "r_fullscreen", Cvar_VariableString ( "ui_r_fullscreen" ) );
 #endif
 #ifdef OPENJK_IOS
+	Cvar_Get( "cg_drawFPS", "0", CVAR_ARCHIVE );
 	Cvar_Set( "cg_drawFPS", Cvar_VariableValue( "ui_iosDrawFPS" ) != 0 ? "1" : "0" );
 #else
 	Cvar_Set ( "r_colorbits", Cvar_VariableString ( "ui_r_colorbits" ) );

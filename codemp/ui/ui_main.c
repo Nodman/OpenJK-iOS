@@ -4927,6 +4927,7 @@ void UI_UpdateVideoSetup ( void )
 	trap->Cvar_Set ( "r_fullscreen", UI_Cvar_VariableString ( "ui_r_fullscreen" ) );
 #endif
 #ifdef OPENJK_IOS
+	trap->Cvar_Register( NULL, "cg_drawFPS", "0", CVAR_ARCHIVE );
 	trap->Cvar_Set( "cg_drawFPS", trap->Cvar_VariableValue( "ui_iosDrawFPS" ) != 0 ? "1" : "0" );
 #else
 	trap->Cvar_Set ( "r_colorbits", UI_Cvar_VariableString ( "ui_r_colorbits" ) );

@@ -31,6 +31,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "ui/ui_shared.h"
 #include "ui/ui_public.h"
 
+#ifdef OPENJK_IOS
+#include "sys/ios/ios_touch_geometry.h"
+#endif
+
 extern float CG_RadiusForCent( centity_t *cent );
 qboolean CG_WorldCoordToScreenCoordFloat(vec3_t worldCoord, float *x, float *y);
 qboolean CG_CalcMuzzlePoint( int entityNum, vec3_t muzzle );
@@ -3194,11 +3198,15 @@ static float CG_DrawFPS( float y ) {
 	const float scale = AspectLayout_SharpTextScale( layout, glyphHeight, 22.0f );
 	const float height = glyphHeight * scale;
 	const aspectPoint_t safe = AspectLayout_SizeToVirtual( layout, layout->safeR, layout->safeT );
-	const float right = layout->fullRect.x + layout->fullRect.w - safe.x - 4;
+	float conX, conY, conW, conH;
+	IOS_TouchConsoleRectPixels( layout->W, layout->H,
+		layout->safeL, layout->safeT, layout->safeR, layout->safeB, &conX, &conY, &conW, &conH );
+	const float right = AspectLayout_ToVirtual( layout,
+		fminf( layout->W - layout->safeR, conX - 6.0f ), 0 ).x;
 	const int width = trap->R_Font_StrLenPixels( s, font, scale );
-	y = layout->fullRect.y + safe.y + 2;
-	trap->R_Font_DrawString( right - width, y, s, colorTable[CT_LTGOLD1], font, -1, scale );
-	return y + height;
+	const float top = layout->fullRect.y + safe.y + 2 + y;
+	trap->R_Font_DrawString( right - width, top, s, colorTable[CT_LTGOLD1], font, -1, scale );
+	return y + height + 2;
 #else
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 

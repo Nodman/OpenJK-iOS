@@ -30,6 +30,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../game/objectives.h"
 #include "../game/g_vehicles.h"
 
+#ifdef OPENJK_IOS
+#include "sys/ios/ios_touch_geometry.h"
+#endif
+
 extern vmCvar_t	cg_debugHealthBars;
 
 extern Vehicle_t *G_IsRidingVehicle( gentity_t *ent );
@@ -3476,11 +3480,15 @@ static float CG_DrawFPS( float y ) {
 	const float scale = AspectLayout_SharpTextScale( layout, glyphHeight, 22.0f );
 	const float height = glyphHeight * scale;
 	const aspectPoint_t safe = AspectLayout_SizeToVirtual( layout, layout->safeR, layout->safeT );
-	const float right = layout->fullRect.x + layout->fullRect.w - safe.x - 4;
+	float conX, conY, conW, conH;
+	IOS_TouchConsoleRectPixels( layout->W, layout->H,
+		layout->safeL, layout->safeT, layout->safeR, layout->safeB, &conX, &conY, &conW, &conH );
+	const float right = AspectLayout_ToVirtual( layout,
+		fminf( layout->W - layout->safeR, conX - 6.0f ), 0 ).x;
 	const int width = cgi_R_Font_StrLenPixels( s, font, scale );
-	y = layout->fullRect.y + safe.y + 2;
-	cgi_R_Font_DrawString( right - width, y, s, colorTable[CT_LTGOLD1], font, -1, scale );
-	return y + height;
+	const float top = layout->fullRect.y + safe.y + 2 + y;
+	cgi_R_Font_DrawString( right - width, top, s, colorTable[CT_LTGOLD1], font, -1, scale );
+	return y + height + 2;
 #else
 	const int w = cgi_R_Font_StrLenPixels(s, cgs.media.qhFontMedium, 1.0f);
 	cgi_R_Font_DrawString(635-xOffset - w, y+2, s, colorTable[CT_LTGOLD1], cgs.media.qhFontMedium, -1, 1.0f);
