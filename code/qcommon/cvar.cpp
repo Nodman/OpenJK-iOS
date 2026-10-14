@@ -1223,8 +1223,10 @@ void Cvar_Restart(qboolean unsetVM)
 
 	while(curvar)
 	{
-		if((curvar->flags & CVAR_USER_CREATED) ||
-			(unsetVM && (curvar->flags & CVAR_VM_CREATED)))
+		// Platform defaults survive a restart; they reset like registered cvars.
+		if(!(curvar->flags & CVAR_PLATFORM_DEFAULT) &&
+			((curvar->flags & CVAR_USER_CREATED) ||
+			(unsetVM && (curvar->flags & CVAR_VM_CREATED))))
 		{
 			// throw out any variables the user/vm created
 			curvar = Cvar_Unset(curvar);
