@@ -25,6 +25,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 // cl_main.c  -- client main loop
 
 #include "client.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 
 #include <limits.h>
 #include "ghoul2/G2.h"
@@ -681,6 +684,9 @@ memory on the hunk from cgame, ui, and renderer
 =====================
 */
 void CL_MapLoading( void ) {
+#ifdef OPENJK_IOS
+	IN_TouchResetState();
+#endif
 	if ( !com_cl_running->integer ) {
 		return;
 	}
@@ -724,6 +730,9 @@ Called before parsing a gamestate
 =====================
 */
 void CL_ClearState (void) {
+#ifdef OPENJK_IOS
+	IN_TouchResetState();
+#endif
 
 //	S_StopAllSounds();
 	Com_Memset( &cl, 0, sizeof( cl ) );

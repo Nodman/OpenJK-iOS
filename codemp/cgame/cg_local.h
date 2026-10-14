@@ -1716,6 +1716,11 @@ Ghoul2 Insert End
 //
 // cg_drawtools.c
 //
+#ifdef OPENJK_IOS
+void CG_UpdateTouchState( qboolean valid );
+void CG_ResetTouchState( void );
+#endif
+
 const aspectLayout_t *CG_AspectLayout( void );
 int CG_Text_CharBytes( const char *text );
 

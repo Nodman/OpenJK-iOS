@@ -24,6 +24,11 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 // cg_main.c -- initialization and primary entry point for cgame
 #include "cg_local.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/ios_touch_visibility.h"
+static vmCvar_t cg_touchState;
+static int cg_lastTouchMask = -1;
+#endif
 
 #include "ui/ui_shared.h"
 
@@ -92,6 +97,54 @@ qboolean CG_NoUseableForce(void)
 	//no useable force powers, I guess.
 	return qtrue;
 }
+
+#ifdef OPENJK_IOS
+static void CG_PublishTouchState( unsigned int mask ) {
+	trap->Cvar_Update( &cg_touchState );
+	if ( TouchCaps_ShouldPublish( mask, cg_lastTouchMask, (unsigned int)cg_touchState.integer ) ) {
+		trap->Cvar_Set( "ui_touchState", va( "%u", mask ) );
+		cg_lastTouchMask = (int)mask;
+	}
+}
+
+void CG_ResetTouchState( void ) {
+	cg_lastTouchMask = -1;
+	CG_PublishTouchState( 0 );
+}
+
+void CG_UpdateTouchState( qboolean valid ) {
+	touchCapsFacts_t facts = { 0 };
+	if ( valid && cg.snap && !( cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE ) &&
+		cg.clientNum >= 0 && cg.clientNum < MAX_CLIENTS && cgs.clientinfo[cg.clientNum].infoValid ) {
+		const playerState_t *ps = &cg.predictedPlayerState;
+		const clientInfo_t *ci = &cgs.clientinfo[cg.clientNum];
+		const int follow = ( ps->pm_flags & PMF_FOLLOW ) || ps->clientNum != cg.clientNum;
+		const int spectator = ci->team == TEAM_SPECTATOR || ps->pm_type == PM_SPECTATOR;
+		const int intermission = cg.intermissionStarted || ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION;
+		static const int styles[7] = { SS_FAST, SS_MEDIUM, SS_STRONG, SS_DESANN, SS_TAVION, SS_DUAL, SS_STAFF };
+		facts.valid = facts.chatAvailable = 1;
+		facts.style = TOUCH_STYLE_UNKNOWN;
+		facts.equipmentAllowed = TouchCaps_EquipmentAllowed( ps->pm_type == PM_DEAD ? 0 : ps->stats[STAT_HEALTH], spectator, follow, intermission );
+		if ( !spectator && !follow ) {
+			unsigned int weapons = 0;
+			unsigned int forbidden = ci->saber[0].model[0] && ps->saberHolstered == 0 ? ci->saber[0].stylesForbidden : 0;
+			const int special = cgs.gametype == GT_SIEGE || ci->saber[1].model[0] || ci->saber[0].numBlades > 1 || ci->saber[0].type == SABER_STAFF;
+			int weapon, power;
+			facts.saberOwned = ( ps->stats[STAT_WEAPONS] & ( 1u << WP_SABER ) ) != 0;
+			facts.legalStyleCount = TouchCaps_MPStyleCount( facts.saberOwned, special, ps->fd.forcePowerLevel[FP_SABER_OFFENSE], forbidden, SS_FAST, SS_STRONG );
+			for ( power = FP_HEAL; power < NUM_FORCE_POWERS; ++power ) {
+				if ( power != FP_LEVITATION && power != FP_SABER_OFFENSE && power != FP_SABER_DEFENSE && power != FP_SABERTHROW &&
+					( ps->fd.forcePowersKnown & ( 1u << power ) ) ) ++facts.selectableForceCount;
+			}
+			for ( weapon = WP_STUN_BATON; weapon <= LAST_USEABLE_WEAPON; ++weapon )
+				if ( weapon != WP_MELEE || !facts.saberOwned ) weapons |= 1u << weapon;
+			facts.ownedWeaponCount = TouchCaps_CountBits( ps->stats[STAT_WEAPONS] & weapons );
+			facts.style = TouchCaps_StyleColor( ps->fd.saberDrawAnimLevel ? ps->fd.saberDrawAnimLevel : ps->fd.saberAnimLevel, styles );
+		}
+	}
+	CG_PublishTouchState( TouchCaps_Pack( &facts, 1 ) );
+}
+#endif
 
 static int C_PointContents( void ) {
 	TCGPointContents *data = &cg.sharedBuffer.pointContents;
@@ -2407,6 +2460,11 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
 	const char	*s;
 	int i = 0;
 
+#ifdef OPENJK_IOS
+	trap->Cvar_Register( &cg_touchState, "ui_touchState", "0", CVAR_ROM );
+	CG_ResetTouchState();
+#endif
+
 	Rand_Init( trap->Milliseconds() );
 
 	BG_InitAnimsets(); //clear it out
@@ -2695,6 +2753,9 @@ Called before every level change or subsystem restart
 */
 void CG_Shutdown( void )
 {
+#ifdef OPENJK_IOS
+	CG_ResetTouchState();
+#endif
 	BG_ClearAnimsets(); //free all dynamic allocations made through the engine
 
     CG_DestroyAllGhoul2();

@@ -1,6 +1,7 @@
 #include "sys_ios.h"
 #include "ios_touch_layout.h"
 #include "ios_touch_state.h"
+#include "ios_touch_visibility.h"
 #include "qcommon/qcommon.h"
 #include "sys/sys_local.h"
 #include "client/client.h"
@@ -32,7 +33,9 @@ static qboolean layoutReady;
 static qboolean lastUIMode, lastHidden, lastCinematic;
 static int softKeyboardTarget;
 static qboolean lastHwKeyboard, lastTextDemand;
-static cvar_t *in_touchControls;
+static cvar_t *in_touchControls, *ui_touchState;
+static touchBridgeState_t bridgeState;
+static touchVisibility_t visibility;
 
 static qboolean IN_TouchHidden( void ) {
 	return ( in_touchControls->integer == 0 || ( in_touchControls->integer == 1 &&
@@ -75,15 +78,7 @@ static int IN_TouchButtonKey( int button ) {
 }
 
 static unsigned int IN_TouchVisibleButtons( void ) {
-	if ( CL_TouchCinematic() )
-		return 0;
-	if ( lastHidden || CL_TouchUIMode() )
-		return 1u << TB_CONSOLE;
-	unsigned int visible = IOS_TOUCH_ALL_BUTTONS;
-#ifdef _JK2EXE
-	visible &= ~( 1u << TB_CHAT );
-#endif
-	return visible;
+	return TouchCaps_ButtonMask( &visibility );
 }
 
 static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, float x, float y ) {
@@ -97,7 +92,7 @@ static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, fl
 	input.radius = IOS_TOUCH_STICK_RADIUS * touchUnit;
 	input.slop = TouchLayout_FireSlop( touchUnit, pixelsPerPoint );
 	input.visibleButtons = IN_TouchVisibleButtons();
-	input.moveEnabled = input.lookEnabled = layoutReady && !lastHidden && !CL_TouchUIMode() && !CL_TouchCinematic();
+	input.moveEnabled = input.lookEnabled = layoutReady && visibility.sticks;
 	const touchGestureActions_t actions = TouchGesture_Step( &gestures, input );
 	for ( int i = 0; i < actions.keyCount; ++i )
 		Sys_QueEvent( 0, SE_KEY, IN_TouchButtonKey( actions.keys[i].button ), actions.keys[i].down ? qtrue : qfalse, 0, NULL );
@@ -140,6 +135,30 @@ static void IN_TouchSyncMode( void ) {
 	}
 }
 
+static void IN_TouchSyncVisibility( void ) {
+#ifdef _JK2EXE
+	const int multiplayer = 0;
+#else
+	const int multiplayer = 1;
+#endif
+	const unsigned int mask = ui_touchState ? (unsigned int)ui_touchState->integer : 0;
+	visibility = TouchBridge_Step( &bridgeState, mask, multiplayer, cls.state == CA_ACTIVE,
+		lastHidden, CL_TouchUIMode(), CL_TouchCinematic(), (unsigned int)cls.realtime );
+	if ( visibility.logMissing )
+		Com_Printf( "Touch controls: no cgame state for 1000ms; using full controls\n" );
+	IN_TouchStep( TOUCH_REFRESH, 0, TOUCH_TARGET_IGNORE, 0, 0, 0 );
+}
+
+void IN_TouchResetState( void ) {
+	if ( !ui_touchState )
+		ui_touchState = Cvar_Get( "ui_touchState", "0", CVAR_ROM );
+	Cvar_Set( "ui_touchState", "0" );
+	TouchBridge_Reset( &bridgeState );
+	visibility = {};
+	IN_TouchReleaseAll();
+	IN_GamepadZeroAxes();
+}
+
 static void IN_TouchTextInput( void ) {
 	int catcher = Key_GetCatcher();
 	qboolean hwKeyboard = Sys_IOS_HardwareKeyboardConnected();
@@ -169,6 +188,7 @@ static void IN_TouchTextInput( void ) {
 
 void IN_TouchInit( SDL_Window *window ) {
 	in_touchControls = Cvar_Get( "in_touchControls", "1", CVAR_ARCHIVE );
+	ui_touchState = Cvar_Get( "ui_touchState", "0", CVAR_ROM );
 	IN_TouchReleaseAll();	// in_restart calls IN_Init without IN_Shutdown
 	touchWindow = window;
 	memset( fingers, 0, sizeof( fingers ) );
@@ -181,6 +201,7 @@ void IN_TouchInit( SDL_Window *window ) {
 	lastCinematic = CL_TouchCinematic();
 	if ( lastCinematic )
 		IN_GamepadZeroAxes();
+	IN_TouchSyncVisibility();
 	IN_TouchTextInput();
 }
 
@@ -315,6 +336,7 @@ void IN_TouchHandleEvent( const SDL_Event *e ) {
 		return;
 	IN_TouchUpdateLayout();
 	IN_TouchSyncMode();
+	IN_TouchSyncVisibility();
 	switch ( e->type ) {
 	case SDL_FINGERDOWN:
 		IN_TouchFingerDown( &e->tfinger );
@@ -355,6 +377,7 @@ void IN_TouchFrame( void ) {
 	IN_TouchUpdateLayout();
 
 	IN_TouchSyncMode();
+	IN_TouchSyncVisibility();
 
 	IN_TouchTextInput();
 
@@ -386,6 +409,7 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 		return 0;
 	IN_TouchUpdateLayout();
 	IN_TouchSyncMode();
+	IN_TouchSyncVisibility();
 	if ( CL_TouchCinematic() )
 		return 0;
 	if ( !layoutReady )
@@ -404,7 +428,7 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 		}
 		IN_TouchAddItem( items, &n, maxItems, rects[b].x, rects[b].y, rects[b].w, rects[b].h, touchButtonDefs[b].label, pressed );
 	}
-	if ( conOnly )
+	if ( conOnly || !visibility.sticks )
 		return n;
 
 	if ( gestures.moveOwner >= 0 ) {

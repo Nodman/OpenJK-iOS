@@ -1,6 +1,7 @@
 #include "sys/ios/ios_touch_math.h"
 #include "sys/ios/ios_touch_state.h"
 #include "sys/ios/ios_touch_visibility.h"
+#include "sys/ios/ios_touch_layout.h"
 
 #include <boost/test/unit_test.hpp>
 #include <limits>
@@ -375,6 +376,78 @@ BOOST_AUTO_TEST_CASE( same_frame_fire_tap_and_cinematic_reset_batch )
 	}
 	BOOST_CHECK( !TouchAxes_Send( &axes ).send );
 	BOOST_CHECK_EQUAL( TouchGesture_Step( &gestures, Input( TOUCH_REFRESH ) ).lookX, 0 );
+}
+
+BOOST_AUTO_TEST_CASE( distinct_local_equipment_predicates )
+{
+	BOOST_CHECK( TouchCaps_EquipmentAllowed( 100, 0, 0, 0 ) );
+	BOOST_CHECK( !TouchCaps_EquipmentAllowed( 0, 0, 0, 0 ) );
+	BOOST_CHECK( !TouchCaps_EquipmentAllowed( -10, 0, 0, 0 ) );
+	BOOST_CHECK( !TouchCaps_EquipmentAllowed( 100, 1, 0, 0 ) );
+	BOOST_CHECK( !TouchCaps_EquipmentAllowed( 100, 0, 1, 0 ) );
+	BOOST_CHECK( !TouchCaps_EquipmentAllowed( 100, 0, 0, 1 ) );
+}
+
+BOOST_AUTO_TEST_CASE( style_policy_colours_and_bridge_republication )
+{
+	BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 1, 0, 1, 0, 1, 3 ), 1 );
+	BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 1, 0, 2, 0, 1, 3 ), 2 );
+	BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 1, 0, 9, 0, 1, 3 ), 3 );
+	BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 1, 0, 3, ( 1u << 2 ) | ( 1u << 3 ), 1, 3 ), 1 );
+	for ( int special = 1; special <= 3; ++special ) {
+		BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 1, special, 0, ~0u, 1, 3 ), 2 );
+		BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 0, special, 3, 0, 1, 3 ), 0 );
+	}
+	BOOST_CHECK_EQUAL( TouchCaps_CountBits( ( 1u << 1 ) | ( 1u << 2 ) ), 2 );
+	const int styles[] = { 1, 2, 3, 4, 5, 6, 7 };
+	const int colours[] = { TOUCH_STYLE_UNKNOWN, TOUCH_STYLE_BLUE, TOUCH_STYLE_YELLOW, TOUCH_STYLE_RED,
+		TOUCH_STYLE_RED, TOUCH_STYLE_BLUE, TOUCH_STYLE_YELLOW, TOUCH_STYLE_YELLOW, TOUCH_STYLE_UNKNOWN };
+	for ( int i = 0; i < 9; ++i ) {
+		const int colour = TouchCaps_StyleColor( i, styles );
+		BOOST_CHECK_EQUAL( colour, colours[i] );
+		auto facts = Facts();
+		facts.style = colour;
+		BOOST_CHECK_EQUAL( TouchCaps_Visible( TouchCaps_Pack( &facts, 0 ), 0 ).styleColor, colour );
+	}
+	const auto publication = Facts();
+	const unsigned int valid = TouchCaps_Pack( &publication, 0 );
+	BOOST_CHECK( TouchCaps_ShouldPublish( 0, -1, 0 ) );
+	BOOST_CHECK( TouchCaps_ShouldPublish( valid, 0, 0 ) );
+	BOOST_CHECK( !TouchCaps_ShouldPublish( valid, valid, valid ) );
+	BOOST_CHECK( TouchCaps_ShouldPublish( valid, valid, 0 ) );
+	BOOST_CHECK( TouchCaps_ShouldPublish( 0, valid, valid ) );
+	BOOST_CHECK( !TouchCaps_ShouldPublish( 0, 0, 0 ) );
+}
+
+BOOST_AUTO_TEST_CASE( decoded_button_mask_and_selective_capability_loss )
+{
+	auto facts = Facts();
+	facts.legalStyleCount = facts.selectableForceCount = facts.ownedWeaponCount = 2;
+	facts.chatAvailable = 1;
+	const auto full = TouchCaps_Visible( TouchCaps_Pack( &facts, 1 ), 1 );
+	BOOST_CHECK_EQUAL( TouchCaps_ButtonMask( &full ), IOS_TOUCH_ALL_BUTTONS );
+	touchGestureState_t state;
+	TouchGesture_Reset( &state );
+	TouchGesture_Step( &state, Input( TOUCH_DOWN, 1, TOUCH_TARGET_BUTTON, TB_FORCE ) );
+	TouchGesture_Step( &state, Input( TOUCH_DOWN, 2, TOUCH_TARGET_AIM ) );
+	TouchGesture_Step( &state, Input( TOUCH_MOTION, 2, TOUCH_TARGET_AIM, 0, 100 ) );
+	facts.equipmentAllowed = 0;
+	const auto dead = TouchCaps_Visible( TouchCaps_Pack( &facts, 1 ), 1 );
+	const unsigned int basic = ( 1u << TB_ATTACK ) | ( 1u << TB_ALTATTACK ) | ( 1u << TB_JUMP ) | ( 1u << TB_CROUCH ) | ( 1u << TB_USE );
+	BOOST_CHECK_EQUAL( TouchCaps_ButtonMask( &dead ), basic | ( 1u << TB_MENU ) | ( 1u << TB_CONSOLE ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) );
+	auto in = Input( TOUCH_REFRESH );
+	in.visibleButtons = TouchCaps_ButtonMask( &dead );
+	in.moveEnabled = in.lookEnabled = dead.sticks;
+	const auto out = TouchGesture_Step( &state, in );
+	BOOST_REQUIRE_EQUAL( out.keyCount, 1 );
+	BOOST_CHECK_EQUAL( out.keys[0].button, TB_FORCE );
+	BOOST_CHECK_EQUAL( out.keys[0].down, 0 );
+	BOOST_CHECK_EQUAL( out.lookX, 127 );
+	TouchGesture_Step( &state, Input( TOUCH_UP, 2 ) );
+	const auto hiddenMotion = TouchGesture_Step( &state, Input( TOUCH_MOTION, 1, TOUCH_TARGET_AIM, 0, -100 ) );
+	BOOST_CHECK_EQUAL( hiddenMotion.keyCount, 0 );
+	BOOST_CHECK_EQUAL( hiddenMotion.lookX, 0 );
+	BOOST_CHECK_EQUAL( state.lookOwner, -1 );
 }
 
 BOOST_AUTO_TEST_CASE( missing_bridge_grace_recovery_priority_and_epoch )

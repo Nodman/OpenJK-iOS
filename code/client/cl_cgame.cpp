@@ -29,6 +29,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../ui/ui_shared.h"
 
 #include "client.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 #include "vmachine.h"
 #include "qcommon/stringed_ingame.h"
 #include "sys/sys_loadlib.h"
@@ -423,6 +426,9 @@ CL_ShutdonwCGame
 ====================
 */
 void CL_ShutdownCGame( void ) {
+#ifdef OPENJK_IOS
+	IN_TouchResetState();
+#endif
 	cls.cgameStarted = qfalse;
 
 	if ( !cgvm.entryPoint) {

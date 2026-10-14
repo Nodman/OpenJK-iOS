@@ -23,6 +23,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 // cl_cgame.c  -- client system interaction with client game
 #include "client.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 #include "cl_cgameapi.h"
 #include "botlib/botlib.h"
 #include "FXExport.h"
@@ -451,6 +454,9 @@ rescan:
 	}
 
 	if ( !strcmp( cmd, "map_restart" ) ) {
+#ifdef OPENJK_IOS
+		IN_TouchResetState();
+#endif
 		// clear notify lines and outgoing commands before passing
 		// the restart to the cgame
 		Con_ClearNotify();
@@ -492,6 +498,9 @@ CL_ShutdonwCGame
 ====================
 */
 void CL_ShutdownCGame( void ) {
+#ifdef OPENJK_IOS
+	IN_TouchResetState();
+#endif
 	Key_SetCatcher( Key_GetCatcher( ) & ~KEYCATCH_CGAME );
 
 	if ( !cls.cgameStarted )

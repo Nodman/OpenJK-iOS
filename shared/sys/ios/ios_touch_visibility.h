@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ios_touch_geometry.h"
+#include "ios_touch_layout.h"
 
 typedef enum {
 	TOUCH_CAP_SABER = 1u << 0,
@@ -106,4 +107,58 @@ IOS_TOUCH_INLINE touchVisibility_t TouchBridge_Step( touchBridgeState_t *state, 
 		state->warned = 1;
 	}
 	return v;
+}
+
+IOS_TOUCH_INLINE int TouchCaps_EquipmentAllowed( int health, int spectator, int follow, int intermission )
+{
+	return health > 0 && !spectator && !follow && !intermission;
+}
+
+IOS_TOUCH_INLINE int TouchCaps_CountBits( unsigned int mask )
+{
+	int count = 0;
+	while ( mask ) {
+		mask &= mask - 1;
+		++count;
+	}
+	return count;
+}
+
+IOS_TOUCH_INLINE int TouchCaps_MPStyleCount( int saber, int special, int offense, unsigned int forbidden, int first, int last )
+{
+	int style, count = 0;
+	if ( !saber ) return 0;
+	if ( special ) return 2;
+	for ( style = first; style <= last && style <= offense; ++style )
+		if ( style >= 0 && style < 32 && !( forbidden & ( 1u << style ) ) ) ++count;
+	return count;
+}
+
+IOS_TOUCH_INLINE int TouchCaps_StyleColor( int stance, const int styles[7] )
+{
+	if ( stance == styles[0] || stance == styles[4] ) return TOUCH_STYLE_BLUE;
+	if ( stance == styles[1] || stance == styles[5] || stance == styles[6] ) return TOUCH_STYLE_YELLOW;
+	if ( stance == styles[2] || stance == styles[3] ) return TOUCH_STYLE_RED;
+	return TOUCH_STYLE_UNKNOWN;
+}
+
+IOS_TOUCH_INLINE int TouchCaps_ShouldPublish( unsigned int mask, int previous, unsigned int bridge )
+{
+	return previous < 0 || mask != (unsigned int)previous || ( ( previous & TOUCH_CAP_VALID ) && bridge == 0 );
+}
+
+IOS_TOUCH_INLINE unsigned int TouchCaps_ButtonMask( const touchVisibility_t *v )
+{
+	unsigned int mask = 0;
+	if ( v->menu ) mask |= 1u << TB_MENU;
+	if ( v->console ) mask |= 1u << TB_CONSOLE;
+	if ( v->basic ) mask |= ( 1u << TB_ATTACK ) | ( 1u << TB_ALTATTACK ) | ( 1u << TB_JUMP ) | ( 1u << TB_CROUCH ) | ( 1u << TB_USE );
+	if ( v->saber ) mask |= 1u << TB_SABER_SELECT;
+	if ( v->style ) mask |= 1u << TB_STYLE;
+	if ( v->force ) mask |= 1u << TB_FORCE;
+	if ( v->forceCycle ) mask |= 1u << TB_FORCENEXT;
+	if ( v->weapons ) mask |= ( 1u << TB_WEAPPREV ) | ( 1u << TB_WEAPNEXT );
+	if ( v->pad ) mask |= 1u << TB_PAD;
+	if ( v->chat ) mask |= 1u << TB_CHAT;
+	return mask;
 }

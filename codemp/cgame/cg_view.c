@@ -2458,6 +2458,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// if we are only updating the screen as a loading
 	// pacifier, don't even try to read snapshots
 	if ( cg.infoScreenText[0] != 0 ) {
+#ifdef OPENJK_IOS
+		CG_UpdateTouchState( qfalse );
+#endif
 		CG_DrawInformation();
 		return;
 	}
@@ -2482,6 +2485,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// we can draw is the information screen
 	if ( !cg.snap || ( cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE ) )
 	{
+#ifdef OPENJK_IOS
+		CG_UpdateTouchState( qfalse );
+#endif
 #if 0
 		// Transition from zero to negative one on the snapshot timeout.
 		// The reason we do this is because the first client frame is responsible for
@@ -2564,6 +2570,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// update cg.predictedPlayerState
 	CG_PredictPlayerState();
+#ifdef OPENJK_IOS
+	CG_UpdateTouchState( qtrue );
+#endif
 
 	// decide on third person view
 	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0);
