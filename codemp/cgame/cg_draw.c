@@ -7564,6 +7564,7 @@ static QINLINE void CG_ChatBox_DrawStrings(void)
 
 static void CG_Draw2DScreenTints( void )
 {
+	const aspectRect_t *full = &CG_AspectLayout()->fullRect;
 	float			rageTime, rageRecTime, absorbTime, protectTime, ysalTime;
 	vec4_t			hcolor;
 	if (cgs.clientinfo[cg.snap->ps.clientNum].team != TEAM_SPECTATOR)
@@ -7595,7 +7596,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson)
 			{
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 			}
 
 			cgRageFadeTime = 0;
@@ -7650,7 +7651,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson && rageTime)
 			{
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 			}
 			else
 			{
@@ -7660,7 +7661,7 @@ static void CG_Draw2DScreenTints( void )
 					hcolor[0] = 0.2f;
 					hcolor[1] = 0.2f;
 					hcolor[2] = 0.2f;
-					CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+					CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 				}
 				cgRageTime = 0;
 			}
@@ -7692,7 +7693,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson)
 			{
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 			}
 
 			cgRageRecFadeTime = 0;
@@ -7726,7 +7727,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson && rageRecTime)
 			{
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 			}
 			else
 			{
@@ -7761,7 +7762,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson)
 			{
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 			}
 
 			cgAbsorbFadeTime = 0;
@@ -7795,7 +7796,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson && absorbTime)
 			{
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 			}
 			else
 			{
@@ -7830,7 +7831,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson)
 			{
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 			}
 
 			cgProtectFadeTime = 0;
@@ -7864,7 +7865,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson && protectTime)
 			{
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 			}
 			else
 			{
@@ -7904,7 +7905,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson)
 			{
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 			}
 
 			cgYsalFadeTime = 0;
@@ -7938,7 +7939,7 @@ static void CG_Draw2DScreenTints( void )
 
 			if (!cg.renderingThirdPerson && ysalTime)
 			{
-				CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+				CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 			}
 			else
 			{
@@ -7955,7 +7956,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0;
 		hcolor[2] = 0;
 
-		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+		CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 	}
 	else if ( (cg.refdef.viewContents&CONTENTS_SLIME) )
 	{//tint screen green
@@ -7965,7 +7966,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0.7f;
 		hcolor[2] = 0;
 
-		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+		CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 	}
 	else if ( (cg.refdef.viewContents&CONTENTS_WATER) )
 	{//tint screen light blue -- FIXME: don't do this if CONTENTS_FOG? (in case someone *does* make a water shader with fog in it?)
@@ -7975,7 +7976,7 @@ static void CG_Draw2DScreenTints( void )
 		hcolor[1] = 0.2f;
 		hcolor[2] = 0.8f;
 
-		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+		CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 	}
 }
 
@@ -8169,7 +8170,8 @@ static void CG_Draw2D( void ) {
 		hcolor[1] = 0;
 		hcolor[2] = 0;
 
-		CG_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hcolor );
+		const aspectRect_t *full = &CG_AspectLayout()->fullRect;
+		CG_FillRect( full->x, full->y, full->w, full->h, hcolor );
 
 		if (!gCGHasFallVector)
 		{

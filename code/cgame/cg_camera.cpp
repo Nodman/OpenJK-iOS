@@ -1316,6 +1316,10 @@ CGCam_DrawWideScreen
 void CGCam_DrawWideScreen( void )
 {
 	vec4_t	modulate;
+	const aspectLayout_t *layout = CG_AspectLayout();
+	const aspectRect_t *full = &layout->fullRect;
+	const float x = layout->branch == ASPECT_CORRECTED ? full->x : cg.refdef.x;
+	const float y = layout->branch == ASPECT_CORRECTED ? full->y : cg.refdef.y;
 
 	//Only draw if visible
 	if ( client_camera.bar_alpha )
@@ -1325,15 +1329,15 @@ void CGCam_DrawWideScreen( void )
 		modulate[0] = modulate[1] = modulate[2] = 0.0f;
 		modulate[3] = client_camera.bar_alpha;
 
-		CG_FillRect( cg.refdef.x, cg.refdef.y, 640, client_camera.bar_height, modulate  );
-		CG_FillRect( cg.refdef.x, cg.refdef.y + 480 - client_camera.bar_height, 640, client_camera.bar_height, modulate  );
+		CG_FillRect( x, y, full->w, client_camera.bar_height, modulate );
+		CG_FillRect( x, y + full->h - client_camera.bar_height, full->w, client_camera.bar_height, modulate );
 	}
 
 	//NOTENOTE: Camera always draws the fades unless the alpha is 0
 	if ( client_camera.fade_color[3] == 0.0f )
 		return;
 
-	CG_FillRect( cg.refdef.x, cg.refdef.y, 640, 480, client_camera.fade_color );
+	CG_FillRect( x, y, full->w, full->h, client_camera.fade_color );
 }
 
 /*

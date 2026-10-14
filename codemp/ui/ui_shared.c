@@ -6784,7 +6784,20 @@ void Menu_Paint(menuDef_t *menu, qboolean forcePaint) {
 	if (menu->fullScreen) {
 		// implies a background shader
 		// FIXME: make sure we have a default shader if fullscreen is set with no background
-		DC->drawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menu->window.background );
+		if ( DC->aspectLayout.branch == ASPECT_CORRECTED ) {
+			const aspectRect_t *full = &DC->aspectLayout.fullRect;
+			const vec4_t black = { 0, 0, 0, 1 };
+			DC->fillRect( full->x, full->y, full->w, full->h, black );
+			if ( menu->window.background ) {
+				if ( DC->getCVarValue( "r_aspectStretchBackdrops" ) != 0 ) {
+					DC->drawHandlePic( full->x, full->y, full->w, full->h, menu->window.background );
+				} else {
+					DC->drawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menu->window.background );
+				}
+			}
+		} else {
+			DC->drawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menu->window.background );
+		}
 	} else if (menu->window.background) {
 		// this allows a background shader without being full screen
 		//UI_DrawHandlePic(menu->window.rect.x, menu->window.rect.y, menu->window.rect.w, menu->window.rect.h, menu->backgroundShader);

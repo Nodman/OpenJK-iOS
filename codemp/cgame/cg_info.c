@@ -138,6 +138,9 @@ void CG_DrawInformation( void ) {
 	char		buf[1024];
 	int			iPropHeight = 18;	// I know, this is total crap, but as a post release asian-hack....  -Ste
 
+	const aspectLayout_t *layout = CG_AspectLayout();
+	char stretchValue[16];
+
 	info = CG_ConfigString( CS_SERVERINFO );
 	sysInfo = CG_ConfigString( CS_SYSTEMINFO );
 
@@ -146,8 +149,20 @@ void CG_DrawInformation( void ) {
 	if ( !levelshot ) {
 		levelshot = trap->R_RegisterShaderNoMip( "menu/art/unknownmap_mp" );
 	}
-	trap->R_SetColor( NULL );
-	CG_DrawPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, levelshot );
+	if ( layout->branch == ASPECT_CORRECTED ) {
+		const aspectRect_t *full = &layout->fullRect;
+		trap->Cvar_VariableStringBuffer( "r_aspectStretchBackdrops", stretchValue, sizeof( stretchValue ) );
+		CG_FillRect( full->x, full->y, full->w, full->h, colorBlack );
+		trap->R_SetColor( NULL );
+		if ( atoi( stretchValue ) ) {
+			CG_DrawPic( full->x, full->y, full->w, full->h, levelshot );
+		} else {
+			CG_DrawPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, levelshot );
+		}
+	} else {
+		trap->R_SetColor( NULL );
+		CG_DrawPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, levelshot );
+	}
 
 	CG_LoadBar();
 

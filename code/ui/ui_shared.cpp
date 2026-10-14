@@ -6096,7 +6096,19 @@ void Menu_Paint(menuDef_t *menu, qboolean forcePaint)
 			menu->window.background = uis.whiteShader;
 		}
 
-		DC->drawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menu->window.background );
+		if ( DC->aspectLayout.branch == ASPECT_CORRECTED ) {
+			const aspectRect_t *full = &DC->aspectLayout.fullRect;
+			if ( DC->getCVarValue( "r_aspectStretchBackdrops" ) != 0 ) {
+				DC->drawHandlePic( full->x, full->y, full->w, full->h, menu->window.background );
+			} else {
+				const vec4_t black = { 0, 0, 0, 1 };
+				DC->fillRect( full->x, full->y, full->w, full->h, black );
+				ui.R_SetColor( color );
+				DC->drawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menu->window.background );
+			}
+		} else {
+			DC->drawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, menu->window.background );
+		}
 	}
 	else if (menu->window.background)
 	{

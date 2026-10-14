@@ -1622,7 +1622,7 @@ void R_Register( void )
 {
 #ifdef OPENJK_IOS
 	r_aspectCorrect = ri.Cvar_Get( "r_aspectCorrect", "1", CVAR_ARCHIVE, "" );
-	r_aspectStretchBackdrops = ri.Cvar_Get( "r_aspectStretchBackdrops", "1", CVAR_ARCHIVE, "" );
+	r_aspectStretchBackdrops = ri.Cvar_Get( "r_aspectStretchBackdrops", "0", CVAR_ARCHIVE, "" );
 #else
 	r_aspectCorrect = ri.Cvar_Get( "r_aspectCorrect", "0", CVAR_ARCHIVE, "" );
 	r_aspectStretchBackdrops = ri.Cvar_Get( "r_aspectStretchBackdrops", "0", CVAR_ARCHIVE, "" );
