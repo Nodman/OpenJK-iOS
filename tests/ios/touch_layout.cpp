@@ -1,4 +1,5 @@
 #include "sys/ios/ios_touch_layout.cpp"
+#include "qcommon/aspect_layout.h"
 
 #include <boost/test/unit_test.hpp>
 
@@ -127,22 +128,175 @@ BOOST_AUTO_TEST_CASE( stick_inside_radius )
 
 BOOST_AUTO_TEST_CASE( virtual_cursor )
 {
+	const aspectLayout_t layout = AspectLayout_Build( 2388, 1668, 1, 1.5f, 0, 0, 0, 0 );
+	BOOST_CHECK_EQUAL( layout.branch, ASPECT_LEGACY );
 	int x, y;
-	TouchLayout_ToVirtual( 0, 0, &x, &y );
+	TouchLayout_ToVirtual( &layout, 0, 0, &x, &y );
 	BOOST_CHECK_EQUAL( x, 0 );
 	BOOST_CHECK_EQUAL( y, 0 );
-	TouchLayout_ToVirtual( 1, 1, &x, &y );
+	TouchLayout_ToVirtual( &layout, 1, 1, &x, &y );
 	BOOST_CHECK_EQUAL( x, 640 );
 	BOOST_CHECK_EQUAL( y, 480 );
-	TouchLayout_ToVirtual( -0.1f, 1.2f, &x, &y );
+	TouchLayout_ToVirtual( &layout, -0.1f, 1.2f, &x, &y );
 	BOOST_CHECK_EQUAL( x, 0 );
 	BOOST_CHECK_EQUAL( y, 480 );
-	TouchLayout_ToVirtual( 0.5f, 0.5f, &x, &y );
+	TouchLayout_ToVirtual( &layout, 0.5f, 0.5f, &x, &y );
 	BOOST_CHECK_EQUAL( x, 320 );
 	BOOST_CHECK_EQUAL( y, 240 );
-	TouchLayout_ToVirtual( 10.75f / 640, 20.25f / 480, &x, &y );
+	TouchLayout_ToVirtual( &layout, 0.5f / 640, 0.5f / 480, &x, &y );
+	BOOST_CHECK_EQUAL( x, 1 );
+	BOOST_CHECK_EQUAL( y, 1 );
+	TouchLayout_ToVirtual( &layout, 10.75f / 640, 20.25f / 480, &x, &y );
 	BOOST_CHECK_EQUAL( x, 11 );
 	BOOST_CHECK_EQUAL( y, 20 );
+}
+
+BOOST_AUTO_TEST_CASE( disabled_wide_cursor )
+{
+	const aspectLayout_t layout = AspectLayout_Build( 2868, 1320, 0, 1.5f, 144, 30, 44, 90 );
+	BOOST_CHECK_EQUAL( layout.branch, ASPECT_LEGACY );
+	int x, y;
+	TouchLayout_ToVirtual( &layout, 0.5f, 0.5f, &x, &y );
+	BOOST_CHECK_EQUAL( x, 320 );
+	BOOST_CHECK_EQUAL( y, 240 );
+	TouchLayout_ToVirtual( &layout, 1, 1, &x, &y );
+	BOOST_CHECK_EQUAL( x, 640 );
+	BOOST_CHECK_EQUAL( y, 480 );
+	TouchLayout_ToVirtual( &layout, 0, 0, &x, &y );
+	BOOST_CHECK_EQUAL( x, 0 );
+	BOOST_CHECK_EQUAL( y, 0 );
+	TouchLayout_ToVirtual( &layout, 0.5f / 640, 0.5f / 480, &x, &y );
+	BOOST_CHECK_EQUAL( x, 1 );
+	BOOST_CHECK_EQUAL( y, 1 );
+}
+
+BOOST_AUTO_TEST_CASE( corrected_cursor_and_gutters )
+{
+	const aspectLayout_t layout = AspectLayout_Build( 2868, 1320, 1, 1.5f, 144, 30, 44, 90 );
+	BOOST_CHECK_EQUAL( layout.branch, ASPECT_CORRECTED );
+	BOOST_CHECK_EQUAL( layout.ox, 554 );
+	int x, y;
+	TouchLayout_ToVirtual( &layout, 554.0f / 2868, 0, &x, &y );
+	BOOST_CHECK_EQUAL( x, 0 );
+	BOOST_CHECK_EQUAL( y, 0 );
+	TouchLayout_ToVirtual( &layout, 2314.0f / 2868, 1, &x, &y );
+	BOOST_CHECK_EQUAL( x, 640 );
+	BOOST_CHECK_EQUAL( y, 480 );
+	TouchLayout_ToVirtual( &layout, 0.5f, 0.5f, &x, &y );
+	BOOST_CHECK_EQUAL( x, 320 );
+	BOOST_CHECK_EQUAL( y, 240 );
+	TouchLayout_ToVirtual( &layout, -0.1f, 1.2f, &x, &y );
+	BOOST_CHECK_EQUAL( x, 0 );
+	BOOST_CHECK_EQUAL( y, 480 );
+	TouchLayout_ToVirtual( &layout, 144.0f / 2868, 0.5f, &x, &y );
+	BOOST_CHECK_EQUAL( x, 0 );
+	BOOST_CHECK_EQUAL( y, 240 );
+	TouchLayout_ToVirtual( &layout, 2500.0f / 2868, 0.5f, &x, &y );
+	BOOST_CHECK_EQUAL( x, 640 );
+	BOOST_CHECK_EQUAL( y, 240 );
+	const touchRect_t left = TouchLayout_RectToVirtual( &layout, { 0, 0, 144, 144 } );
+	const touchRect_t right = TouchLayout_RectToVirtual( &layout, { 2500, 0, 144, 144 } );
+	BOOST_CHECK_LT( left.x, 0 );
+	BOOST_CHECK_GT( right.x, 640 );
+	BOOST_CHECK_SMALL( left.x + 554.0f / 2.75f, 1e-4f );
+	BOOST_CHECK_SMALL( left.w - 144.0f / 2.75f, 1e-4f );
+	BOOST_CHECK_EQUAL( left.w, left.h );
+}
+
+BOOST_AUTO_TEST_CASE( snapped_cursor )
+{
+	const aspectLayout_t layout = AspectLayout_Build( 2151, 990, 1, 1.5f, 0, 0, 0, 0 );
+	BOOST_CHECK_EQUAL( layout.ox, 416 );
+	int x, y;
+	TouchLayout_ToVirtual( &layout, ( 416.0f + 10.75f * 2.0625f ) / 2151,
+		20.25f * 2.0625f / 990, &x, &y );
+	BOOST_CHECK_EQUAL( x, 11 );
+	BOOST_CHECK_EQUAL( y, 20 );
+}
+
+static void CheckTouchRectRoundTrip( const aspectLayout_t &layout, const touchRect_t &rect )
+{
+	const touchRect_t overlay = TouchLayout_RectToVirtual( &layout, rect );
+	const aspectPoint_t origin = AspectLayout_ToPixels( &layout, overlay.x, overlay.y );
+	const aspectPoint_t size = AspectLayout_SizeToPixels( &layout, overlay.w, overlay.h );
+	BOOST_CHECK_SMALL( origin.x - rect.x, 1e-3 );
+	BOOST_CHECK_SMALL( origin.y - rect.y, 1e-3 );
+	BOOST_CHECK_SMALL( size.x - rect.w, 1e-3 );
+	BOOST_CHECK_SMALL( size.y - rect.h, 1e-3 );
+}
+
+BOOST_AUTO_TEST_CASE( vertical_gutters )
+{
+	const aspectLayout_t layout = AspectLayout_Build( 640, 600, 1, 0, 0, 0, 0, 0 );
+	BOOST_CHECK_EQUAL( layout.branch, ASPECT_CORRECTED );
+	BOOST_CHECK_EQUAL( layout.ox, 0 );
+	BOOST_CHECK_EQUAL( layout.oy, 60 );
+	int x, y;
+	TouchLayout_ToVirtual( &layout, 0.5f, 30.0f / 600, &x, &y );
+	BOOST_CHECK_EQUAL( x, 320 );
+	BOOST_CHECK_EQUAL( y, 0 );
+	TouchLayout_ToVirtual( &layout, 0.5f, 570.0f / 600, &x, &y );
+	BOOST_CHECK_EQUAL( x, 320 );
+	BOOST_CHECK_EQUAL( y, 480 );
+	TouchLayout_ToVirtual( &layout, 0.5f, 0.5f, &x, &y );
+	BOOST_CHECK_EQUAL( x, 320 );
+	BOOST_CHECK_EQUAL( y, 240 );
+	const touchRect_t top = { 100, 20, 40, 30 };
+	const touchRect_t bottom = { 100, 560, 40, 30 };
+	BOOST_CHECK_EQUAL( TouchLayout_RectToVirtual( &layout, top ).y, -40 );
+	BOOST_CHECK_EQUAL( TouchLayout_RectToVirtual( &layout, bottom ).y, 500 );
+	CheckTouchRectRoundTrip( layout, top );
+	CheckTouchRectRoundTrip( layout, bottom );
+	touchRect_t rects[TB_COUNT];
+	TouchLayout_Build( 640, 600, 0, 0, 0, 0, rects );
+	for ( int i = 0; i < TB_COUNT; ++i )
+		CheckTouchRectRoundTrip( layout, rects[i] );
+}
+
+BOOST_AUTO_TEST_CASE( every_button_round_trips )
+{
+	const aspectLayout_t layouts[] = {
+		AspectLayout_Build( 2388, 1668, 1, 1.5f, 44, 30, 12, 90 ),
+		AspectLayout_Build( 2868, 1320, 1, 1.5f, 144, 30, 44, 90 ),
+		AspectLayout_Build( 2868, 1320, 0, 1.5f, 144, 30, 44, 90 ),
+		AspectLayout_Build( 2151, 990, 1, 1.5f, 99, 10, 33, 60 )
+	};
+	for ( const aspectLayout_t &layout : layouts ) {
+		touchRect_t rects[TB_COUNT];
+		TouchLayout_Build( layout.W, layout.H, layout.safeL, layout.safeT, layout.safeR, layout.safeB, rects );
+		for ( int i = 0; i < TB_COUNT; ++i ) {
+			BOOST_TEST_CONTEXT( "button " << i << ", width " << layout.W << ", branch " << layout.branch ) {
+				CheckTouchRectRoundTrip( layout, rects[i] );
+				BOOST_CHECK_EQUAL( TouchLayout_Hit( rects, rects[i].x + rects[i].w / 2,
+					rects[i].y + rects[i].h / 2, 0 ), i );
+				BOOST_CHECK_GE( rects[i].x, layout.safeL );
+				BOOST_CHECK_GE( rects[i].y, layout.safeT );
+				BOOST_CHECK_LE( rects[i].x + rects[i].w, layout.W - layout.safeR );
+				BOOST_CHECK_LE( rects[i].y + rects[i].h, layout.H - layout.safeB );
+			}
+		}
+		CheckTouchRectRoundTrip( layout, { 50, 100, 280, 280 } );
+		CheckTouchRectRoundTrip( layout, { 148, 198, 84, 84 } );
+	}
+}
+
+BOOST_AUTO_TEST_CASE( equal_size_rotation )
+{
+	const aspectLayout_t before = AspectLayout_Build( 2868, 1320, 1, 1.5f, 144, 30, 44, 90 );
+	const aspectLayout_t after = AspectLayout_Build( 2868, 1320, 1, 1.5f, 44, 30, 144, 90 );
+	touchRect_t oldRects[TB_COUNT], newRects[TB_COUNT];
+	TouchLayout_Build( before.W, before.H, before.safeL, before.safeT, before.safeR, before.safeB, oldRects );
+	TouchLayout_Build( after.W, after.H, after.safeL, after.safeT, after.safeR, after.safeB, newRects );
+	for ( int i = 0; i < TB_COUNT; ++i ) {
+		BOOST_CHECK_SMALL( newRects[i].x - oldRects[i].x + 100.0f, 1e-3f );
+		BOOST_CHECK_EQUAL( newRects[i].y, oldRects[i].y );
+		BOOST_CHECK_EQUAL( newRects[i].w, oldRects[i].w );
+		BOOST_CHECK_EQUAL( newRects[i].h, oldRects[i].h );
+		CheckTouchRectRoundTrip( before, oldRects[i] );
+		CheckTouchRectRoundTrip( after, newRects[i] );
+		BOOST_CHECK_EQUAL( TouchLayout_Hit( newRects, newRects[i].x + newRects[i].w / 2,
+			newRects[i].y + newRects[i].h / 2, 0 ), i );
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -152,9 +306,10 @@ BOOST_AUTO_TEST_CASE( stick_zero_radius_and_nan_virtual )
 	TouchLayout_Stick( 0, 0, 5, 5, 0, &sx, &sy );
 	BOOST_CHECK_EQUAL( sx, 0 );
 	BOOST_CHECK_EQUAL( sy, 0 );
+	const aspectLayout_t layout = AspectLayout_Build( 2868, 1320, 1, 1.5f, 0, 0, 0, 0 );
 	int vx, vy;
-	TouchLayout_ToVirtual( 0.0f / 0.0f, 1e9f, &vx, &vy );
-	BOOST_CHECK( vx >= 0 && vx <= 640 );
+	TouchLayout_ToVirtual( &layout, 0.0f / 0.0f, 1e9f, &vx, &vy );
+	BOOST_CHECK_EQUAL( vx, 0 );
 	BOOST_CHECK_EQUAL( vy, 480 );
 }
 

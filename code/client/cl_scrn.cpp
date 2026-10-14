@@ -51,7 +51,7 @@ const aspectLayout_t &SCR_GetAspectLayout( qboolean refresh ) {
 	checkedFrame = cls.framecount;
 	const int W = cls.glconfig.vidWidth;
 	const int H = cls.glconfig.vidHeight;
-	const int enabled = Cvar_VariableValue( "r_aspectCorrect" ) != 0;
+	const int enabled = (int)Cvar_VariableValue( "r_aspectCorrect" ) != 0;
 	const float minRatio = Cvar_VariableValue( "r_aspectCorrectMinRatio" );
 	const int L = Cvar_VariableIntegerValue( "r_aspectSafeLeft" );
 	const int T = Cvar_VariableIntegerValue( "r_aspectSafeTop" );
@@ -560,7 +560,9 @@ static void SCR_PublishSafeArea( void ) {
 
 // small-char glyph cells are 1:2; keep that aspect on screen, in 640x480 coords
 static void CL_DrawTouchLabel( float cx, float cy, float charH, const char *s ) {
-	float charW = charH * 0.5f * ( (float)SCREEN_WIDTH / cls.glconfig.vidWidth ) * ( (float)cls.glconfig.vidHeight / SCREEN_HEIGHT );
+	float charW = charH * 0.5f;
+	if ( SCR_GetAspectLayout().branch == ASPECT_LEGACY )
+		charW = charH * 0.5f * ( (float)SCREEN_WIDTH / cls.glconfig.vidWidth ) * ( (float)cls.glconfig.vidHeight / SCREEN_HEIGHT );
 	float x = cx - strlen( s ) * charW * 0.5f, y = cy - charH * 0.5f;
 	re.SetColor( colorWhite );
 	for ( ; *s; s++, x += charW ) {
