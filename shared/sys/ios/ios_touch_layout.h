@@ -38,7 +38,13 @@ IOS_TOUCH_INLINE const char *TouchLayout_DefaultBind( int button, const char *bi
 	return touchButtonDefs[button].defaultBind;
 }
 
-void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT] );
+struct touchLayoutOverrides_s;
+
+void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT], const struct touchLayoutOverrides_s *overrides
+#ifdef __cplusplus
+ = 0
+#endif
+ );
 int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons );
 IOS_TOUCH_INLINE int TouchLayout_Key( int button, int aux16, int escape, int tab )
 {

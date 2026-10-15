@@ -1,5 +1,6 @@
 #include "ios_touch_layout.h"
 #include "ios_touch_geometry.h"
+#include "ios_touch_layout_edit.h"
 
 #include <math.h>
 
@@ -21,8 +22,10 @@ const touchButtonDef_t touchButtonDefs[TB_COUNT] = {
 	{ "PAD",   TOUCH_ANCHOR_TL, .12f, .26f, .12f, TG_PAD, TOUCH_KEY_TAB, 0 }
 };
 
-void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT] )
+void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT], const touchLayoutOverrides_t *overrides )
 {
+	touchButtonDef_t defs[TB_COUNT];
+	TouchEdit_Apply( overrides, defs );
 	const float unit = TouchLayout_Unit( viewW - safeL - safeR, viewH - safeT - safeB, p );
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		out[i] = { 0, 0, 0, 0 };
@@ -32,8 +35,8 @@ void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, floa
 			IOS_TouchConsoleRectPixels( viewW, viewH, safeL, safeT, safeR, safeB,
 				&out[i].x, &out[i].y, &out[i].w, &out[i].h );
 		} else {
-			TouchLayout_AnchorRect( viewW, viewH, safeL, safeT, safeR, safeB, p, touchButtonDefs[i].anchor,
-				touchButtonDefs[i].cx, touchButtonDefs[i].cy, touchButtonDefs[i].size,
+			TouchLayout_AnchorRect( viewW, viewH, safeL, safeT, safeR, safeB, p, defs[i].anchor,
+				defs[i].cx, defs[i].cy, defs[i].size,
 				&out[i].x, &out[i].y, &out[i].w, &out[i].h );
 		}
 	}

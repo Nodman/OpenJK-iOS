@@ -1,5 +1,6 @@
 #include "sys_ios.h"
 #include "ios_touch_layout.h"
+#include "ios_touch_layout_edit.h"
 #include "ios_touch_state.h"
 #include "ios_touch_visibility.h"
 #include "qcommon/qcommon.h"
@@ -24,6 +25,8 @@ static SDL_Window *touchWindow;
 static touchFinger_t fingers[MAX_TOUCH_FINGERS];
 static touchGestureState_t gestures = { {}, -1, -1 };
 static touchRect_t rects[TB_COUNT];
+static touchLayoutOverrides_t layoutOverrides;
+static int layoutModification = -1;
 static int viewW, viewH;
 static float safeL, safeT, safeR, safeB;
 static aspectLayout_t touchLayout;
@@ -33,7 +36,7 @@ static qboolean layoutReady;
 static qboolean lastUIMode, lastHidden, lastCinematic;
 static int softKeyboardTarget;
 static qboolean lastHwKeyboard, lastTextDemand;
-static cvar_t *in_touchControls, *in_touchOpacity, *ui_touchState;
+static cvar_t *in_touchControls, *in_touchOpacity, *ui_touchState, *in_touchLayout;
 static touchBridgeState_t bridgeState;
 static touchVisibility_t visibility;
 
@@ -57,10 +60,12 @@ static void IN_TouchUpdateLayout( void ) {
 	const float p = TouchLayout_PixelsPerPoint( (float)w, (float)h, pointW, pointH );
 	touchLayout = AspectLayout_Build( w, h, (int)Cvar_VariableValue( "r_aspectCorrect" ) != 0,
 		Cvar_VariableValue( "r_aspectCorrectMinRatio" ), (int)l, (int)t, (int)r, (int)b );
-	if ( w == viewW && h == viewH && l == safeL && t == safeT && r == safeR && b == safeB && p == pixelsPerPoint )
+	if ( w == viewW && h == viewH && l == safeL && t == safeT && r == safeR && b == safeB && p == pixelsPerPoint && in_touchLayout->modificationCount == layoutModification )
 		return;
 	IN_TouchReleaseAll();
-	TouchLayout_Build( (float)w, (float)h, l, t, r, b, p, rects );
+	TouchEdit_Parse( in_touchLayout->string, &layoutOverrides );
+	layoutModification = in_touchLayout->modificationCount;
+	TouchLayout_Build( (float)w, (float)h, l, t, r, b, p, rects, &layoutOverrides );
 	viewW = w;
 	viewH = h;
 	safeL = l;
@@ -199,7 +204,16 @@ void IN_TouchRestoreDefaultBinds( void ) {
 	}
 }
 
+static void IN_TouchLayoutReset( void ) {
+	Cvar_Set( "in_touchLayout", "" );
+	layoutModification = -1;
+	if ( touchWindow ) IN_TouchUpdateLayout();
+}
+
 void IN_TouchInit( SDL_Window *window ) {
+	in_touchLayout = Cvar_Get( "in_touchLayout", "", CVAR_ARCHIVE );
+	Cmd_RemoveCommand( "touchLayoutReset" );
+	Cmd_AddCommand( "touchLayoutReset", IN_TouchLayoutReset );
 	in_touchControls = Cvar_Get( "in_touchControls", "1", CVAR_ARCHIVE );
 	in_touchOpacity = Cvar_Get( "in_touchOpacity", "1.0", CVAR_ARCHIVE );
 	ui_touchState = Cvar_Get( "ui_touchState", "0", CVAR_ROM );
@@ -220,6 +234,7 @@ void IN_TouchInit( SDL_Window *window ) {
 }
 
 void IN_TouchShutdown( void ) {
+	Cmd_RemoveCommand( "touchLayoutReset" );
 	IN_TouchReleaseAll();
 	touchWindow = NULL;
 }
