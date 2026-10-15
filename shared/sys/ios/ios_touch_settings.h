@@ -9,7 +9,7 @@
 
 typedef enum { TOUCH_SETTINGS_DOWN, TOUCH_SETTINGS_MOVE, TOUCH_SETTINGS_UP } touchSettingsEvent_t;
 typedef enum { TOUCH_SETTINGS_NONE, TOUCH_SETTINGS_APPEARANCE, TOUCH_SETTINGS_AIM, TOUCH_SETTINGS_FORCE, TOUCH_SETTINGS_DONE,
-	TOUCH_SETTINGS_MODE = 70, TOUCH_SETTINGS_SENSITIVITY = 71, TOUCH_SETTINGS_CURVE = 72,
+	TOUCH_SETTINGS_MODE = 70, TOUCH_SETTINGS_SENSITIVITY = 71, TOUCH_SETTINGS_CURVE = 72, TOUCH_SETTINGS_RESET_LAYOUT = 73,
 	TOUCH_SETTINGS_MODE_CHOICE = 80, TOUCH_SETTINGS_CURVE_CHOICE = 100, TOUCH_SETTINGS_SLOT = 40, TOUCH_SETTINGS_POWER = 50, TOUCH_SETTINGS_OPACITY = 10 } touchSettingsControl_t;
 typedef struct { touchRect_t rect; int control, selected, force; float fill; char label[32]; } touchSettingsItem_t;
 typedef struct {
@@ -21,7 +21,7 @@ typedef struct {
 	int slider, sliderMode, sliderTab; touchRect_t sliderRect;
 } touchSettingsState_t;
 typedef struct { touchRect_t bar, panel; touchSettingsItem_t items[IOS_TOUCH_SETTINGS_ITEMS]; int count; float maxScroll, p; } touchSettingsLayout_t;
-typedef struct { int consumed, cancelDrag, done, setOpacity, assign, slot, power, aimSetting, aimMode;float opacity, aimValue; } touchSettingsAction_t;
+typedef struct { int consumed, cancelDrag, done, setOpacity, assign, slot, power, aimSetting, aimMode, resetLayout;float opacity, aimValue; } touchSettingsAction_t;
 
 static const char *const touchAimCurves[6]={"Default","Quick","Precise","Steady","Digital","Dynamic"};
 
@@ -62,6 +62,7 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 	if ( out->bar.w <= 0 ) return;
 	gap = state->tab ? fminf( 4*p, fmaxf( 0,H-T-B-out->bar.h ) ) : 0;
 	content = state->tab ? 52*p : 0;
+	if(state->tab==TOUCH_SETTINGS_APPEARANCE) content=100*p;
 	if(state->tab==TOUCH_SETTINGS_AIM) {
 		const int rows=state->aimMode?2:3;
 		const int choices=state->dropdown==1?2:state->dropdown==3?6:0;
@@ -93,6 +94,9 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 		const int before=out->count;
 		TouchSettings_Add(out,r,TOUCH_SETTINGS_OPACITY,0,r.h>=24*p?label:"");
 		if(out->count>before) out->items[out->count-1].fill=fmaxf(0,fminf(opacity,1));
+		r.x=out->panel.x+4*p;r.y=out->panel.y+52*p-scroll;r.w=out->panel.w-8*p;r.h=44*p;
+		r.h=fminf(r.y+r.h,out->panel.y+out->panel.h)-fmaxf(r.y,out->panel.y);r.y=fmaxf(r.y,out->panel.y);
+		TouchSettings_Add(out,r,TOUCH_SETTINGS_RESET_LAYOUT,0,r.h>=24*p?"Reset layout":"");
 	}
 	if(state->tab==TOUCH_SETTINGS_AIM) {
 		const int rows=state->aimMode?2:3;
@@ -200,6 +204,10 @@ IOS_TOUCH_INLINE touchSettingsAction_t TouchSettings_Step( touchSettingsState_t 
 			if(event==TOUCH_SETTINGS_UP) {state->capture[found]=0;state->slider=0;}
 			return action;
 		}
+		if(event==TOUCH_SETTINGS_UP && state->control==TOUCH_SETTINGS_RESET_LAYOUT) {
+			const float dx=x-state->startX,dy=y-state->startY;
+			if(dx*dx+dy*dy>36*layout->p*layout->p) state->moved=1;
+		}
 		if(event==TOUCH_SETTINGS_MOVE) {
 			const float dx=x-state->startX,dy=y-state->startY;
 			if(dx*dx+dy*dy>36*layout->p*layout->p) state->moved=1;
@@ -220,6 +228,7 @@ IOS_TOUCH_INLINE touchSettingsAction_t TouchSettings_Step( touchSettingsState_t 
 			} else if(state->control>=TOUCH_SETTINGS_CURVE_CHOICE && state->control<TOUCH_SETTINGS_CURVE_CHOICE+6) {
 				action.aimSetting=3;action.aimValue=(float)(state->control-TOUCH_SETTINGS_CURVE_CHOICE);state->dropdown=0;state->scroll=0;
 			} else if(state->control==TOUCH_SETTINGS_DONE) action.done=1;
+			else if(state->control==TOUCH_SETTINGS_RESET_LAYOUT) action.resetLayout=1;
 		}
 	}
 	if(event==TOUCH_SETTINGS_UP) state->capture[found]=0;

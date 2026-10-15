@@ -70,6 +70,27 @@ BOOST_AUTO_TEST_CASE( row_slider_custom_values_endpoints_and_modal_capture )
 	Tap(state,TOUCH_SETTINGS_AIM);BOOST_CHECK(Tap(state,TOUCH_SETTINGS_DONE).done);
 }
 
+BOOST_AUTO_TEST_CASE( reset_layout_requires_primary_true_tap_and_preserves_panel )
+{
+	touchSettingsState_t state={};state.tab=TOUCH_SETTINGS_APPEARANCE;
+	const auto layout=Build(state);const auto r=Control(layout,TOUCH_SETTINGS_RESET_LAYOUT),opacity=Control(layout,TOUCH_SETTINGS_OPACITY);
+	BOOST_CHECK_SMALL(r.y-opacity.y-opacity.h-4*layout.p,.001f);
+	const float x=r.x+r.w/2,y=r.y+r.h/2;
+	TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,1,x,y);
+	TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,2,x,y);
+	auto action=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,1,x,y);
+	BOOST_CHECK(action.resetLayout && action.consumed && !action.done && !action.setOpacity);
+	BOOST_CHECK_EQUAL(state.tab,TOUCH_SETTINGS_APPEARANCE);
+	BOOST_CHECK(!TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,2,x,y).resetLayout);
+	for(int moved=0;moved<2;++moved) {
+		TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,3,x,y);
+		if(moved) TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_MOVE,3,x+20*layout.p,y);
+		BOOST_CHECK(!TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,3,x+20*layout.p,y).resetLayout);
+	}
+	TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,4,x,y);
+	BOOST_CHECK(!TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,4,0,0).resetLayout);
+}
+
 BOOST_AUTO_TEST_CASE( panel_gaps_capture_secondary_fingers_and_no_drag_leak )
 {
 	touchSettingsState_t state={}; state.tab=TOUCH_SETTINGS_APPEARANCE;

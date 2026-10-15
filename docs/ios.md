@@ -80,14 +80,14 @@
 
 ### Edit the layout and aim
 
-- Tap Lock below Console to edit. Held touch actions release, touch sticks and drag stop, and the game view dims. All controls appear for editing; physical gamepad and keyboard input keep their state.
+- Tap Lock to edit. Held touch actions release, touch sticks and drag stop, and the game view dims. All controls appear for editing; physical gamepad and keyboard input keep their state.
 - Drag a button, including Console or Lock, to move it. Its size stays fixed. Buttons may reach the physical screen edges, beyond the safe area or HUD gutters; the whole hitbox stays inside the drawable screen. An edge position can overlap a cutout or home indicator.
 - Tap a quick slot without dragging to open its picker. Hidden or overlapping slots are also reachable through the Force tab.
 - The Appearance / Aim / Force / Done group starts collapsed at screen center. Tap a tab to expand it; tap the same tab to collapse it. The expanded group centers and clamps inside safe bounds. Short screens scroll the panel while Done stays visible. Panel touches and extra fingers cannot drag or activate controls underneath.
-- Appearance has a full-row yellow opacity slider from 0% to 100%. Aim has Joystick / Free drag, that mode's sensitivity slider, and a joystick-only curve. Drag across a slider row to change it live. Buttons stay fully visible while editing, even at 0% opacity.
+- Appearance has a full-row yellow opacity slider from 0% to 100% and a Reset layout button. Reset layout restores all button positions, including Console, and keeps the editor open for preview. It preserves opacity, aim settings, Force assignments and bindings. Aim has Joystick / Free drag, that mode's sensitivity slider, and a joystick-only curve. Drag across a slider row to change it live. Buttons stay fully visible while editing, even at 0% opacity.
 - The sensitivity slider runs continuously from .25 to 4. Custom saved opacity and sensitivity stay unchanged until you touch their slider. Joystick and Free drag save separate values. Mode, curve or sensitivity changes cancel existing touch gestures before the next game command; press again to resume. Physical controller response is unchanged.
 - Tap Done, or tap Lock without dragging, to save and return to play. Opening a menu or console, changing maps, restarting input/video, hiding controls or backgrounding also saves and closes the editor. SP and MP save separate layouts.
-- Existing saved layouts migrate while preserving their prior on-screen centers where possible, then clamp after resize or rotation. `touchLayoutReset` restores positions, including Console; it keeps Force assignments, aim and opacity settings.
+- Phone defaults use the arranged Console/Menu/Pad/Chat row, stacked weapon/Force selectors and slanted Force quick slots. Tablet defaults keep the prior layout. Saved positions take priority until Reset layout is pressed. Historical saved layouts migrate while preserving their prior on-screen centers where possible, then clamp after resize or rotation. `touchLayoutReset` restores positions, including Console; it keeps Force assignments, aim and opacity settings.
 
 ### Touch bindings
 
@@ -168,7 +168,7 @@
 - The joystick uses an 8% radial deadzone, then remaps the remaining distance to `q`. Curves affect touch joystick aim only.
 - `in_touchLookScale 1.0`: saved Joystick sensitivity. `in_touchDragScale 1.0`: separate saved Free drag sensitivity. Effective finite values clamp to `.1`–`10`; nonfinite values use `1`. Neither setting changes physical pad look. Old look-scale values survive, but custom `j_lookSpeed` or keyboard turn-speed values no longer change touch aim speed.
 - `in_touchOpacity 1.0`: default touch opacity, clamped to `0`–`1`. `0` hides drawing but leaves touch input active. It does not change availability.
-- `in_touchLayout`: saved versioned positions for this app; empty means defaults. Use Lock to edit or `touchLayoutReset` to restore positions.
+- `in_touchLayout`: saved versioned positions for this app; empty means defaults. Use Lock to edit, Appearance → Reset layout to restore positions while editing, or `touchLayoutReset` to restore positions and close the editor.
 - `in_touchForceSlots`: saved assignments, default `v1:1,2,3,4`. IDs: `0` Empty; `1` Push; `2` Pull; `3` Speed; `4` Sense; `5` Absorb; `6` Heal; `7` Mind Trick; `8` Protect; `9` Drain; `10` Grip; `11` Lightning; `12` Dark Rage. Prefer the learned-only editor picker to assign them.
 - Touch mode, aim mode/curve, both sensitivities, opacity, layout and assignments are saved separately per app. Example console/autoexec lines: `seta in_touchControls 2`, `seta in_touchAimMode 1`, `seta in_touchDragScale 1.25`, `seta in_touchOpacity 0.5`.
 - `j_lookSpeed 1.5`: default pad look scale. Higher values turn faster.

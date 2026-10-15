@@ -368,11 +368,19 @@ void IN_TouchRestoreDefaultBinds( void ) {
 	}
 }
 
-static void IN_TouchLayoutReset( void ) {
-	IN_TouchEndEdit();
+static void IN_TouchResetPositions( void ) {
+	memset(&layoutOverrides,0,sizeof(layoutOverrides));
+	layoutOverrides.version=2;
 	Cvar_Set( "in_touchLayout", "" );
-	layoutModification = -1;
-	if ( touchWindow ) IN_TouchUpdateLayout();
+	layoutModification=in_touchLayout->modificationCount;
+	if(layoutReady) TouchLayout_Build((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,rects,&layoutOverrides,layoutProfile);
+}
+
+static void IN_TouchLayoutReset( void ) {
+	IN_TouchReleaseAll();
+	IN_GamepadZeroTouchAxes();
+	if(touchWindow) IN_TouchUpdateLayout();
+	IN_TouchResetPositions();
 }
 
 void IN_TouchInit( SDL_Window *window ) {
@@ -554,6 +562,15 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 		IN_TouchSyncAim();
 	}
 	if(action.setOpacity) Cvar_SetValue("in_touchOpacity",action.opacity);
+	if(action.resetLayout) {
+		editState.dragging=0;editState.button=-1;
+		CL_TouchCancelAllSources();
+		for(int i=0;i<MAX_TOUCH_FINGERS;++i) IN_TouchRelease(&fingers[i],TOUCH_CANCEL);
+		IN_TouchStep(TOUCH_CANCEL_ALL,0,TOUCH_TARGET_IGNORE,0,0,0);
+		IN_GamepadZeroTouchAxes();
+		IN_TouchResetPositions();
+		return;
+	}
 	if(action.done) { IN_TouchEndEdit(); return; }
 	if(action.consumed) return;
 

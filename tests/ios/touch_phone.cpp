@@ -1,4 +1,5 @@
 #include "sys/ios/ios_touch_layout_edit.h"
+#include "touch_phone_fixture.h"
 #include <boost/test/unit_test.hpp>
 #include <cmath>
 #include <cstring>
@@ -6,7 +7,7 @@
 BOOST_AUTO_TEST_SUITE(ios)
 BOOST_AUTO_TEST_SUITE(touch_phone)
 
-static const char *captured = "v2;0:0.779724,0.487575;1:0.716180,0.696303;2:0.890762,0.752773;3:0.938505,0.913030;4:0.108964,0.906212;5:0.901398,0.317879;6:0.968630,0.314091;7:0.850110,0.923030;8:0.832140,0.130304;9:0.973795,0.128787;10:0.114543,0.074242;11:0.059604,0.074091;12:0.897563,0.139394;13:0.230176,0.078030;14:0.167542,0.076212;15:0.035707,0.674498;16:0.829286,0.318637;17:0.118580,0.270909;18:0.199410,0.264848;19:0.179123,0.412575;20:0.266926,0.410304;";
+
 
 static bool Disjoint(const touchRect_t &a,const touchRect_t &b) {
 	return a.x+a.w<=b.x+.001f || b.x+b.w<=a.x+.001f || a.y+a.h<=b.y+.001f || b.y+b.h<=a.y+.001f;
@@ -31,7 +32,7 @@ BOOST_AUTO_TEST_CASE(reference_matches_approved_cleanup_and_keeps_protected_cent
 		touchRect_t editor;TouchEdit_PositionRect(NULL,i,2868,1320,132,0,132,102,3,&editor,TOUCH_LAYOUT_PHONE);
 		BOOST_CHECK_EQUAL(editor.x,phone[i].x);BOOST_CHECK_EQUAL(editor.y,phone[i].y);
 	}
-	touchLayoutOverrides_t source;TouchEdit_Parse(captured,&source);
+	touchLayoutOverrides_t source;TouchEdit_Parse(touchPhoneLayoutFixture,&source);
 	const int fixed[7]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK};
 	for(float p:{1.5f,2.25f,3.f}) for(float bottom:{0.f,21.f,34.f}) {
 		TouchLayout_Build(956*p,440*p,44*p,0,44*p,bottom*p,p,phone,NULL,TOUCH_LAYOUT_PHONE);
@@ -74,7 +75,7 @@ BOOST_AUTO_TEST_CASE(compiled_phone_matrix_and_documented_320_point_stress) {
 }
 
 BOOST_AUTO_TEST_CASE(saved_v2_centers_survive_profiles_and_partial_lock_does_not_migrate) {
-	touchLayoutOverrides_t saved;TouchEdit_Parse(captured,&saved);const auto original=saved;
+	touchLayoutOverrides_t saved;TouchEdit_Parse(touchPhoneLayoutFixture,&saved);const auto original=saved;
 	for(auto profile:{TOUCH_LAYOUT_TABLET,TOUCH_LAYOUT_PHONE}) for(float p:{1.5f,3.f}) {
 		touchRect_t r[TB_COUNT];TouchLayout_Build(956*p,440*p,44*p,0,44*p,21*p,p,r,&saved,profile);
 		for(int i=0;i<TB_COUNT;++i) {BOOST_CHECK_SMALL(X(r[i])-saved.cx[i]*956*p,.002f);BOOST_CHECK_SMALL(Y(r[i])-saved.cy[i]*440*p,.002f);}
