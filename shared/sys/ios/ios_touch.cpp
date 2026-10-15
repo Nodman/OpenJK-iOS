@@ -28,6 +28,8 @@ static touchGestureState_t gestures = { {}, -1, -1 };
 static touchRect_t rects[TB_COUNT];
 static touchLayoutOverrides_t layoutOverrides;
 static touchEditState_t editState;
+static int sliderDragging;
+static SDL_FingerID sliderFinger;
 static int layoutModification = -1;
 static int viewW, viewH;
 static float safeL, safeT, safeR, safeB;
@@ -127,6 +129,7 @@ static void IN_TouchSaveEdit( void ) {
 	if ( !editState.active ) return;
 	touchEditInput_t input = {}; input.event=TOUCH_EDIT_EXIT;
 	TouchEdit_State(&editState,input);
+	sliderDragging=0;
 	char text[1024];
 	if ( in_touchLayout && TouchEdit_Serialize(&layoutOverrides,text,sizeof(text)) ) {
 		Cvar_Set("in_touchLayout",text);
@@ -387,6 +390,20 @@ static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
 }
 
 static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
+	const touchRect_t slider=TouchEdit_SliderRect((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint);
+	const float x=tf->x*viewW,y=tf->y*viewH;
+	if (event==TOUCH_EDIT_DOWN && !editState.dragging && !sliderDragging &&
+		x>=slider.x && x<=slider.x+slider.w && y>=slider.y && y<=slider.y+slider.h) {
+		sliderDragging=1; sliderFinger=tf->fingerId;
+	}
+	if (sliderDragging) {
+		if (sliderFinger==tf->fingerId) {
+			Cvar_SetValue("in_touchOpacity",TouchEdit_SliderValue(x,&slider));
+			if(event==TOUCH_EDIT_UP) sliderDragging=0;
+		}
+		return;
+	}
+
 	touchEditInput_t input = {};
 	input.event=event; input.finger=tf->fingerId; input.x=tf->x*viewW; input.y=tf->y*viewH;
 	input.button=TouchLayout_Hit(rects,input.x,input.y,IOS_TOUCH_ALL_BUTTONS);
@@ -497,6 +514,8 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	input.gestures = &gestures;
 	input.visibleButtons = IN_TouchVisibleButtons();
 	input.sticks = visibility.sticks;
+	const touchRect_t slider=TouchEdit_SliderRect((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint);
+	input.slider=&slider; input.opacity=IN_TouchGetOpacity();
 	input.editing = editState.active;
 	input.dragButton = editState.dragging ? editState.button : -1;
 	input.styleColor = visibility.styleColor;

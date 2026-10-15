@@ -1,6 +1,7 @@
 #include "sys/ios/ios_touch_layout_edit.h"
 #include "sys/ios/ios_touch_edit_state.h"
 #include "ios/touch/touch_atlas.h"
+#include "sys/ios/ios_touch_edit_slider.h"
 #include <boost/test/unit_test.hpp>
 #include <cstring>
 
@@ -120,6 +121,32 @@ BOOST_AUTO_TEST_CASE( lock_drag_and_forced_exit_do_not_leak_ownership )
 	in.event=TOUCH_EDIT_EXIT; out=TouchEdit_State(&state,in); BOOST_CHECK(out.save && out.zero && out.release);
 	BOOST_CHECK(!state.active && !state.dragging);
 	in.event=TOUCH_EDIT_MOVE; BOOST_CHECK(!TouchEdit_State(&state,in).move);
+}
+
+BOOST_AUTO_TEST_CASE( slider_mapping_clamps_and_round_trips )
+{
+	const auto r=TouchEdit_SliderRect(2868,1320,132,0,132,102,3);
+	BOOST_CHECK_CLOSE(r.w,1302,.001);
+	BOOST_CHECK_EQUAL(TouchEdit_SliderValue(-1000,&r),.2f);
+	BOOST_CHECK_EQUAL(TouchEdit_SliderValue(5000,&r),1);
+	for(int i=0;i<=8;++i) {
+		const float v=.2f+.1f*i;
+		BOOST_CHECK_SMALL(TouchEdit_SliderValue(TouchEdit_SliderX(v,&r),&r)-v,1e-6f);
+	}
+	const auto layout=AspectLayout_Build(2868,1320,1,1.5f,132,0,132,102);
+	touchRect_t rects[TB_COUNT]; TouchLayout_Build(2868,1320,132,0,132,102,3,rects);
+	for(int b=0;b<TB_COUNT;++b)
+		BOOST_CHECK(r.x+r.w<=rects[b].x || rects[b].x+rects[b].w<=r.x || r.y+r.h<=rects[b].y || rects[b].y+rects[b].h<=r.y);
+	touchGestureState_t gestures; TouchGesture_Reset(&gestures);
+	touchDrawInput_t input={}; input.layout=&layout;input.rects=rects;input.gestures=&gestures;
+	input.editing=1;input.dragButton=TB_FORCE;input.slider=&r;input.opacity=.6f;
+	touchDrawItem_t items[33], sentinel; memset(&sentinel,0x5a,sizeof(sentinel));
+	for(int capacity=0;capacity<=32;++capacity) {
+		memset(items,0x5a,sizeof(items));
+		const int n=TouchDraw_Build(&input,items,capacity);
+		BOOST_CHECK_EQUAL(n,capacity<TB_COUNT+4?capacity:TB_COUNT+4);
+		BOOST_CHECK_EQUAL(memcmp(&items[n],&sentinel,sizeof(sentinel)),0);
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()
