@@ -1,10 +1,12 @@
 #include TOUCH_PNG_SOURCE
 #include "ios/touch/touch-v2.inc"
+#include "ios/touch/touch_atlas.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <set>
 #include <vector>
+#include <cmath>
 #include <zlib.h>
 
 refimport_t ri = {};
@@ -42,6 +44,41 @@ static void Quiet( int, const char *, ... ) {}
 static long NoRead( const char *, void ** ) { ++fsCalls; return -1; }
 static void NoFreeFile( void * ) { ++fsCalls; Require( false ); }
 
+static void GlyphPixels( const byte *pixels ) {
+	const int round[] = {3,4,5,7,9,10,11,12,13,14,17,18};
+	for(int cell:round) {
+		for(int y=0;y<256;++y) for(int x=0;x<256;++x) {
+			const int alpha=pixels[(((cell/4)*256+y)*1024+(cell%4)*256+x)*4+3];
+			if(alpha) Require(std::hypot(std::fabs(x+.5-128)+1,std::fabs(y+.5-128)+1)<=119.5);
+		}
+	}
+	double meanX[3],meanY[3],length[3];
+	const int styles[]={4,13,18};
+	const double wanted[]={45,10,90},relative[]={0,-35,45};
+	for(int i=0;i<3;++i) {
+		double sum=0,sx=0,sy=0,sxx=0,syy=0,sxy=0;
+		for(int y=0;y<256;++y) for(int x=0;x<256;++x) {
+			const double a=pixels[(((styles[i]/4)*256+y)*1024+(styles[i]%4)*256+x)*4+3];
+			const double px=x+.5-128,py=y+.5-128;
+			sum+=a; sx+=a*px; sy+=a*py; sxx+=a*px*px; syy+=a*py*py; sxy+=a*px*py;
+		}
+		meanX[i]=sx/sum; meanY[i]=sy/sum;
+		const double xx=sxx/sum-meanX[i]*meanX[i],yy=syy/sum-meanY[i]*meanY[i],xy=sxy/sum-meanX[i]*meanY[i];
+		double angle=.5*std::atan2(2*xy,xx-yy)*180/3.141592653589793;
+		if(angle<0) angle+=180;
+		length[i]=std::sqrt((xx+yy+std::hypot(xx-yy,2*xy))/2);
+		Require(std::fabs(angle-wanted[i])<.25);
+		if(i) {
+			const double radians=relative[i]*3.141592653589793/180;
+			Require(std::fabs(meanX[i]-(meanX[0]*std::cos(radians)-meanY[0]*std::sin(radians)))<.3);
+			Require(std::fabs(meanY[i]-(meanX[0]*std::sin(radians)+meanY[0]*std::cos(radians)))<.3);
+			Require(std::fabs(length[i]/length[0]-1)<.002);
+		}
+		std::printf("Style cell %d: angle %.4f, major radius %.4f, centre offset %.4f/%.4f\n",styles[i],angle,length[i],meanX[i],meanY[i]);
+	}
+	Require(pixels[(384*1024+640)*4+3]==0);
+}
+
 static void Decode( const byte *input, size_t length, bool expected ) {
 	++cases;
 	byte *pixels = (byte *)1;
@@ -55,6 +92,7 @@ static void Decode( const byte *input, size_t length, bool expected ) {
 		Require( pixels[3] == 0 );
 		Require( pixels[(1152 * 1024 + 896) * 4 + 3] == 255 );
 		Require( pixels[( 896 * 1024 + 896 ) * 4 + 3] == 255 );
+		if(cases==1) GlyphPixels(pixels);
 		Free( pixels );
 	} else {
 		Require( pixels == NULL && width == 0 && height == 0 );

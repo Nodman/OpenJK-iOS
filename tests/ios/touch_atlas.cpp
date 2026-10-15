@@ -11,7 +11,7 @@ BOOST_AUTO_TEST_SUITE( touch_atlas )
 BOOST_AUTO_TEST_CASE( immutable_cells_and_inner_texel_centres )
 {
 	const int glyphs[] = { TG_MENU, TG_CHAT, TG_PAD, TG_WEAPPREV, TG_SABER_SELECT, TG_WEAPNEXT,
-		TG_FORCENEXT, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_GUN_ALT, TG_RECT_PLATE };
+		TG_RING, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE_BLUE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_STYLE_RED, TG_RECT_PLATE };
 	for ( int i = 0; i < 20; ++i ) {
 		BOOST_CHECK_EQUAL( glyphs[i], i );
 		const touchAtlasUV_t uv = TouchAtlas_UV( i );
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE( full_twenty_records_and_raw_knobs_round_trip )
 		BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, IOS_TOUCH_MAX_DRAW_ITEMS ), TB_COUNT+4 );
 		for ( int i = 0; i < TB_COUNT; ++i ) {
 			BOOST_CHECK_EQUAL( items[i].kind, TOUCH_DRAW_BUTTON );
-			BOOST_CHECK_EQUAL( items[i].glyph, touchButtonDefs[i].glyph );
+			BOOST_CHECK_EQUAL( items[i].glyph, i==TB_STYLE?TG_STYLE_BLUE:touchButtonDefs[i].glyph );
 			const unsigned int rectangular = ( 1u << TB_MENU ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) |
 				( 1u << TB_CONSOLE ) | ( 1u << TB_LOCK );
 			BOOST_CHECK_EQUAL( items[i].plate, rectangular & ( 1u << i ) ? TG_RECT_PLATE : TG_PLATE );
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE( weapon_classes_pack_decode_and_choose_glyphs )
 		BOOST_CHECK_EQUAL((mask>>11)&3u,(unsigned int)c);
 		BOOST_CHECK_EQUAL(TouchCaps_Visible(mask,0).weaponClass,c);
 		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ATTACK,c),c==2||c==3?TG_GUN_ATTACK:TG_ATTACK);
-		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ALTATTACK,c),c==2?TG_GUN_ALT:TG_ALTATTACK);
+		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ALTATTACK,c),TG_ALTATTACK);
 		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_JUMP,c),TG_JUMP);
 		facts.valid=0;BOOST_CHECK_EQUAL(TouchCaps_Pack(&facts,0),0);
 	}
@@ -245,12 +245,75 @@ BOOST_AUTO_TEST_CASE( selected_weapon_reaches_pressed_draw_records )
 	auto input=DrawInput(&layout,rects,&gestures);input.weaponClass=TOUCH_WEAPON_GUN;
 	touchDrawItem_t items[32];TouchDraw_Build(&input,items,32);
 	BOOST_CHECK_EQUAL(items[TB_ATTACK].glyph,TG_GUN_ATTACK);
-	BOOST_CHECK_EQUAL(items[TB_ALTATTACK].glyph,TG_GUN_ALT);
+	BOOST_CHECK_EQUAL(items[TB_ALTATTACK].glyph,TG_ALTATTACK);
 	BOOST_CHECK(items[TB_ATTACK].pressed);
 	touchCapsFacts_t facts={};facts.valid=1;
 	const unsigned int before=TouchCaps_Pack(&facts,1);facts.weaponClass=TOUCH_WEAPON_GUN;
 	BOOST_CHECK(TouchCaps_ShouldPublish(TouchCaps_Pack(&facts,1),(int)before,before));
 	facts.weaponClass=99;BOOST_CHECK_EQUAL(TouchCaps_Visible(TouchCaps_Pack(&facts,1),1).weaponClass,TOUCH_WEAPON_UNKNOWN);
+}
+
+BOOST_AUTO_TEST_CASE( round_buttons_have_no_fill_and_style_glyphs_keep_rects )
+{
+	const auto layout=AspectLayout_Build(2868,1320,1,1.5f,132,0,132,102);
+	touchRect_t rects[TB_COUNT]; TouchLayout_Build(2868,1320,132,0,132,102,3,rects);
+	touchGestureState_t gestures; HeldSticks(&gestures);
+	auto input=DrawInput(&layout,rects,&gestures);
+	for(int style=0;style<4;++style) {
+		input.styleColor=style;
+		touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
+		BOOST_REQUIRE_EQUAL(TouchDraw_Build(&input,items,IOS_TOUCH_MAX_DRAW_ITEMS),TB_COUNT+4);
+		for(int i=0;i<TB_COUNT;++i) {
+			const int backdrop=TouchDraw_Backdrop(&items[i]);
+			if(items[i].plate==TG_RECT_PLATE) BOOST_CHECK_EQUAL(backdrop,TG_RECT_PLATE);
+			else BOOST_CHECK_EQUAL(backdrop,items[i].glyph<0?TG_RING:-1);
+		}
+		const int expected[]={TG_STYLE_BLUE,TG_SABER_SELECT,TG_STYLE_RED,TG_SABER_SELECT};
+		BOOST_CHECK_EQUAL(items[TB_STYLE].glyph,expected[style]);
+		BOOST_CHECK_EQUAL(items[TB_SABER_SELECT].glyph,TG_SABER_SELECT);
+		const auto r=TouchLayout_RectToVirtual(&layout,rects[TB_STYLE]);
+		BOOST_CHECK_EQUAL(items[TB_STYLE].x,r.x); BOOST_CHECK_EQUAL(items[TB_STYLE].y,r.y);
+		BOOST_CHECK_EQUAL(items[TB_STYLE].w,r.w); BOOST_CHECK_EQUAL(items[TB_STYLE].h,r.h);
+		for(int i=TB_COUNT;i<TB_COUNT+4;++i) BOOST_CHECK_EQUAL(TouchDraw_Backdrop(&items[i]),TG_PLATE);
+	}
+	input.editing=1; input.dragButton=TB_ATTACK;
+	touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
+	const int count=TouchDraw_Build(&input,items,IOS_TOUCH_MAX_DRAW_ITEMS);
+	for(int i=0;i<count;++i) if(items[i].kind==TOUCH_DRAW_HIGHLIGHT) BOOST_CHECK_EQUAL(TouchDraw_Backdrop(&items[i]),TG_RING);
+	float colour[4];
+	for(int i=0;i<count;++i) if(items[i].kind==TOUCH_DRAW_BUTTON && items[i].glyph<0) {
+		TouchDraw_Color(&items[i],0,1,colour); BOOST_CHECK_EQUAL(colour[3],.65f);
+	}
+}
+
+BOOST_AUTO_TEST_CASE( style_canvas_mapping_keeps_physical_axes_on_both_aspect_paths )
+{
+	for(const auto &f : {touchRect_t{2868,1320,3,0},touchRect_t{2388,1668,2,0},touchRect_t{2048,1536,2,0},touchRect_t{1434,660,1.5f,0}}) {
+		for(int corrected=0;corrected<2;++corrected) {
+			const auto layout=AspectLayout_Build(f.x,f.y,corrected,1.5f,0,0,0,0);
+			touchRect_t rects[TB_COUNT]; TouchLayout_Build(f.x,f.y,0,0,0,0,f.w,rects);
+			touchGestureState_t gestures; TouchGesture_Reset(&gestures);
+			auto input=DrawInput(&layout,rects,&gestures);
+			const double cx=rects[TB_STYLE].x+rects[TB_STYLE].w/2,cy=rects[TB_STYLE].y+rects[TB_STYLE].h/2;
+			for(int style=0;style<3;++style) {
+				input.styleColor=style;
+				touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
+				TouchDraw_Build(&input,items,IOS_TOUCH_MAX_DRAW_ITEMS);
+				const auto &item=items[TB_STYLE];
+				const float degrees[]={10,45,90};
+				const double angle=degrees[style]*3.141592653589793/180;
+				const auto uv=TouchAtlas_UV(item.glyph);
+				const double u=((item.glyph%4)*256+128+60*cos(angle))/1024;
+				const double v=((item.glyph/4)*256+128+60*sin(angle))/1280;
+				const auto center=AspectLayout_ToPixels(&layout,item.x+item.w/2,item.y+item.h/2);
+				const auto edge=AspectLayout_ToPixels(&layout,item.x+(u-uv.s1)/(uv.s2-uv.s1)*item.w,item.y+(v-uv.t1)/(uv.t2-uv.t1)*item.h);
+				const double radius=rects[TB_STYLE].w*60/239;
+				BOOST_CHECK_SMALL(center.x-cx,.001); BOOST_CHECK_SMALL(center.y-cy,.001);
+				BOOST_CHECK_SMALL(hypot(edge.x-cx,edge.y-cy)-radius,.001);
+				BOOST_CHECK_SMALL(atan2(edge.y-cy,edge.x-cx)*180/3.141592653589793-degrees[style],.001);
+			}
+		}
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()

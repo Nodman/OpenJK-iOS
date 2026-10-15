@@ -61,10 +61,30 @@ IOS_TOUCH_INLINE int TouchDraw_WeaponGlyph( int button,int weaponClass )
 {
 	if(button<0 || button>=TB_COUNT) return TG_PLATE;
 	if(button==TB_ATTACK || button==TB_ALTATTACK) {
-		if(weaponClass==TOUCH_WEAPON_GUN) return button==TB_ATTACK?TG_GUN_ATTACK:TG_GUN_ALT;
+		if(weaponClass==TOUCH_WEAPON_GUN) return button==TB_ATTACK?TG_GUN_ATTACK:TG_ALTATTACK;
 		if(weaponClass==TOUCH_WEAPON_MELEE) return button==TB_ATTACK?TG_GUN_ATTACK:TG_ALTATTACK;
 	}
 	return touchButtonDefs[button].glyph;
+}
+
+IOS_TOUCH_INLINE int TouchDraw_ButtonGlyph( int button, int weaponClass, int style )
+{
+	if(button==TB_STYLE) {
+		if(style==TOUCH_STYLE_BLUE) return TG_STYLE_BLUE;
+		if(style==TOUCH_STYLE_RED) return TG_STYLE_RED;
+		return TG_SABER_SELECT;
+	}
+	return TouchDraw_WeaponGlyph(button,weaponClass);
+}
+
+IOS_TOUCH_INLINE int TouchDraw_Backdrop( const touchDrawItem_t *item )
+{
+	if(item->kind==TOUCH_DRAW_BUTTON) {
+		if(item->plate==TG_RECT_PLATE) return TG_RECT_PLATE;
+		return item->glyph<0?TG_RING:-1;
+	}
+	if(item->kind==TOUCH_DRAW_HIGHLIGHT && item->plate==TG_PLATE) return TG_RING;
+	return item->plate;
 }
 
 IOS_TOUCH_INLINE float TouchDraw_Opacity( float value )
@@ -98,7 +118,7 @@ IOS_TOUCH_INLINE void TouchDraw_Color( const touchDrawItem_t *item, int glyphLay
 	int i;
 	for ( i = 0; i < 3; ++i ) rgba[i] = glyph ? item->rgb[i] : 1;
 	if ( item->kind == TOUCH_DRAW_BUTTON )
-		rgba[3] = glyph ? ( item->pressed ? 1.0f : .85f ) : ( item->pressed ? .40f : .20f );
+		rgba[3] = glyph ? ( item->pressed ? 1.0f : .85f ) : ( item->glyph < 0 ? .65f : item->pressed ? .40f : .20f );
 	else
 		rgba[3] = item->kind == TOUCH_DRAW_STICK_KNOB ? .40f : .20f;
 	rgba[3] *= TouchDraw_Opacity( opacity );
@@ -146,7 +166,7 @@ IOS_TOUCH_INLINE int TouchDraw_Build( const touchDrawInput_t *input, touchDrawIt
 			if ( TouchGesture_IsButton( f->role ) && f->button == button ) pressed = 1;
 		}
 		TouchDraw_Add( input, items, &count, capacity, r->x, r->y, r->w, r->h, TOUCH_DRAW_BUTTON,
-			TouchDraw_WeaponGlyph(button,input->weaponClass), TouchDraw_ButtonPlate(button), pressed, button == TB_STYLE ? input->styleColor : TOUCH_STYLE_UNKNOWN );
+			TouchDraw_ButtonGlyph(button,input->weaponClass,input->styleColor), TouchDraw_ButtonPlate(button), pressed, button == TB_STYLE ? input->styleColor : TOUCH_STYLE_UNKNOWN );
 	}
 	if ( input->sticks && !input->editing ) {
 		const int owners[2] = { input->gestures->moveOwner, input->gestures->lookOwner };

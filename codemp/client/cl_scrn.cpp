@@ -604,7 +604,8 @@ static void CL_DrawTouchControls( void ) {
 			continue;
 		}
 		re->SetColor( colour );
-		CL_DrawTouchQuad( &items[i], items[i].plate );
+		const int backdrop=TouchDraw_Backdrop(&items[i]);
+		if(backdrop>=0) CL_DrawTouchQuad( &items[i], backdrop );
 		if ( items[i].kind == TOUCH_DRAW_BUTTON && items[i].glyph >= 0 ) {
 			TouchDraw_Color( &items[i], 1, opacity, colour );
 			re->SetColor( colour );

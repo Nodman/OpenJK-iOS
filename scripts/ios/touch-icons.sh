@@ -4,6 +4,7 @@ task_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 exec python3 - "$task_root" "$@" <<'PY'
 import argparse
 import binascii
+import math
 from pathlib import Path
 import struct
 import subprocess
@@ -17,9 +18,15 @@ parser = argparse.ArgumentParser(description='Regenerate the embedded touch atla
 parser.add_argument('--check', action='store_true', help='Regenerate and compare without changing outputs.')
 args = parser.parse_args(sys.argv[2:])
 source = root / 'shared/ios/touch'
-names = ('menu', 'chat', 'pad', 'prev', 'saber', 'next', 'force-cycle', 'force-use',
-         'console', 'alt-attack', 'attack', 'jump', 'crouch', 'style', 'use', 'plate',
-         'lock', 'gun-attack', 'gun-alt-attack', 'rect-plate')
+names = ('menu', 'chat', 'pad', 'prev', 'saber', 'next', 'ring', 'force-use',
+         'console', 'alt-attack', 'attack', 'jump', 'crouch', 'style-blue', 'use', 'plate',
+         'lock', 'gun-attack', 'style-red', 'rect-plate')
+# Fits use the source alpha bounds, the 8.5..247.5 UV crop, and a one-texel edge margin.
+transforms = {4: (0.776416612, 0), 7: (0.850418701, 0), 10: (0.755092724, 0),
+              13: (0.776416612, -35), 17: (0.858732719, 0), 18: (0.776416612, 45)}
+if not ((source / '04-saber.svg').read_bytes() == (source / '13-style-blue.svg').read_bytes()
+        == (source / '18-style-red.svg').read_bytes()):
+    raise SystemExit('Saber variants must retain identical unmodified source SVG bytes')
 namespace = 'http://www.w3.org/2000/svg'
 ET.register_namespace('', namespace)
 atlas = ET.Element(f'{{{namespace}}}svg', width='1024', height='1280', viewBox='0 0 1024 1280')
@@ -33,6 +40,13 @@ for cell, name in enumerate(names):
         for key, value in element.attrib.items():
             if 'href' in key or 'url(' in value:
                 raise SystemExit(f'External or referenced content in cell {cell}')
+    if cell in transforms:
+        scale, angle = transforms[cell]
+        group = ET.Element(f'{{{namespace}}}g', transform=f'translate(128 128) rotate({angle}) scale({scale}) translate(-128 -128)')
+        for child in list(glyph):
+            glyph.remove(child)
+            group.append(child)
+        glyph.append(group)
     glyph.set('width', '256')
     glyph.set('height', '256')
     glyph.set('x', str((cell % 4) * 256))
@@ -98,7 +112,7 @@ def validate(blob):
         pixels[y * stride:(y + 1) * stride] = row
     print('PNG: 1024x1280, colour type 6, depth 8, straight RGBA, CRCs valid')
     for cell, name in enumerate(names):
-        occupied, partial, bounds = 0, 0, [256, 256, -1, -1]
+        occupied, partial, bounds, radius = 0, 0, [256, 256, -1, -1], 0.0
         for y in range(256):
             for x in range(256):
                 pos = (((cell // 4) * 256 + y) * 1024 + (cell % 4) * 256 + x) * 4
@@ -106,12 +120,15 @@ def validate(blob):
                 if alpha:
                     if (red, green, blue) != (255, 255, 255):
                         raise ValueError(f'Non-white pixel in cell {cell}')
+                    radius = max(radius, math.hypot(abs(x + .5 - 128) + 1, abs(y + .5 - 128) + 1))
                     occupied += 1
                     partial += alpha < 255
                     bounds = [min(bounds[0], x), min(bounds[1], y), max(bounds[2], x), max(bounds[3], y)]
         if not occupied or not partial or min(bounds[:2]) < 8 or max(bounds[2:]) > 247:
             raise ValueError(f'Cell {cell} fails content/inset/antialias check: {bounds}')
-        print(f'Cell {cell:02d} {name}: pixels={occupied}, partial-alpha={partial}, bounds={bounds}')
+        if cell in (3, 4, 5, 7, 9, 10, 11, 12, 13, 14, 17, 18) and radius > 119.5:
+            raise ValueError(f'Round glyph {cell} exceeds circular footprint: {radius}')
+        print(f'Cell {cell:02d} {name}: pixels={occupied}, partial-alpha={partial}, bounds={bounds}, radius={radius:.4f}')
     def alpha(x, y):
         return pixels[(y * 1024 + x) * 4 + 3]
     if alpha(896, 896) != 255 or alpha(776, 776) != 0 or not 0 < alpha(852, 785) < 255:
