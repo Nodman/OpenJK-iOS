@@ -60,7 +60,7 @@
 - At the top right, previous weapon, saber and next weapon run left to right. Saber selects the saber, or toggles its blade when already selected. Force cycle and Force use sit below that row. MP melee selection has no dedicated touch button.
 - Menu sits at the top left and sends Escape. Chat sits beside it in MP and opens global chat and the soft keyboard. Pad sits below Menu: tap for the SP datapad, or hold for the MP scoreboard and lift to close it.
 - Buttons keep their positions when others hide. Saber hides without a saber. Style hides with only one legal stance unless a blade toggle is useful; Siege, dual and staff keep it available in MP. Force use hides without a selectable power; Force cycle hides with fewer than two. Weapon arrows hide with only one selectable weapon.
-- The SP datapad button appears once you have a selectable Force power. It may hide an objective-only datapad; a keyboard's TAB still works. Chat is MP-only. Death, spectator and intermission states keep basic actions and sticks, while equipment buttons hide.
+- The SP datapad button is always available in a map, even before you learn Force powers. Chat is MP-only. Death, spectator and intermission states keep basic actions and sticks, while equipment buttons hide.
 - If a custom mod never reports which controls are available, the full set returns after about one second in a map. SP still has no chat button. Menu, cinematic and hardware-hide rules still apply.
 - The console glyph replaces the old CON text in the same top-right corner. Tap or drag elsewhere in menus to use the cursor.
 - Tap the console button in a map or menu to open the console and keyboard. Tap it again to close both. Closing the console another way also closes its soft keyboard.

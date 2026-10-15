@@ -247,10 +247,10 @@ BOOST_AUTO_TEST_CASE( capability_bits_style_counts_and_sp_progress )
 	auto facts = Facts();
 	facts.legalStyleCount = 1;
 	facts.ownedWeaponCount = 1;
-	BOOST_CHECK_EQUAL( TouchCaps_Pack( &facts, 0 ), ( 1u << 0 ) | ( 1u << 8 ) | ( 1u << 10 ) );
+	BOOST_CHECK_EQUAL( TouchCaps_Pack( &facts, 0 ), ( 1u << 0 ) | ( 1u << 4 ) | ( 1u << 8 ) | ( 1u << 10 ) );
 	const auto opening = TouchCaps_Visible( TouchCaps_Pack( &facts, 0 ), 0 );
-	BOOST_CHECK( opening.menu && opening.console && opening.basic && opening.sticks && opening.saber );
-	BOOST_CHECK( !opening.pad && !opening.chat && !opening.style && !opening.force && !opening.forceCycle && !opening.weapons );
+	BOOST_CHECK( opening.menu && opening.console && opening.basic && opening.sticks && opening.saber && opening.pad );
+	BOOST_CHECK( !opening.chat && !opening.style && !opening.force && !opening.forceCycle && !opening.weapons );
 	facts.legalStyleCount = 2;
 	facts.selectableForceCount = 2;
 	facts.ownedWeaponCount = 3;
@@ -273,6 +273,31 @@ BOOST_AUTO_TEST_CASE( capability_bits_style_counts_and_sp_progress )
 	BOOST_CHECK_EQUAL( mask & TOUCH_CAP_FORCE_CYCLE, 0 );
 	facts.valid = 0;
 	BOOST_CHECK_EQUAL( TouchCaps_Pack( &facts, 1 ), 0 );
+}
+
+BOOST_AUTO_TEST_CASE( sp_pad_follows_valid_state_without_force_or_equipment )
+{
+	auto facts = Facts();
+	facts.saberOwned = facts.equipmentAllowed = 0;
+	BOOST_CHECK_EQUAL( facts.selectableForceCount, 0 );
+	const unsigned int sp = TouchCaps_Pack( &facts, 0 );
+	const auto visible = TouchCaps_Visible( sp, 0 );
+	BOOST_CHECK( sp & TOUCH_CAP_PAD );
+	BOOST_CHECK( visible.pad );
+	BOOST_CHECK( TouchCaps_ButtonMask( &visible ) & ( 1u << TB_PAD ) );
+	BOOST_CHECK( TouchCaps_Visible( TOUCH_CAP_VALID, 0 ).pad );
+	BOOST_CHECK( !TouchCaps_Visible( TOUCH_CAP_PAD, 0 ).pad );
+	const unsigned int mp = TouchCaps_Pack( &facts, 1 );
+	BOOST_CHECK_EQUAL( mp & TOUCH_CAP_PAD, 0 );
+	BOOST_CHECK( TouchCaps_Visible( mp, 1 ).pad );
+	touchBridgeState_t bridge = {};
+	BOOST_CHECK( !TouchBridge_Step( &bridge, sp, 0, 0, 0, 0, 0, 0 ).pad );
+	BOOST_CHECK( !TouchBridge_Step( &bridge, sp, 0, 1, 1, 0, 0, 0 ).pad );
+	BOOST_CHECK( !TouchBridge_Step( &bridge, sp, 0, 1, 0, 1, 0, 0 ).pad );
+	BOOST_CHECK( !TouchBridge_Step( &bridge, sp, 0, 1, 0, 0, 1, 0 ).pad );
+	facts.valid = 0;
+	BOOST_CHECK_EQUAL( TouchCaps_Pack( &facts, 0 ), 0 );
+	BOOST_CHECK( !TouchCaps_Visible( TouchCaps_Pack( &facts, 0 ), 0 ).pad );
 }
 
 BOOST_AUTO_TEST_CASE( equipment_gate_preserves_basic_actions )

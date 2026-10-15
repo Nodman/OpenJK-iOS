@@ -48,7 +48,7 @@ IOS_TOUCH_INLINE unsigned int TouchCaps_Pack( const touchCapsFacts_t *facts, int
 	if ( facts->selectableForceCount > 0 ) mask |= TOUCH_CAP_FORCE;
 	if ( facts->selectableForceCount > 1 ) mask |= TOUCH_CAP_FORCE_CYCLE;
 	if ( facts->ownedWeaponCount > 1 ) mask |= TOUCH_CAP_WEAPONS;
-	if ( !multiplayer && facts->selectableForceCount > 0 ) mask |= TOUCH_CAP_PAD;
+	if ( !multiplayer ) mask |= TOUCH_CAP_PAD;
 	if ( multiplayer && facts->chatAvailable ) mask |= TOUCH_CAP_CHAT;
 	if ( facts->equipmentAllowed ) mask |= TOUCH_CAP_EQUIPMENT;
 	return mask;
@@ -67,7 +67,7 @@ IOS_TOUCH_INLINE touchVisibility_t TouchCaps_Visible( unsigned int mask, int mul
 	v.force = equipment && ( mask & TOUCH_CAP_FORCE ) != 0;
 	v.forceCycle = equipment && ( mask & TOUCH_CAP_FORCE_CYCLE ) != 0;
 	v.weapons = equipment && ( mask & TOUCH_CAP_WEAPONS ) != 0;
-	v.pad = valid && ( multiplayer || ( mask & TOUCH_CAP_PAD ) != 0 );
+	v.pad = valid;
 	v.chat = valid && multiplayer && ( mask & TOUCH_CAP_CHAT ) != 0;
 	return v;
 }
