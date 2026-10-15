@@ -55,6 +55,7 @@
 - Touch: put a finger on the lower left to move, or on free space on the right to aim. Each stick appears while touched and starts where your finger lands. Its center stays fixed until you lift.
 - Aim is a turn-rate stick. Deflect a little for a slow turn, or farther for a fast turn. Holding the deflection keeps turning; returning to the center stops turning. Lifting stops that stick.
 - Attack, alternate attack and jump form an arc on the right, from left to right. Tap attack or alternate attack for an immediate press and release. Hold to keep the action pressed. Drag that held finger to aim while attacking; lifting ends both actions. Weapon cooldown and charge rules still apply.
+- Attack glyphs follow the selected weapon: saber, gun or melee. Unknown weapons use the saber pair. The new lock, gun and melee glyphs are placeholders until the final art is ready.
 - The first aiming finger keeps aim until it lifts. Another finger can attack but cannot take aim. If you start dragging an attack while aim is busy, lift and press again to aim with that attack; it will not take over later.
 - Use sits at the bottom left. Crouch sits near the bottom right, with Style to its right. Style switches saber stance; its glyph is blue for fast, yellow for medium, dual or staff, and red for strong. Unknown stance is white.
 - At the top right, previous weapon, saber and next weapon run left to right. Saber selects the saber, or toggles its blade when already selected. Force cycle and Force use sit below that row. MP melee selection has no dedicated touch button.
@@ -68,6 +69,10 @@
 - Pad sends the real TAB key; Chat sends the real Y key. Both follow your key rebinds.
 - If you unbind TAB or Y, its touch button does nothing. Restore Pad with `bind TAB datapad` in SP or `bind TAB +scores` in MP; restore MP Chat with `bind y messagemode`.
 - Empty AUX16–26 bindings regain their defaults at startup, after your saved settings and autoexec. Your nonempty rebinds are kept.
+- Tap Lock on the right, below the console, to edit the layout. Held touch actions release and both sticks stop. The game view dims; all buttons appear, including hidden ones. Touches now edit controls. Gamepad input keeps its normal behavior.
+- Drag a button to move it. Its size stays fixed and its plate stays inside the safe area. The button being dragged has a thin highlight. The console and stick zones stay fixed. You can also drag Lock; tap it without dragging to save and leave edit mode.
+- Drag the opacity slider at the top centre to change opacity live, from `0.2` to `1.0`. Buttons stay fully visible for editing. Tap Lock again to save and return to play.
+- Layouts are saved separately for SP and MP. Opening a menu or console, changing maps, restarting video, or backgrounding saves and closes the editor. Enter `touchLayoutReset` in the console to restore the default positions.
 - Touch button binds:
 
 | Button | Key | Default bind | Action |
@@ -126,6 +131,7 @@
 - `in_touchControls 0`: hide touch controls except the console button. `1`: default; hide them when a pad is connected, or a hardware keyboard and mouse/trackpad are both connected. A keyboard alone keeps touch look and buttons. `2`: keep them visible with these devices. Menus and the console show only the console button. Full-screen cinematics and SP in-game videos hide all controls in every mode; camera cutscenes still show them.
 - `in_touchLookScale 1.0`: default touch turn-rate scale. Higher values turn faster. It now scales joystick turn rate instead of swipe distance. Old saved values survive; reset to `1.0` if aim feels wrong. It does not change pad look.
 - `in_touchOpacity 1.0`: default touch opacity. Effective values clamp to `0`–`1`. `0` hides the drawing but leaves touch input active. It does not change which buttons are available.
+- `in_touchLayout`: saved button positions for this app; empty means the default layout. Use Lock to edit them or `touchLayoutReset` to clear them.
 - Touch mode, look scale and opacity are saved. Console examples: `seta in_touchControls 2`, `seta in_touchLookScale 1.0`, `seta in_touchOpacity 0.5`. The same lines work in your app's autoexec.
 - `j_lookSpeed 1.5`: default pad look scale. Higher values turn faster.
 - `j_deadzone 0.15`: default stick dead zone. Raise it if a stick drifts.
