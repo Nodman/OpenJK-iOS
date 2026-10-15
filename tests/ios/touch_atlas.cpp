@@ -11,7 +11,7 @@ BOOST_AUTO_TEST_SUITE( touch_atlas )
 BOOST_AUTO_TEST_CASE( immutable_cells_and_inner_texel_centres )
 {
 	const int glyphs[] = { TG_MENU, TG_CHAT, TG_PAD, TG_WEAPPREV, TG_SABER_SELECT, TG_WEAPNEXT,
-		TG_FORCENEXT, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_GUN_ALT, TG_MELEE };
+		TG_FORCENEXT, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_GUN_ALT, TG_RECT_PLATE };
 	for ( int i = 0; i < 20; ++i ) {
 		BOOST_CHECK_EQUAL( glyphs[i], i );
 		const touchAtlasUV_t uv = TouchAtlas_UV( i );
@@ -219,8 +219,8 @@ BOOST_AUTO_TEST_CASE( weapon_classes_pack_decode_and_choose_glyphs )
 		const unsigned int mask=TouchCaps_Pack(&facts,0);
 		BOOST_CHECK_EQUAL((mask>>11)&3u,(unsigned int)c);
 		BOOST_CHECK_EQUAL(TouchCaps_Visible(mask,0).weaponClass,c);
-		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ATTACK,c),c==2?TG_GUN_ATTACK:c==3?TG_MELEE:TG_ATTACK);
-		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ALTATTACK,c),c==2?TG_GUN_ALT:c==3?TG_MELEE:TG_ALTATTACK);
+		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ATTACK,c),c==2||c==3?TG_GUN_ATTACK:TG_ATTACK);
+		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ALTATTACK,c),c==2?TG_GUN_ALT:TG_ALTATTACK);
 		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_JUMP,c),TG_JUMP);
 		facts.valid=0;BOOST_CHECK_EQUAL(TouchCaps_Pack(&facts,0),0);
 	}

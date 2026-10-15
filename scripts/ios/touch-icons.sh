@@ -19,7 +19,7 @@ args = parser.parse_args(sys.argv[2:])
 source = root / 'shared/ios/touch'
 names = ('menu', 'chat', 'pad', 'prev', 'saber', 'next', 'force-cycle', 'force-use',
          'console', 'alt-attack', 'attack', 'jump', 'crouch', 'style', 'use', 'plate',
-         'lock', 'gun-attack', 'gun-alt-attack', 'melee')
+         'lock', 'gun-attack', 'gun-alt-attack', 'rect-plate')
 namespace = 'http://www.w3.org/2000/svg'
 ET.register_namespace('', namespace)
 atlas = ET.Element(f'{{{namespace}}}svg', width='1024', height='1280', viewBox='0 0 1024 1280')
@@ -116,9 +116,9 @@ def validate(blob):
         return pixels[(y * 1024 + x) * 4 + 3]
     if alpha(896, 896) != 255 or alpha(776, 776) != 0 or not 0 < alpha(852, 785) < 255:
         raise ValueError('Round plate circle sample failed')
-    if alpha(112, 86) != 255 or alpha(10, 10) != 0:
-        raise ValueError('Menu stroke sample failed')
-    print('Circle/stroke samples: opaque centres, clear corners and partial-alpha edge pass')
+    if alpha(896, 1152) != 255 or alpha(776, 1032) != 0 or alpha(896, 1032) != 255:
+        raise ValueError('Rectangular plate sample failed')
+    print('Plate samples: opaque centres, clear corners and distinct circular/rectangular edges pass')
 
 
 with tempfile.TemporaryDirectory(prefix='openjk-touch-', dir='/private/tmp') as scratch:
