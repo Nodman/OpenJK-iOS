@@ -25,6 +25,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 // cl_parse.c  -- parse a message received from the server
 
 #include "client.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 #include "cl_cgameapi.h"
 #include "qcommon/stringed_ingame.h"
 
@@ -455,10 +458,30 @@ void CL_SystemInfoChanged( void ) {
 	// check pure server string
 	s = Info_ValueForKey( systemInfo, "sv_paks" );
 	t = Info_ValueForKey( systemInfo, "sv_pakNames" );
+#ifdef OPENJK_IOS
+	{
+		static char previousPaks[BIG_INFO_STRING],previousNames[BIG_INFO_STRING];
+		if(strcmp(previousPaks,s) || strcmp(previousNames,t)) {
+			SCR_ResetTouchForceMedia();
+			Q_strncpyz(previousPaks,s,sizeof(previousPaks));
+			Q_strncpyz(previousNames,t,sizeof(previousNames));
+		}
+	}
+#endif
 	FS_PureServerSetLoadedPaks( s, t );
 
 	s = Info_ValueForKey( systemInfo, "sv_referencedPaks" );
 	t = Info_ValueForKey( systemInfo, "sv_referencedPakNames" );
+#ifdef OPENJK_IOS
+	{
+		static char previousPaks[BIG_INFO_STRING],previousNames[BIG_INFO_STRING];
+		if(strcmp(previousPaks,s) || strcmp(previousNames,t)) {
+			SCR_ResetTouchForceMedia();
+			Q_strncpyz(previousPaks,s,sizeof(previousPaks));
+			Q_strncpyz(previousNames,t,sizeof(previousNames));
+		}
+	}
+#endif
 	FS_PureServerSetReferencedPaks( s, t );
 
 	gameSet = qfalse;

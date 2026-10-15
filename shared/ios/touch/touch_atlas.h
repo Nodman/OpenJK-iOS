@@ -35,6 +35,7 @@ typedef enum {
 typedef struct {
 	float x, y, w, h;
 	int kind, glyph, plate, pressed;
+	int button, force;
 	float rgb[3];
 } touchDrawItem_t;
 
@@ -55,6 +56,7 @@ typedef struct {
 	unsigned int visibleButtons, pressedButtons;
 	int sticks, styleColor, weaponClass;
 	int editing, dragButton;
+	int selectedForce;
 } touchDrawInput_t;
 
 IOS_TOUCH_INLINE int TouchDraw_WeaponGlyph( int button,int weaponClass )
@@ -138,6 +140,8 @@ IOS_TOUCH_INLINE void TouchDraw_Add( const touchDrawInput_t *input, touchDrawIte
 	item->y = (float)origin.y;
 	item->w = (float)size.x;
 	item->h = (float)size.y;
+	item->button = -1;
+	item->force = 0;
 	item->kind = kind;
 	item->glyph = glyph;
 	item->plate = plate;
@@ -165,8 +169,10 @@ IOS_TOUCH_INLINE int TouchDraw_Build( const touchDrawInput_t *input, touchDrawIt
 			const touchGestureFinger_t *f = &input->gestures->fingers[i];
 			if ( TouchGesture_IsButton( f->role ) && f->button == button ) pressed = 1;
 		}
+		const int before=count;
 		TouchDraw_Add( input, items, &count, capacity, r->x, r->y, r->w, r->h, TOUCH_DRAW_BUTTON,
 			TouchDraw_ButtonGlyph(button,input->weaponClass,input->styleColor), TouchDraw_ButtonPlate(button), pressed, button == TB_STYLE ? input->styleColor : TOUCH_STYLE_UNKNOWN );
+		if(count>before) { items[count-1].button=button; items[count-1].force=button==TB_FORCE ? input->selectedForce : 0; }
 	}
 	if ( input->sticks && !input->editing ) {
 		const int owners[2] = { input->gestures->moveOwner, input->gestures->lookOwner };

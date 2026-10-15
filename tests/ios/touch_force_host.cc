@@ -1,5 +1,6 @@
 #include "sys/ios/sys_ios.h"
 #include "sys/ios/ios_touch_force_producer.h"
+#include "sys/ios/ios_touch_force_media.h"
 #include <cassert>
 #include <cstdio>
 
@@ -101,6 +102,9 @@ static void EarlyExit(int reset) {
 	if(reset) { TouchForce_Reset(&scopes); return; }
 	frame.Finish(); frame.Finish();
 }
+static int probes,registrations,available,shaderResult=17;
+static int Readable(const char *,void *) { ++probes; return available; }
+static int Register(const char *,void *) { ++registrations; return shaderResult; }
 int main() {
 	ForceRoutingAndLegacy();
 	EarlyExit(0);assert(scopes.committed.selected==1 && !scopes.fields && !scopes.updates);
@@ -159,5 +163,21 @@ int main() {
 	report=TouchForce_Produce(1u<<FP_TEAM_HEAL,levels,FP_TEAM_HEAL,-1,1);
 	assert(report.selected==13 && !report.learned);
 #endif
-	puts("PASS: engine enum producer -> pending -> committed; expiry, nested, reset, no-field, invalid payload, gesture identity/cancel, legacy/host provenance");
+	touchForceMedia_t media={};
+	assert(!TouchForceMedia_Resolve(&media,0,1,Readable,Register,0));
+	assert(!TouchForceMedia_Resolve(&media,1,0,Readable,Register,0) && !probes);
+	for(int id=1;id<=14;++id) {
+		assert(TouchForce_Icon(id));
+		assert(!TouchForceMedia_Resolve(&media,id,1,Readable,Register,0));
+		assert(!TouchForceMedia_Resolve(&media,id,1,Readable,Register,0));
+	}
+	assert(probes==42 && !registrations);
+	available=1;TouchForceMedia_Reset(&media);
+	assert(TouchForceMedia_Resolve(&media,4,1,Readable,Register,0)==17);
+	assert(TouchForceMedia_Resolve(&media,4,1,Readable,Register,0)==17);
+	assert(probes==43 && registrations==1);
+	TouchForceMedia_Reset(&media);shaderResult=0;
+	assert(!TouchForceMedia_Resolve(&media,4,1,Readable,Register,0));
+	assert(!TouchForceMedia_Resolve(&media,4,1,Readable,Register,0) && registrations==2);
+	puts("PASS: engine enum producer -> pending -> committed; expiry, nested, reset, no-field, invalid payload, gesture identity/cancel, legacy/host provenance, cache bounds/negative/reset");
 }

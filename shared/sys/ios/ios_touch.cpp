@@ -213,6 +213,7 @@ static void IN_TouchSyncVisibility( void ) {
 void IN_TouchResetState( void ) {
 	TouchForce_Reset(&forceBridge);
 	lastForceReport=TouchForce_Empty();
+	SCR_ResetTouchForceMedia();
 	if ( !ui_touchState )
 		ui_touchState = Cvar_Get( "ui_touchState", "0", CVAR_ROM );
 	Cvar_Set( "ui_touchState", "0" );
@@ -542,6 +543,7 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	input.gestures = &gestures;
 	input.visibleButtons = IN_TouchVisibleButtons();
 	input.sticks = visibility.sticks;
+	input.selectedForce = cls.state==CA_ACTIVE && !editState.active ? IN_TouchGetForceReport().selected : 0;
 	input.editing = editState.active;
 	input.dragButton = editState.dragging ? editState.button : -1;
 	input.styleColor = visibility.styleColor;

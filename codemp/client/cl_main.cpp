@@ -636,6 +636,9 @@ void CL_ShutdownAll( qboolean shutdownRef ) {
 	if(shutdownRef)
 		CL_ShutdownRef( qfalse );
 	if ( re && re->Shutdown ) {
+		#ifdef OPENJK_IOS
+		SCR_StopTouchMedia();
+		#endif
 		re->Shutdown( qfalse, qfalse );		// don't destroy window or context
 	}
 
@@ -2323,6 +2326,9 @@ static void CL_ShutdownRef( qboolean restarting ) {
 	{
 		if ( re->Shutdown )
 		{
+			#ifdef OPENJK_IOS
+			SCR_StopTouchMedia();
+			#endif
 			re->Shutdown( qtrue, restarting );
 		}
 	}
@@ -2344,6 +2350,9 @@ CL_InitRenderer
 */
 void CL_InitRenderer( void ) {
 	// this sets up the renderer and calls R_Init
+	#ifdef OPENJK_IOS
+	SCR_StopTouchMedia();
+	#endif
 	re->BeginRegistration( &cls.glconfig );
 #ifdef OPENJK_IOS
 	SCR_RegisterTouchMedia();

@@ -559,11 +559,30 @@ static void SCR_PublishSafeArea( void ) {
 	Com_DPrintf( "Safe area (l,t,r,b): %d %d %d %d\n", pixels[0], pixels[1], pixels[2], pixels[3] );
 }
 
+#include "sys/ios/ios_touch_force_media.h"
 static qhandle_t touchShader;
+static touchForceMedia_t touchForceMedia;
+static int touchForceMediaLive;
+
+void SCR_ResetTouchForceMedia(void) { TouchForceMedia_Reset(&touchForceMedia); }
+void SCR_StopTouchMedia(void) {
+	touchForceMediaLive=0; touchShader=0; SCR_ResetTouchForceMedia();
+}
+static int SCR_TouchForceReadable(const char *path,void *) {
+	fileHandle_t file=0;
+	const long length=FS_FOpenFileRead(path,&file,qfalse);
+	if(file) FS_FCloseFile(file);
+	return length>0 && file!=0;
+}
+static int SCR_TouchForceRegister(const char *stem,void *) {
+	return re.RegisterShaderNoMip(stem);
+}
 
 void SCR_RegisterTouchMedia( void ) {
+	SCR_ResetTouchForceMedia();
 	IN_TouchEndEdit();
 	touchShader = re.RegisterShaderNoMip( IOS_TOUCH_ATLAS_NAME );
+	touchForceMediaLive=1;
 }
 
 static void CL_DrawTouchQuad( const touchDrawItem_t *item, int glyph ) {
@@ -615,7 +634,13 @@ static void CL_DrawTouchControls( void ) {
 		if ( items[i].kind == TOUCH_DRAW_BUTTON && items[i].glyph >= 0 ) {
 			TouchDraw_Color( &items[i], 1, opacity, colour );
 			re.SetColor( colour );
-			CL_DrawTouchQuad( &items[i], items[i].glyph );
+			const int force=items[i].button==TB_FORCE ? items[i].force : 0;
+			const qhandle_t shader=TouchForceMedia_Resolve(&touchForceMedia,force,touchForceMediaLive && cls.rendererStarted && touchShader,
+				SCR_TouchForceReadable,SCR_TouchForceRegister,NULL);
+			if(shader) {
+				const touchForceQuad_t quad=TouchForceMedia_Quad(items[i].x,items[i].y,items[i].w,items[i].h);
+				re.DrawStretchPic(quad.x,quad.y,quad.w,quad.h,0,0,1,1,shader);
+			} else CL_DrawTouchQuad( &items[i], items[i].glyph );
 		}
 	}
 	CL_DrawTouchSettings();

@@ -78,6 +78,8 @@ touchForceToken_t IN_TouchBeginForceFrame(void);
 void IN_TouchEndForceUpdate(touchForceToken_t token);
 void IN_TouchEndForceFrame(touchForceToken_t token);
 touchForceReport_t IN_TouchGetForceReport(void);
+void SCR_ResetTouchForceMedia(void);
+void SCR_StopTouchMedia(void);
 
 class TouchForceUpdateScope {
 	touchForceToken_t token;
