@@ -13,7 +13,14 @@ static inline int TouchForce_Canonical(int power) {
 	}
 }
 static inline int TouchForce_Known(unsigned int known,const int *levels,int power) {
-	return power>=0 && power<NUM_FORCE_POWERS && (known & (1u<<power)) && levels[power]>0;
+	if(power<0 || power>=NUM_FORCE_POWERS || !(known & (1u<<power))) return 0;
+#if defined(_JK2EXE) || defined(SP_GAME)
+	return levels[power]>0;
+#else
+	// MP snapshots omit most per-power levels.
+	(void)levels;
+	return 1;
+#endif
 }
 static inline touchForceReport_t TouchForce_Produce(unsigned int known,const int *levels,int selected,int fallback,int equipment) {
 	touchForceReport_t r=TouchForce_Empty(); int power;
