@@ -15,8 +15,36 @@
 #include "../../code/qcommon/cmd.cpp"
 #include "../../code/client/cl_keys.cpp"
 #endif
+#include "../../shared/sys/ios/ios_touch.cpp"
 
+static cvar_t testLayoutVar,testSlotsVar,testControlsVar,testOpacityVar,testCapsVar;
+static std::string testLayoutText,testSlotsText;
+static cvar_t *SetTouchVar(const char *name,const char *value) {
+	cvar_t *var=NULL;std::string *text=NULL;
+	if(!strcmp(name,"in_touchLayout")) { var=&testLayoutVar;text=&testLayoutText; }
+	if(!strcmp(name,"in_touchForceSlots")) { var=&testSlotsVar;text=&testSlotsText; }
+	if(var) { *text=value;var->string=const_cast<char *>(text->c_str());++var->modificationCount; }
+	return var;
+}
+void SDL_GL_GetDrawableSize(SDL_Window *,int *w,int *h) { *w=844;*h=390; }
+void Sys_IOS_GetSafeAreaPixels(SDL_Window *,float *l,float *t,float *r,float *b) { *l=*t=*r=*b=0; }
+void Sys_IOS_GetViewPointSize(SDL_Window *,float *w,float *h) { *w=844;*h=390; }
+qboolean Sys_IOS_HardwareKeyboardConnected(void) { return qfalse; }
+qboolean Sys_IOS_PointerConnected(void) { return qfalse; }
+qboolean IN_GamepadActive(void) { return qfalse; }
+void IN_GamepadSetTouchMove(int,int) {}
+void IN_GamepadSetTouchLook(int,int) {}
+void IN_GamepadSendAxes(void) {}
+void IN_GamepadZeroTouchAxes(void) {}
+void SDL_StopTextInput(void) {}
+void SDL_StartTextInput(void) {}
+SDL_bool SDL_IsTextInputActive(void) { return SDL_FALSE; }
 static int testTime=100;
+#ifdef TEST_MP
+static const int centralButton=9;
+#else
+static const int centralButton=2;
+#endif
 static std::deque<sysEvent_t> events;
 int Sys_Milliseconds(bool) { return testTime; }
 #ifdef TEST_MP
@@ -81,6 +109,8 @@ uint32_t ConvertUTF8ToUTF32(char *,char **) { assert(false);return 0; }
 uint8_t ConvertUTF32ToExpectedCharset(uint32_t) { assert(false);return 0; }
 #ifndef TEST_MP
 void _UI_KeyEvent(int,qboolean) { assert(false); }
+void Cvar_Set(const char *name,const char *value) { SetTouchVar(name,value); }
+float Cvar_VariableValue(const char *) { return 0; }
 void Cvar_SetValue(const char *,float) { assert(false); }
 void UI_SetActiveMenu(const char *,const char *) { assert(false); }
 void SCR_StopCinematic(qboolean) { assert(false); }
@@ -110,7 +140,8 @@ static void OneShot(void) {
 static cvar_t packetdup,showSend,noDelta;
 cvar_t *cl_nodelta=&noDelta,*cl_freelook=&noDelta,*cl_debugMove=&noDelta;
 void CGVM_AutomapInput(void) {}
-qboolean CGVM_NoUseableForce(void) { return qfalse; }
+static qboolean testNoForce;
+qboolean CGVM_NoUseableForce(void) { return testNoForce; }
 void UIVM_SetActiveMenu(uiMenuCommand_t) {}
 void Cvar_User_SetValue(const char *,float) {}
 float Cvar_VariableValue(const char *) { return 0; }
@@ -129,7 +160,7 @@ void MSG_WriteDeltaUsercmdKey(msg_t *,int,usercmd_t *,usercmd_t *) { ++serialize
 int Com_HashKey(char *,int) { return 0; }
 void CL_Netchan_Transmit(netchan_t *,msg_t *) {}
 void CL_Netchan_TransmitNextFragment(netchan_t *) { assert(false); }
-cvar_t *Cvar_Set(const char *,const char *) { return NULL; }
+cvar_t *Cvar_Set(const char *name,const char *value) { return SetTouchVar(name,value); }
 cvar_t *Cvar_Get(const char *,const char *,uint32_t,const char *) { static cvar_t var;return &var; }
 float AngleSubtract(float a,float b) { return a-b; }
 #endif
@@ -146,7 +177,11 @@ static void Hardware(const char *command,int key,int time) {
 }
 static void Register(void) {
 	CL_TouchForceInit();Cmd_AddCommand("wait",Cmd_Wait_f);
+	#ifdef TEST_MP
+	Cmd_AddCommand("+useforce",IN_Button9Down);Cmd_AddCommand("-useforce",IN_Button9Up);
+#else
 	Cmd_AddCommand("+useforce",IN_Button2Down);Cmd_AddCommand("-useforce",IN_Button2Up);
+#endif
 	Cmd_AddCommand("+attack",IN_Button0Down);Cmd_AddCommand("-attack",IN_Button0Up);
 	Cmd_AddCommand("+force_grip",IN_Button6Down);Cmd_AddCommand("-force_grip",IN_Button6Up);
 #ifdef TEST_MP
@@ -227,7 +262,7 @@ static void CentralAndReset(void) {
 		Reset();Key_SetBinding(A_AUX21,binding);assert(CL_TouchForceReserve(0,-1));CL_TouchForceQueue(1);
 		CL_TouchForceCancel();assert(!CL_TouchForceReserve(1,0));Drain();assert(commandsSeen.empty() && !Buttons() && !CL_TouchForceBusy());
 		Reset();Key_SetBinding(A_AUX21,binding);assert(CL_TouchForceReserve(0,-1));CL_TouchForceQueue(1);ExpandEvents();
-		CL_TouchForceCancel();Drain();assert(!in_buttons[2].active);
+		CL_TouchForceCancel();Drain();assert(!in_buttons[centralButton].active);
 		assert(commandsSeen.size()==(strcmp(binding,"+useforce")?1u:0u));
 	}
 	Reset();Key_SetBinding(A_AUX21,"+useforce");assert(CL_TouchForceReserve(0,-1));CL_TouchForceQueue(1);
@@ -269,11 +304,88 @@ static void PacketTiming(void) {
 	Reset();assert(CL_TouchForceReserve(1,0));CL_TouchForceQueue(1);cls.state=CA_DISCONNECTED;Drain();Drain();assert(!CL_TouchForceBusy() && commandsSeen.empty());
 }
 #endif
+static void SDLFixture(void) {
+	Reset();cls.realtime=100;cls.cgameStarted=qfalse;
+	memset(&testLayoutVar,0,sizeof(testLayoutVar));memset(&testSlotsVar,0,sizeof(testSlotsVar));
+	SetTouchVar("in_touchLayout","");SetTouchVar("in_touchForceSlots","v1:1,2,3,4");
+	testControlsVar.integer=2;testOpacityVar.value=1;
+	testCapsVar.integer=TOUCH_CAP_VALID|TOUCH_CAP_EQUIPMENT|TOUCH_CAP_FORCE|TOUCH_CAP_FORCE_CYCLE;
+	in_touchControls=&testControlsVar;in_touchOpacity=&testOpacityVar;ui_touchState=&testCapsVar;
+	in_touchLayout=&testLayoutVar;in_touchForceSlots=&testSlotsVar;
+	TouchForceSlots_Default(&forceSlots);forceSlotsModification=testSlotsVar.modificationCount;
+	memset(fingers,0,sizeof(fingers));TouchGesture_Reset(&gestures);memset(&editState,0,sizeof(editState));memset(&settingsState,0,sizeof(settingsState));
+	memset(&layoutOverrides,0,sizeof(layoutOverrides));TouchBridge_Reset(&bridgeState);
+	viewW=844;viewH=390;safeL=safeT=safeR=safeB=0;safeH=390;pixelsPerPoint=1;
+	layoutModification=testLayoutVar.modificationCount;touchUnit=TouchLayout_Unit(844,390,1);layoutReady=qtrue;
+	touchWindow=reinterpret_cast<SDL_Window *>(1);lastHidden=lastUIMode=lastCinematic=qfalse;
+	touchLayout=AspectLayout_Build(844,390,0,1.5f,0,0,0,0);
+	TouchLayout_Build(844,390,0,0,0,0,1,rects,&layoutOverrides);
+	memset(&forceBridge,0,sizeof(forceBridge));
+	const auto update=IN_TouchBeginForceUpdate(),frame=IN_TouchBeginForceFrame();
+	IN_TouchReportForce(TOUCH_FORCE_API,TOUCH_FORCE_LEARNED,1,1);IN_TouchEndForceFrame(frame);IN_TouchEndForceUpdate(update);
+	lastForceReport=IN_TouchGetForceReport();
+	Key_SetBinding(A_AUX21,"+useforce");Key_SetBinding(A_AUX16,"+attack");
+}
+static void SDLEvent(Uint32 type,long long finger,float x,float y) {
+	SDL_Event event={};event.type=type;event.tfinger.type=type;event.tfinger.fingerId=finger;
+	event.tfinger.timestamp=testTime;event.tfinger.x=x/844;event.tfinger.y=y/390;IN_TouchHandleEvent(&event);
+}
+static void SDLButton(Uint32 type,long long finger,int button) {
+	SDLEvent(type,finger,rects[button].x+rects[button].w/2,rects[button].y+rects[button].h/2);
+}
+static void SDLNormalLiftAndCancellation(void) {
+	SDLFixture();SDLButton(SDL_FINGERDOWN,1,TB_FORCE_SLOT1);SDLButton(SDL_FINGERUP,1,TB_FORCE_SLOT1);Drain();
+	assert(commandsSeen.size()==1 && commandsSeen[0]=="force_throw");
+	SDLFixture();SDLButton(SDL_FINGERDOWN,2,TB_FORCE_SLOT1);IN_TouchReleaseAll();Drain();assert(commandsSeen.empty() && !Buttons());
+	SDLFixture();SDLButton(SDL_FINGERDOWN,3,TB_FORCE);SDLButton(SDL_FINGERUP,3,TB_FORCE);Drain();
+	assert(!in_buttons[centralButton].active && in_buttons[centralButton].wasPressed);
+#ifdef TEST_MP
+	assert(Buttons() & BUTTON_FORCEPOWER);
+#else
+	assert(Buttons() & (1u<<centralButton));
+#endif
+	SDLFixture();SDLButton(SDL_FINGERDOWN,4,TB_FORCE);IN_TouchReleaseAll();Drain();assert(!Buttons());
+	SDLFixture();SDLButton(SDL_FINGERDOWN,5,TB_ATTACK);SDLButton(SDL_FINGERUP,5,TB_ATTACK);Drain();
+	assert(!in_buttons[0].active && (Buttons() & 1u));
+	SDLFixture();SDLButton(SDL_FINGERDOWN,6,TB_ATTACK);IN_TouchReleaseAll();Drain();assert(!Buttons());
+#ifdef TEST_MP
+	SDLFixture();cls.cgameStarted=qtrue;testNoForce=qtrue;
+	SDLButton(SDL_FINGERDOWN,7,TB_FORCE);SDLButton(SDL_FINGERUP,7,TB_FORCE);Drain();
+	const unsigned int buttons=Buttons();assert(!(buttons & BUTTON_FORCEPOWER) && (buttons & BUTTON_USE_HOLDABLE));testNoForce=qfalse;
+#endif
+}
+static void SDLEditorSlotRouting(void) {
+	SDLFixture();editState.active=1;
+	const touchRect_t slot=rects[TB_FORCE_SLOT2];
+	SDLButton(SDL_FINGERDOWN,10,TB_FORCE_SLOT2);SDLEvent(SDL_FINGERMOTION,10,slot.x+slot.w/2+2,slot.y+slot.h/2+1);
+	SDLEvent(SDL_FINGERUP,10,slot.x+slot.w/2+2,slot.y+slot.h/2+1);
+	assert(settingsState.tab==TOUCH_SETTINGS_FORCE && settingsState.picker==2 && !editState.dragging && !layoutOverrides.mask && events.empty());
+	touchSettingsLayout_t panel;IN_TouchSettingsForce();TouchSettings_Build(&settingsState,1,844,390,0,0,0,0,1,&panel);
+	touchRect_t empty={};for(int i=0;i<panel.count;++i) if(panel.items[i].control==TOUCH_SETTINGS_POWER) empty=panel.items[i].rect;
+	assert(empty.w>0);SDLEvent(SDL_FINGERDOWN,11,empty.x+empty.w/2,empty.y+empty.h/2);SDLEvent(SDL_FINGERUP,11,empty.x+empty.w/2,empty.y+empty.h/2);
+	assert(forceSlots.powers[1]==0 && editState.active && !layoutOverrides.mask && events.empty());
+	SDLFixture();editState.active=1;const touchRect_t original=rects[TB_FORCE_SLOT1];
+	SDLButton(SDL_FINGERDOWN,12,TB_FORCE_SLOT1);SDLEvent(SDL_FINGERMOTION,12,original.x+original.w/2+20,original.y+original.h/2+20);
+	SDLEvent(SDL_FINGERUP,12,original.x+original.w/2+20,original.y+original.h/2+20);
+	assert(!settingsState.picker && !settingsState.tab && (layoutOverrides.mask & (1u<<TB_FORCE_SLOT1)) && events.empty());
+	SDLFixture();editState.active=1;
+	SDLButton(SDL_FINGERDOWN,13,TB_FORCE_SLOT1);SDLButton(SDL_FINGERDOWN,14,TB_FORCE_SLOT3);
+	SDLButton(SDL_FINGERUP,13,TB_FORCE_SLOT1);SDLButton(SDL_FINGERUP,14,TB_FORCE_SLOT3);
+	assert(settingsState.picker==1 && !layoutOverrides.mask && events.empty());
+	SDLFixture();editState.active=1;const touchRect_t edge=rects[TB_FORCE_SLOT1];
+	SDLEvent(SDL_FINGERDOWN,15,edge.x+edge.w-1,edge.y+edge.h/2);SDLEvent(SDL_FINGERUP,15,edge.x+edge.w+2,edge.y+edge.h/2);
+	assert(!settingsState.picker && !layoutOverrides.mask && events.empty());
+	SDLFixture();editState.active=1;forceBridge.committed=lastForceReport=TouchForce_Empty();
+	SDLButton(SDL_FINGERDOWN,16,TB_FORCE_SLOT4);SDLButton(SDL_FINGERUP,16,TB_FORCE_SLOT4);
+	assert(settingsState.picker==4 && !settingsState.learned && !layoutOverrides.mask && events.empty());
+	touchWindow=NULL;
+}
 int main() {
 	cls.state=CA_ACTIVE;Cbuf_Init();Register();
 	CommandNamesAndTap();CancellationAndSourcePulses();SelectionAndAssignment();CentralAndReset();
 #ifdef TEST_MP
 	PacketTiming();
 #endif
-	puts("PASS: actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
+	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();
+	puts("PASS: SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
 }

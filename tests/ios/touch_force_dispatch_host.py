@@ -26,7 +26,7 @@ for tree, target in [('code', 'openjk_sp.arm64'), ('codemp', 'openjk.arm64')]:
     command += ['-I' + tree + '/qcommon', '-UNDEBUG']
     if tree == 'codemp':
         command += ['-DTEST_MP']
-    command += ['tests/ios/touch_force_dispatch_host.cc', str(strings), '-Wl,-dead_strip', '-o', str(binary)]
+    command += ['tests/ios/touch_force_dispatch_host.cc', 'shared/sys/ios/ios_touch_layout.cpp', str(strings), '-Wl,-dead_strip', '-o', str(binary)]
     print(tree + ': ' + shlex.join(command), flush=True)
     subprocess.run(command, cwd=root, check=True)
     subprocess.run([str(binary)], cwd=root, check=True)

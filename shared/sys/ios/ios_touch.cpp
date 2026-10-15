@@ -171,10 +171,10 @@ static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, fl
 	IN_GamepadSetTouchLook( actions.lookX, actions.lookY );
 }
 
-static void IN_TouchRelease( touchFinger_t *f ) {
+static void IN_TouchRelease( touchFinger_t *f, int event=TOUCH_CANCEL ) {
 	switch ( f->role ) {
 	case ROLE_GAMEPLAY:
-		IN_TouchStep( TOUCH_CANCEL, f->id, TOUCH_TARGET_IGNORE, 0, f->x, f->y );
+		IN_TouchStep( event, f->id, TOUCH_TARGET_IGNORE, 0, f->x, f->y );
 		break;
 	case ROLE_UITAP:
 		Sys_QueEvent( 0, SE_KEY, A_MOUSE1, qfalse, 0, NULL );
@@ -504,6 +504,10 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 		const touchRect_t *r=&rects[input.button]; input.cx=r->x+r->w/2; input.cy=r->y+r->h/2;
 	}
 	const touchEditOutput_t out=TouchEdit_State(&editState,input);
+	if(out.tap) {
+		settingsState.tab=TOUCH_SETTINGS_FORCE;settingsState.picker=out.button-TB_FORCE_SLOT1+1;
+		settingsState.dropdown=0;settingsState.scroll=0;
+	}
 	if(out.move && TouchEdit_Drag(&layoutOverrides,out.button,out.x,out.y,(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint))
 		TouchLayout_Build((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,rects,&layoutOverrides);
 	if(out.save) {
@@ -558,7 +562,7 @@ void IN_TouchHandleEvent( const SDL_Event *e ) {
 				else
 					IN_TouchConsoleAction();
 			}
-			IN_TouchRelease( f );
+			IN_TouchRelease( f, TOUCH_UP );
 		}
 		break;
 	}
