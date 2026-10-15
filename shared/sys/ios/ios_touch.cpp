@@ -30,6 +30,7 @@ static touchLayoutOverrides_t layoutOverrides;
 static touchEditState_t editState;
 static touchSettingsState_t settingsState;
 static int layoutModification = -1;
+static touchLayoutProfile_t layoutProfile = TOUCH_LAYOUT_TABLET;
 static int viewW, viewH;
 static float safeL, safeT, safeR, safeB;
 static aspectLayout_t touchLayout;
@@ -109,20 +110,22 @@ static void IN_TouchUpdateLayout( void ) {
 	float pointW, pointH;
 	Sys_IOS_GetViewPointSize( touchWindow, &pointW, &pointH );
 	const float p = TouchLayout_PixelsPerPoint( (float)w, (float)h, pointW, pointH );
+	const touchLayoutProfile_t profile = Sys_IOS_TouchLayoutProfile( touchWindow );
 	touchLayout = AspectLayout_Build( w, h, (int)Cvar_VariableValue( "r_aspectCorrect" ) != 0,
 		Cvar_VariableValue( "r_aspectCorrectMinRatio" ), (int)l, (int)t, (int)r, (int)b );
-	if ( w == viewW && h == viewH && l == safeL && t == safeT && r == safeR && b == safeB && p == pixelsPerPoint && in_touchLayout->modificationCount == layoutModification )
+	if ( w == viewW && h == viewH && l == safeL && t == safeT && r == safeR && b == safeB && p == pixelsPerPoint && profile == layoutProfile && in_touchLayout->modificationCount == layoutModification )
 		return;
 	IN_TouchReleaseAll();
 	TouchEdit_Parse( in_touchLayout->string, &layoutOverrides );
+	const int legacy=layoutOverrides.version!=2;
 	int repaired=TouchEdit_Migrate(&layoutOverrides,(float)w,(float)h,l,t,r,b,p);
-	repaired |= TouchEdit_RepairLock(&layoutOverrides,(float)w,(float)h,l,t,r,b,p);
+	if(legacy) repaired |= TouchEdit_RepairLock(&layoutOverrides,(float)w,(float)h,l,t,r,b,p,TOUCH_LAYOUT_TABLET);
 	if ( repaired ) {
 		char corrected[IOS_TOUCH_LAYOUT_TEXT];
 		if ( TouchEdit_Serialize(&layoutOverrides,corrected,sizeof(corrected)) ) Cvar_Set("in_touchLayout",corrected);
 	}
 	layoutModification = in_touchLayout->modificationCount;
-	TouchLayout_Build( (float)w, (float)h, l, t, r, b, p, rects, &layoutOverrides );
+	TouchLayout_Build( (float)w, (float)h, l, t, r, b, p, rects, &layoutOverrides, profile );
 	viewW = w;
 	viewH = h;
 	safeL = l;
@@ -131,6 +134,7 @@ static void IN_TouchUpdateLayout( void ) {
 	safeB = b;
 	safeH = h - t - b;
 	pixelsPerPoint = p;
+	layoutProfile = profile;
 	touchUnit = TouchLayout_Unit( w - l - r, safeH, p );
 	layoutReady = touchUnit > 0 ? qtrue : qfalse;
 }
@@ -566,8 +570,8 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 		settingsState.tab=TOUCH_SETTINGS_FORCE;settingsState.picker=out.button-TB_FORCE_SLOT1+1;
 		settingsState.dropdown=0;settingsState.scroll=0;
 	}
-	if(out.move && TouchEdit_Drag(&layoutOverrides,out.button,out.x,out.y,(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint))
-		TouchLayout_Build((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,rects,&layoutOverrides);
+	if(out.move && TouchEdit_Drag(&layoutOverrides,out.button,out.x,out.y,(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,layoutProfile))
+		TouchLayout_Build((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,rects,&layoutOverrides,layoutProfile);
 	if(out.save) {
 		char text[IOS_TOUCH_LAYOUT_TEXT];
 		if(TouchEdit_Serialize(&layoutOverrides,text,sizeof(text))) Cvar_Set("in_touchLayout",text);

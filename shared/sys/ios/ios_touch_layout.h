@@ -20,6 +20,7 @@ typedef enum {
 #define IOS_TOUCH_ALL_BUTTONS ( ( 1u << TB_COUNT ) - 1u )
 
 typedef struct { float x, y, w, h; } touchRect_t;
+typedef enum { TOUCH_LAYOUT_TABLET, TOUCH_LAYOUT_PHONE } touchLayoutProfile_t;
 
 IOS_TOUCH_INLINE float TouchLayout_ButtonScale( int button )
 {
@@ -66,9 +67,15 @@ IOS_TOUCH_INLINE const char *TouchLayout_DefaultBind( int button, const char *bi
 
 struct touchLayoutOverrides_s;
 
+void TouchLayout_Defaults( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p,
+	touchRect_t out[TB_COUNT], touchLayoutProfile_t profile );
 void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT], const struct touchLayoutOverrides_s *overrides
 #ifdef __cplusplus
  = 0
+#endif
+ , touchLayoutProfile_t profile
+#ifdef __cplusplus
+ = TOUCH_LAYOUT_TABLET
 #endif
  );
 int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons );

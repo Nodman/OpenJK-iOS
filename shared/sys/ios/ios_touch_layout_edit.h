@@ -195,24 +195,30 @@ IOS_TOUCH_INLINE int TouchEdit_Migrate( touchLayoutOverrides_t *o, float W, floa
 }
 
 IOS_TOUCH_INLINE void TouchEdit_PositionRect( const touchLayoutOverrides_t *o, int button,
-	float W,float H,float L,float T,float R,float B,float p,touchRect_t *rect )
+	float W,float H,float L,float T,float R,float B,float p,touchRect_t *rect,touchLayoutProfile_t profile )
 {
-	TouchEdit_DefaultRect(button,W,H,L,T,R,B,p,rect);
+	touchRect_t defaults[TB_COUNT];
+	TouchLayout_Defaults(W,H,L,T,R,B,p,defaults,profile);
+	*rect=defaults[button];
 	if(o && o->version==2 && (o->mask&(1u<<button))) {
 		rect->x=fmaxf(0,fminf(o->cx[button]*W-rect->w/2,W-rect->w));
 		rect->y=fmaxf(0,fminf(o->cy[button]*H-rect->h/2,H-rect->h));
 	}
 }
 
-IOS_TOUCH_INLINE int TouchEdit_RepairLock( touchLayoutOverrides_t *o, float W,float H,float L,float T,float R,float B,float p )
+IOS_TOUCH_INLINE int TouchEdit_RepairLock( touchLayoutOverrides_t *o, float W,float H,float L,float T,float R,float B,float p, touchLayoutProfile_t profile
+#ifdef __cplusplus
+ = TOUCH_LAYOUT_TABLET
+#endif
+ )
 {
 	touchRect_t lock,blocked[2];
 	float xs[7],ys[7],half,x,y,bestX,bestY,gap;
 	double bestDistance=0;
 	int i,j,found=0;
 	if(!o || o->version!=2 || TouchLayout_Unit(W-L-R,H-T-B,p)<=0) return 0;
-	TouchEdit_PositionRect(o,TB_LOCK,W,H,L,T,R,B,p,&lock);
-	TouchEdit_PositionRect(o,TB_CONSOLE,W,H,L,T,R,B,p,&blocked[0]);
+	TouchEdit_PositionRect(o,TB_LOCK,W,H,L,T,R,B,p,&lock,profile);
+	TouchEdit_PositionRect(o,TB_CONSOLE,W,H,L,T,R,B,p,&blocked[0],profile);
 	blocked[1]=TouchSettings_BarRect(W,H,L,T,R,B,p);
 	half=lock.w/2; x=bestX=lock.x+half; y=bestY=lock.y+half;
 	if(TouchLegacy_ClearCenter(x,y,half,&blocked[0]) && TouchLegacy_ClearCenter(x,y,half,&blocked[1])) return 0;
@@ -235,21 +241,25 @@ IOS_TOUCH_INLINE int TouchEdit_RepairLock( touchLayoutOverrides_t *o, float W,fl
 	return 1;
 }
 
-IOS_TOUCH_INLINE int TouchEdit_ClampCenter( int button,float *x,float *y,float W,float H,float L,float T,float R,float B,float p )
+IOS_TOUCH_INLINE int TouchEdit_ClampCenter( int button,float *x,float *y,float W,float H,float L,float T,float R,float B,float p,touchLayoutProfile_t profile )
 {
 	touchRect_t r;
 	if(!TouchEdit_Editable(button) || !IOS_TouchFinite(*x) || !IOS_TouchFinite(*y)) return 0;
-	TouchEdit_DefaultRect(button,W,H,L,T,R,B,p,&r);
+	TouchEdit_PositionRect(NULL,button,W,H,L,T,R,B,p,&r,profile);
 	if(r.w<=0) return 0;
 	*x=fmaxf(r.w/2,fminf(*x,W-r.w/2)); *y=fmaxf(r.h/2,fminf(*y,H-r.h/2));
 	return 1;
 }
 
-IOS_TOUCH_INLINE int TouchEdit_Drag( touchLayoutOverrides_t *o,int button,float x,float y,float W,float H,float L,float T,float R,float B,float p )
+IOS_TOUCH_INLINE int TouchEdit_Drag( touchLayoutOverrides_t *o,int button,float x,float y,float W,float H,float L,float T,float R,float B,float p,touchLayoutProfile_t profile
+#ifdef __cplusplus
+ = TOUCH_LAYOUT_TABLET
+#endif
+ )
 {
-	if(!o || !TouchEdit_ClampCenter(button,&x,&y,W,H,L,T,R,B,p)) return 0;
+	if(!o || !TouchEdit_ClampCenter(button,&x,&y,W,H,L,T,R,B,p,profile)) return 0;
 	TouchEdit_Migrate(o,W,H,L,T,R,B,p);
 	o->version=2; o->mask|=1u<<button; o->cx[button]=x/W; o->cy[button]=y/H;
-	TouchEdit_RepairLock(o,W,H,L,T,R,B,p);
+	TouchEdit_RepairLock(o,W,H,L,T,R,B,p,profile);
 	return 1;
 }

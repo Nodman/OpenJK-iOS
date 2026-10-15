@@ -76,14 +76,62 @@ static void TouchLayout_ForceRow(float W,float H,float L,float T,float R,float B
 	}
 }
 
-void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT], const touchLayoutOverrides_t *overrides )
+static void TouchLayout_Center(touchRect_t *rect,float x,float y)
+{
+	rect->x=x-rect->w/2;rect->y=y-rect->h/2;
+}
+
+static void TouchLayout_FitGroup(float W,float H,touchRect_t rects[TB_COUNT],const int *ids,int count)
+{
+	float left=W,top=H,right=0,bottom=0;
+	for(int i=0;i<count;++i) {
+		const touchRect_t *r=&rects[ids[i]];
+		left=fminf(left,r->x);top=fminf(top,r->y);right=fmaxf(right,r->x+r->w);bottom=fmaxf(bottom,r->y+r->h);
+	}
+	const float dx=fmaxf(-left,fminf(0,W-right)),dy=fmaxf(-top,fminf(0,H-bottom));
+	for(int i=0;i<count;++i) {rects[ids[i]].x+=dx;rects[ids[i]].y+=dy;}
+}
+
+static void TouchLayout_Phone(float W,float H,touchRect_t rects[TB_COUNT])
+{
+	// Reference placements use full drawable height; safe insets only affect existing size rules.
+	const float scale=H/440;
+	const int fixed[7]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK};
+	const float offsets[7][2]={{210.583856f,225.467f},{271.331920f,133.626680f},{104.431528f,108.779880f},
+		{58.789220f,38.266800f},{143.294840f,33.866800f},{104.169584f,41.266720f},{34.135892f,143.220880f}};
+	for(int i=0;i<7;++i) TouchLayout_Center(&rects[fixed[i]],i<5?W-offsets[i][0]*scale:offsets[i][0]*scale,H-offsets[i][1]*scale);
+	const int tools[4]={TB_CONSOLE,TB_MENU,TB_PAD,TB_CHAT};
+	float cursor=45.816424f*scale;
+	for(int i=0;i<4;++i) {
+		touchRect_t *r=&rects[tools[i]];
+		TouchLayout_Center(r,cursor+r->w/2,33.283250f*scale);cursor+=r->w+30.333944f*scale;
+	}
+	const int selectors[6]={TB_WEAPPREV,TB_SABER_SELECT,TB_WEAPNEXT,TB_FORCEPREV,TB_FORCE,TB_FORCENEXT};
+	const float center=W-95.151955f*scale;
+	for(int i=0;i<6;++i) TouchLayout_Center(&rects[selectors[i]],center+(i%3-1)*67.158761f*scale,(i<3?58.444467f:139.422360f)*scale);
+	const int slots[4]={TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4};
+	for(int i=0;i<4;++i) TouchLayout_Center(&rects[slots[i]],(111.695933f+(i%2)*80.606574f+(i/2)*61.212202f)*scale,(117.866540f+(i/2)*63.166840f)*scale);
+	TouchLayout_FitGroup(W,H,rects,tools,4);TouchLayout_FitGroup(W,H,rects,selectors,6);TouchLayout_FitGroup(W,H,rects,slots,4);
+	TouchLayout_FitGroup(W,H,rects,fixed,5);TouchLayout_FitGroup(W,H,rects,fixed+5,1);TouchLayout_FitGroup(W,H,rects,fixed+6,1);
+}
+
+void TouchLayout_Defaults(float W,float H,float L,float T,float R,float B,float p,touchRect_t out[TB_COUNT],touchLayoutProfile_t profile)
+{
+	for(int i=0;i<TB_COUNT;++i) TouchEdit_DefaultRect(i,W,H,L,T,R,B,p,&out[i]);
+	if(TouchLayout_Unit(W-L-R,H-T-B,p)<=0) return;
+	if(profile==TOUCH_LAYOUT_PHONE) TouchLayout_Phone(W,H,out);
+	else TouchLayout_ForceRow(W,H,L,T,R,B,p,out);
+}
+
+void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT], const touchLayoutOverrides_t *overrides, touchLayoutProfile_t profile )
 {
 	touchLayoutOverrides_t positions = {};
 	if ( overrides ) positions = *overrides;
+	const int legacy=positions.version!=2;
 	TouchEdit_Migrate( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p );
-	TouchEdit_RepairLock( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p );
-	for(int i=0;i<TB_COUNT;++i) TouchEdit_DefaultRect(i,viewW,viewH,safeL,safeT,safeR,safeB,p,&out[i]);
-	TouchLayout_ForceRow(viewW,viewH,safeL,safeT,safeR,safeB,p,out);
+	if(legacy) TouchEdit_RepairLock( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p, TOUCH_LAYOUT_TABLET );
+	if(!(positions.mask & (1u<<TB_LOCK))) TouchEdit_RepairLock( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p, profile );
+	TouchLayout_Defaults(viewW,viewH,safeL,safeT,safeR,safeB,p,out,profile);
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		if ( out[i].w > 0 && ( positions.mask & ( 1u << i ) ) ) {
 			out[i].x = fmaxf( 0, fminf( positions.cx[i] * viewW - out[i].w / 2, viewW - out[i].w ) );
