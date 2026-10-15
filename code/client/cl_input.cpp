@@ -154,6 +154,10 @@ void IN_MLookUp( void ) {
 	}
 }
 
+#ifdef OPENJK_IOS
+#include "sys/ios/ios_touch_force_client.inc"
+#endif
+
 void IN_KeyDown( kbutton_t *b ) {
 	int		k;
 	const char	*c;
@@ -164,6 +168,10 @@ void IN_KeyDown( kbutton_t *b ) {
 	} else {
 		k = -1;		// typed manually at the console for continuous down
 	}
+
+#ifdef OPENJK_IOS
+	if(k==A_AUX21 && !CL_TouchForceCentralAllowed()) return;
+#endif
 
 	if ( k == b->down[0] || k == b->down[1] ) {
 		return;		// repeating key
@@ -177,6 +185,10 @@ void IN_KeyDown( kbutton_t *b ) {
 		Com_Printf ("Three keys down for a button!\n");
 		return;
 	}
+
+#ifdef OPENJK_IOS
+	CL_TouchKeyDown(b,k);
+#endif
 
 	if ( b->active ) {
 		return;		// still down
@@ -205,6 +217,9 @@ void IN_KeyUp( kbutton_t *b ) {
 		return;
 	}
 
+#ifdef OPENJK_IOS
+	IN_ReleaseSource(b,k,(unsigned int)atoi(Cmd_Argv(2)));
+#else
 	if ( b->down[0] == k ) {
 		b->down[0] = 0;
 	} else if ( b->down[1] == k ) {
@@ -228,6 +243,7 @@ void IN_KeyUp( kbutton_t *b ) {
 	}
 
 	b->active = qfalse;
+#endif
 }
 
 
@@ -662,6 +678,9 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		if ( in_buttons[i].active || in_buttons[i].wasPressed ) {
 			cmd->buttons |= 1 << i;
 		}
+#ifdef OPENJK_IOS
+		memset(&touchForcePulses[i],0,sizeof(touchForcePulses[i]));
+#endif
 		in_buttons[i].wasPressed = qfalse;
 	}
 
@@ -980,6 +999,9 @@ CL_InitInput
 ============
 */
 void CL_InitInput( void ) {
+#ifdef OPENJK_IOS
+	CL_TouchForceInit();
+#endif
 	Cmd_AddCommand ("centerview",IN_CenterView);
 
 	Cmd_AddCommand ("+moveup",IN_UpDown);

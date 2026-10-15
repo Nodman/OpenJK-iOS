@@ -42,6 +42,11 @@ static inline int TouchForce_ShouldCancel(const touchForceBridge_t *s,touchForce
 	return s->producerSeen && (!current.equipment || !current.selected || current.learned!=previous.learned ||
 		current.selected!=previous.selected || current.equipment!=previous.equipment);
 }
+static inline int TouchForce_ShouldCancelPower(const touchForceBridge_t *s,touchForceReport_t previous,touchForceReport_t current,int power) {
+	if(power>0 && power<=12)
+		return s->producerSeen && (!current.equipment || !(current.learned & (1u<<power)) || current.learned!=previous.learned);
+	return TouchForce_ShouldCancel(s,previous,current);
+}
 static inline void TouchForce_Report(touchForceBridge_t *s,int version,int mask,int selected,int equipment) {
 	if(!TouchForce_InFrame(s)) return;
 	s->pending=TouchForce_Empty();

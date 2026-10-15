@@ -396,6 +396,10 @@ void IN_VoiceChatButton(void)
 	UIVM_SetActiveMenu( UIMENU_VOICECHAT );
 }
 
+#ifdef OPENJK_IOS
+#include "sys/ios/ios_touch_force_client.inc"
+#endif
+
 void IN_KeyDown( kbutton_t *b ) {
 	int		k;
 	char	*c;
@@ -406,6 +410,10 @@ void IN_KeyDown( kbutton_t *b ) {
 	} else {
 		k = -1;		// typed manually at the console for continuous down
 	}
+
+#ifdef OPENJK_IOS
+	if(k==A_AUX21 && !CL_TouchForceCentralAllowed()) return;
+#endif
 
 	if ( k == b->down[0] || k == b->down[1] ) {
 		return;		// repeating key
@@ -419,6 +427,10 @@ void IN_KeyDown( kbutton_t *b ) {
 		Com_Printf ("Three keys down for a button!\n");
 		return;
 	}
+
+#ifdef OPENJK_IOS
+	CL_TouchKeyDown(b,k);
+#endif
 
 	if ( b->active ) {
 		return;		// still down
@@ -447,6 +459,9 @@ void IN_KeyUp( kbutton_t *b ) {
 		return;
 	}
 
+#ifdef OPENJK_IOS
+	IN_ReleaseSource(b,k,(unsigned int)atoi(Cmd_Argv(2)));
+#else
 	if ( b->down[0] == k ) {
 		b->down[0] = 0;
 	} else if ( b->down[1] == k ) {
@@ -470,6 +485,7 @@ void IN_KeyUp( kbutton_t *b ) {
 	}
 
 	b->active = qfalse;
+#endif
 }
 
 
@@ -1257,6 +1273,9 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		if ( in_buttons[i].active || in_buttons[i].wasPressed ) {
 			cmd->buttons |= 1 << i;
 		}
+#ifdef OPENJK_IOS
+		memset(&touchForcePulses[i],0,sizeof(touchForcePulses[i]));
+#endif
 		in_buttons[i].wasPressed = qfalse;
 	}
 
@@ -1630,6 +1649,9 @@ void CL_WritePacket( void ) {
 		if (cl.gcmdSentValue)
 		{ //hmm, just clear here, I guess.. hoping it will resolve issues with gencmd values sometimes not going through.
 			cl.gcmdSendValue = qfalse;
+#ifdef OPENJK_IOS
+			TouchForce_PacketConsumed(&touchForceDispatch);
+#endif
 			cl.gcmdSentValue = qfalse;
 			cl.gcmdValue = 0;
 		}
@@ -1809,6 +1831,9 @@ CL_InitInput
 ============
 */
 void CL_InitInput( void ) {
+#ifdef OPENJK_IOS
+	CL_TouchForceInit();
+#endif
 	Cmd_AddCommandList( inputCmds );
 
 	cl_nodelta = Cvar_Get ("cl_nodelta", "0", 0);
@@ -1826,5 +1851,8 @@ CL_ShutdownInput
 ============
 */
 void CL_ShutdownInput( void ) {
+#ifdef OPENJK_IOS
+	CL_TouchForceReset();
+#endif
 	Cmd_RemoveCommandList( inputCmds );
 }

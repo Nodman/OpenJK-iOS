@@ -95,3 +95,15 @@ public:
 	void Finish() { if(!finished) { finished=true; IN_TouchEndForceFrame(token); } }
 	~TouchForceFrameScope() { Finish(); }
 };
+
+void CL_TouchForceInit(void);
+int CL_TouchForceBusy(void);
+int CL_TouchForceCentralAllowed(void);
+int CL_TouchForceReserve(int power,int slot);
+void CL_TouchForceQueue(int down);
+void CL_TouchForceCancel(void);
+void CL_TouchForceReset(void);
+void CL_TouchCancelSource(int source);
+void CL_TouchClearPulses(void);
+void CL_TouchCancelAllSources(void);
+int CL_TouchForcePower(void);

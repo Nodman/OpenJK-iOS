@@ -225,6 +225,7 @@ Called before parsing a gamestate
 void CL_ClearState (void) {
 #ifdef OPENJK_IOS
 	IN_TouchResetState();
+	CL_TouchClearPulses();
 #endif
 	CL_ShutdownCGame();
 

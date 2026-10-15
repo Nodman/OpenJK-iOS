@@ -26,6 +26,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 
 #include "client.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 #include "client_ui.h"
 
 /*
@@ -1179,6 +1182,9 @@ Execute the commands in the bind string
 */
 void CL_ParseBinding( int key, qboolean down, unsigned time )
 {
+#ifdef OPENJK_IOS
+	if(down && key==A_AUX21 && !CL_TouchForceCentralAllowed()) return;
+#endif
 	char buf[ MAX_STRING_CHARS ], *p = buf, *end;
 	qboolean allCommands, allowUpCmds;
 
@@ -1380,6 +1386,9 @@ void Key_ClearStates( void ) {
 		kg.keys[i].down = qfalse;
 		kg.keys[i].repeats = 0;
 	}
+#ifdef OPENJK_IOS
+	CL_TouchClearPulses();
+#endif
 }
 
 static int keyCatchers = 0;

@@ -107,10 +107,14 @@ static int IN_TouchButtonKey( int button ) {
 	return TouchLayout_Key( button, A_AUX16, A_ESCAPE, A_TAB );
 }
 
+static void IN_TouchCancelForceFingers(void);
+
 static void IN_TouchSyncForceSlots(void) {
 	if(!in_touchForceSlots || forceSlotsModification==in_touchForceSlots->modificationCount) return;
-	TouchForceSlots_Parse(in_touchForceSlots->string,&forceSlots);
+	// Cancellation reenters visibility, so publish the revision first.
 	forceSlotsModification=in_touchForceSlots->modificationCount;
+	IN_TouchCancelForceFingers();
+	TouchForceSlots_Parse(in_touchForceSlots->string,&forceSlots);
 }
 static void IN_TouchSettingsForce(void) {
 	IN_TouchSyncForceSlots();
@@ -139,9 +143,30 @@ static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, fl
 	input.slop = TouchLayout_FireSlop( touchUnit, pixelsPerPoint );
 	input.visibleButtons = IN_TouchVisibleButtons();
 	input.moveEnabled = input.lookEnabled = layoutReady && visibility.sticks;
+	const int force=button==TB_FORCE || (button>=TB_FORCE_SLOT1 && button<=TB_FORCE_SLOT4);
+	int reserved=0;
+	if(event==TOUCH_DOWN && input.target==TOUCH_TARGET_BUTTON) {
+		if((button==TB_FORCEPREV || button==TB_FORCENEXT) && CL_TouchForceBusy()) input.target=TOUCH_TARGET_IGNORE;
+		if(force) {
+			const int slot=button==TB_FORCE?-1:button-TB_FORCE_SLOT1;
+			const touchForceReport_t report=IN_TouchGetForceReport();
+			const int power=slot<0?report.selected:TouchForceSlots_Visible(&forceSlots,slot,report.learned);
+			reserved=CL_TouchForceReserve(power,slot);
+			if(!reserved) input.target=TOUCH_TARGET_IGNORE;
+		}
+	}
 	const touchGestureActions_t actions = TouchGesture_Step( &gestures, input );
-	for ( int i = 0; i < actions.keyCount; ++i )
-		Sys_QueEvent( 0, SE_KEY, IN_TouchButtonKey( actions.keys[i].button ), actions.keys[i].down ? qtrue : qfalse, 0, NULL );
+	if(reserved && !TouchGesture_HoldsButton(&gestures,id,button)) CL_TouchForceCancel();
+	for ( int i = 0; i < actions.keyCount; ++i ) {
+		const int pressed=actions.keys[i].button,down=actions.keys[i].down;
+		if(pressed==TB_FORCE || (pressed>=TB_FORCE_SLOT1 && pressed<=TB_FORCE_SLOT4)) {
+			if(!down && event!=TOUCH_UP) CL_TouchForceCancel();else CL_TouchForceQueue(down);
+		} else {
+			const int key=IN_TouchButtonKey(pressed);
+			Sys_QueEvent(0,SE_KEY,key,down?qtrue:qfalse,0,NULL);
+			if(!down && event!=TOUCH_UP) CL_TouchCancelSource(key);
+		}
+	}
 	IN_GamepadSetTouchMove( actions.moveX, -actions.moveY );
 	IN_GamepadSetTouchLook( actions.lookX, actions.lookY );
 }
@@ -160,13 +185,22 @@ static void IN_TouchRelease( touchFinger_t *f ) {
 	f->role = ROLE_NONE;
 }
 
+static void IN_TouchCancelForceFingers(void) {
+	CL_TouchForceCancel();
+	for(int i=0;i<MAX_TOUCH_FINGERS;++i) {
+		if(fingers[i].role!=ROLE_GAMEPLAY) continue;
+		for(int button=TB_FORCE;button<=TB_FORCE_SLOT4;++button)
+			if((button==TB_FORCE || button>=TB_FORCE_SLOT1) && TouchGesture_HoldsButton(&gestures,fingers[i].id,button)) {
+				IN_TouchRelease(&fingers[i]);break;
+			}
+	}
+}
 static void IN_TouchCancelUnavailableForce(void) {
 	const touchForceReport_t report=IN_TouchGetForceReport();
-	const int cancel=TouchForce_ShouldCancel(&forceBridge,lastForceReport,report);
+	const int cancel=TouchForce_ShouldCancelPower(&forceBridge,lastForceReport,report,CL_TouchForcePower());
 	lastForceReport=report;
 	if(!cancel) return;
-	for(int i=0;i<MAX_TOUCH_FINGERS;++i)
-		if(fingers[i].role==ROLE_GAMEPLAY && TouchGesture_HoldsButton(&gestures,fingers[i].id,TB_FORCE)) IN_TouchRelease(&fingers[i]);
+	IN_TouchCancelForceFingers();
 }
 
 static void IN_TouchSaveEdit( void ) {
@@ -182,6 +216,7 @@ static void IN_TouchSaveEdit( void ) {
 }
 
 void IN_TouchReleaseAll( void ) {
+	CL_TouchCancelAllSources();
 	IN_TouchSaveEdit();
 	for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ )
 		IN_TouchRelease( &fingers[i] );
@@ -228,6 +263,7 @@ static void IN_TouchSyncVisibility( void ) {
 }
 
 void IN_TouchResetState( void ) {
+	CL_TouchForceReset();
 	TouchForce_Reset(&forceBridge);
 	lastForceReport=TouchForce_Empty();
 	SCR_ResetTouchForceMedia();
@@ -397,9 +433,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		if (TouchLayout_Hit(rects,x,y,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK) hit=TB_LOCK;
 		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
 		int target = TOUCH_TARGET_IGNORE;
-		if ( hit >= TB_FORCE_SLOT1 && hit <= TB_FORCE_SLOT4 )
-			target = TOUCH_TARGET_IGNORE;
-		else if ( hit >= 0 )
+		if ( hit >= 0 )
 			target = hit == TB_ATTACK || hit == TB_ALTATTACK ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
 		else if ( zone == TOUCH_ZONE_MOVE )
 			target = TOUCH_TARGET_MOVE;
@@ -451,6 +485,7 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 	const touchSettingsAction_t action=TouchSettings_Step(&settingsState,&panel,panelEvent,tf->fingerId,tf->x*viewW,tf->y*viewH);
 	if(action.cancelDrag) { editState.dragging=0; editState.button=-1; }
 	if(action.assign) {
+		IN_TouchCancelForceFingers();
 		char text[64];
 		TouchForceSlots_Assign(&forceSlots,action.slot,action.power,IN_TouchGetForceReport().learned);
 		TouchForceSlots_Save(&forceSlots,text,sizeof(text));Cvar_Set("in_touchForceSlots",text);
