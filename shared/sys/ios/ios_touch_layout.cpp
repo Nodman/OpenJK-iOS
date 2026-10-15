@@ -26,7 +26,7 @@ const touchButtonDef_t touchButtonDefs[TB_COUNT] = {
 void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT], const touchLayoutOverrides_t *overrides )
 {
 	touchButtonDef_t defs[TB_COUNT];
-	TouchEdit_Apply( overrides, defs );
+	TouchEdit_Apply( overrides, defs, viewW, viewH, safeL, safeT, safeR, safeB, p );
 	const float unit = TouchLayout_Unit( viewW - safeL - safeR, viewH - safeT - safeB, p );
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		out[i] = { 0, 0, 0, 0 };

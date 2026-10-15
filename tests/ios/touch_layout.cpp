@@ -224,36 +224,31 @@ BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
 	BOOST_CHECK( TouchLayout_DefaultBind( TB_COUNT, NULL ) == NULL );
 }
 
-BOOST_AUTO_TEST_CASE( fps_clears_console )
+BOOST_AUTO_TEST_CASE( fps_clears_lock_and_console_across_fixtures_and_stack_offsets )
 {
-	for ( int factor = 1; factor <= 2; ++factor ) {
-		for ( int corrected = 0; corrected <= 1; ++corrected ) {
-			for ( int side = 0; side < 3; ++side ) {
-				const int L = side == 2 ? 0 : 66 * factor;
-				const int R = side == 1 ? 0 : 66 * factor;
-				const aspectLayout_t layout = AspectLayout_Build( 1434 * factor, 660 * factor,
-					corrected, 1.5f, L, 0, R, 51 * factor );
-				touchRect_t con;
-				IOS_TouchConsoleRectPixels( layout.W, layout.H, L, 0, R, layout.safeB,
-					&con.x, &con.y, &con.w, &con.h );
-				const float scale = AspectLayout_SharpTextScale( &layout, 18, 22 );
-				BOOST_CHECK_SMALL( scale - ( factor == 1 ? 0.888889f : 0.444444f ), 1e-6f );
-				const double right = AspectLayout_ToVirtual( &layout,
-					fminf( layout.W - R, con.x - 6 ), 0 ).x;
-				// Retail ocr_a "60fps" has five glyphs and 51 total advances; emulate
-				// integer width and draw coordinates using only the pure geometry helpers.
-				const int width = (int)ceilf( 51 * scale );
-				const aspectPoint_t origin = AspectLayout_ToPixels( &layout,
-					(int)( right - width ), (int)( layout.fullRect.y + 2 ) );
-				const aspectPoint_t size = AspectLayout_SizeToPixels( &layout, width, 18 * scale );
-				touchRect_t buttons[TB_COUNT];
-				TouchLayout_Build(layout.W,layout.H,L,0,R,layout.safeB,1.5f*factor,buttons);
-				BOOST_CHECK_GE(buttons[TB_LOCK].y,origin.y+size.y);
-				BOOST_CHECK_LE( origin.x + size.x, con.x - 6 + 1e-3 );
-				BOOST_CHECK_LE( origin.x + size.x, layout.W - R );
-				BOOST_CHECK( origin.x + size.x <= con.x || origin.x >= con.x + con.w ||
-					origin.y + size.y <= con.y || origin.y >= con.y + con.h );
-			}
+	const float fixtures[][7]={
+		{2868,1320,132,0,132,102,3},{1434,660,66,0,66,51,1.5f},
+		{2048,1536,0,0,0,0,2},{1024,768,0,0,0,0,1},
+		{2868,1320,144,30,44,90,3},{1434,660,72,15,22,45,1.5f},
+		{2868,1320,44,30,144,90,3},{1434,660,22,15,72,45,1.5f}
+	};
+	for (const auto &f : fixtures) for (int corrected : {0,1}) {
+		const auto layout=AspectLayout_Build((int)f[0],(int)f[1],corrected,1.5f,(int)f[2],(int)f[3],(int)f[4],(int)f[5]);
+		touchRect_t buttons[TB_COUNT]; TouchLayout_Build(f[0],f[1],f[2],f[3],f[4],f[5],f[6],buttons);
+		const auto &con=buttons[TB_CONSOLE]; const auto &lock=buttons[TB_LOCK];
+		const float scale=AspectLayout_SharpTextScale(&layout,18,22);
+		const double right=AspectLayout_ToVirtual(&layout,fminf(f[0]-f[4],con.x-6),0).x;
+		const double top=layout.fullRect.y+AspectLayout_SizeToVirtual(&layout,0,f[3]).y;
+		const int width=(int)ceilf(51*scale);
+		// Timers follow FPS; also stress two debug-row advances.
+		for(int engine=0;engine<2;++engine) for(int rows=0;rows<=2;++rows) for(int team=0;team<=(engine?8:0);++team) {
+			const int offset=rows*(16+(engine?4:10))+team*8;
+			const auto origin=AspectLayout_ToPixels(&layout,(int)(right-width),(int)(top+offset+2));
+			const auto size=AspectLayout_SizeToPixels(&layout,width,18*scale);
+			BOOST_CHECK_LE(origin.x+size.x,con.x-6+1e-3);
+			BOOST_CHECK_LE(origin.x+size.x,f[0]-f[4]);
+			BOOST_CHECK(origin.x+size.x<=con.x || origin.x>=con.x+con.w || origin.y+size.y<=con.y || origin.y>=con.y+con.h);
+			BOOST_CHECK(origin.x+size.x<=lock.x || origin.x>=lock.x+lock.w || origin.y+size.y<=lock.y || origin.y>=lock.y+lock.h);
 		}
 	}
 }

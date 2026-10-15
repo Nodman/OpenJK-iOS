@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE( anchored_drag_clamps_and_builds_without_moving_console )
 			char text[1024]; TouchEdit_Serialize( &o, text, sizeof(text) );
 			touchLayoutOverrides_t parsed; TouchEdit_Parse( text, &parsed );
 			BOOST_CHECK_SMALL( parsed.cx[button] - o.cx[button], .00051f );
-			touchButtonDef_t defs[TB_COUNT]; TouchEdit_Apply( &parsed, defs );
+			touchButtonDef_t defs[TB_COUNT]; TouchEdit_Apply( &parsed, defs, f.x, f.y, 40, 10, 50, 30, f.w );
 			BOOST_CHECK_EQUAL( defs[button].anchor, touchButtonDefs[button].anchor );
 		}
 	}
@@ -146,6 +146,86 @@ BOOST_AUTO_TEST_CASE( slider_mapping_clamps_and_round_trips )
 		const int n=TouchDraw_Build(&input,items,capacity);
 		BOOST_CHECK_EQUAL(n,capacity<TB_COUNT+4?capacity:TB_COUNT+4);
 		BOOST_CHECK_EQUAL(memcmp(&items[n],&sentinel,sizeof(sentinel)),0);
+	}
+}
+
+static bool PlatesDisjoint( const touchRect_t &a, const touchRect_t &b )
+{
+	return a.x+a.w<=b.x || b.x+b.w<=a.x || a.y+a.h<=b.y || b.y+b.h<=a.y;
+}
+
+BOOST_AUTO_TEST_CASE( lock_drag_and_loaded_overrides_keep_exit_and_reentry_reachable )
+{
+	for (float scale : {1.0f,.5f}) {
+		const float W=2048*scale,H=1536*scale,p=2*scale;
+		const float unit=TouchLayout_Unit(W,H,p);
+		const auto slider=TouchEdit_SliderRect(W,H,0,0,0,0,p);
+		touchRect_t baseline[TB_COUNT]; TouchLayout_Build(W,H,0,0,0,0,p,baseline);
+		for (const auto &blocked : {slider,baseline[TB_CONSOLE]}) {
+			for (int load=0;load<2;++load) {
+				const float x=blocked.x+blocked.w/2,y=blocked.y+blocked.h/2;
+				touchLayoutOverrides_t o={};
+				if (load) {
+					o.mask=1u<<TB_LOCK; o.cx[TB_LOCK]=(W-x)/unit; o.cy[TB_LOCK]=y/unit;
+					char text[1024]; BOOST_REQUIRE(TouchEdit_Serialize(&o,text,sizeof(text)));
+					TouchEdit_Parse(text,&o);
+				} else BOOST_REQUIRE(TouchEdit_Drag(&o,TB_LOCK,x,y,W,H,0,0,0,0,p));
+				touchRect_t rects[TB_COUNT]; TouchLayout_Build(W,H,0,0,0,0,p,rects,&o);
+				BOOST_CHECK(PlatesDisjoint(rects[TB_LOCK],slider));
+				BOOST_CHECK(PlatesDisjoint(rects[TB_LOCK],rects[TB_CONSOLE]));
+				if (load) {
+					char before[1024],fixed[1024]; TouchEdit_Serialize(&o,before,sizeof(before));
+					BOOST_REQUIRE(TouchEdit_RepairLock(&o,W,H,0,0,0,0,p));
+					BOOST_REQUIRE(TouchEdit_Serialize(&o,fixed,sizeof(fixed)));
+					BOOST_CHECK_NE(std::strcmp(before,fixed),0);
+					TouchEdit_Parse(fixed,&o);
+				}
+				const float cx=rects[TB_LOCK].x+rects[TB_LOCK].w/2,cy=rects[TB_LOCK].y+rects[TB_LOCK].h/2;
+				BOOST_CHECK(!(cx>=slider.x && cx<=slider.x+slider.w && cy>=slider.y && cy<=slider.y+slider.h));
+				BOOST_CHECK_NE(TouchLayout_Hit(rects,cx,cy,1u<<TB_CONSOLE),TB_CONSOLE);
+				touchEditState_t state={}; touchEditInput_t in={}; in.event=TOUCH_EDIT_ENTER;
+				TouchEdit_State(&state,in);
+				in.event=TOUCH_EDIT_DOWN;in.x=in.cx=cx;in.y=in.cy=cy;
+				in.button=TouchLayout_Hit(rects,cx,cy,1u<<TB_LOCK);
+				BOOST_REQUIRE_EQUAL(in.button,TB_LOCK);
+				TouchEdit_State(&state,in);in.event=TOUCH_EDIT_UP;
+				BOOST_CHECK(TouchEdit_State(&state,in).save);
+				BOOST_CHECK(!state.active);
+				char saved[1024]; BOOST_REQUIRE(TouchEdit_Serialize(&o,saved,sizeof(saved)));
+				TouchEdit_Parse(saved,&o); TouchLayout_Build(W,H,0,0,0,0,p,rects,&o);
+				BOOST_CHECK(PlatesDisjoint(rects[TB_LOCK],slider));
+				BOOST_CHECK(PlatesDisjoint(rects[TB_LOCK],rects[TB_CONSOLE]));
+				const float rx=rects[TB_LOCK].x+rects[TB_LOCK].w/2,ry=rects[TB_LOCK].y+rects[TB_LOCK].h/2;
+				BOOST_CHECK_NE(TouchLayout_Hit(rects,rx,ry,1u<<TB_CONSOLE),TB_CONSOLE);
+				BOOST_CHECK_EQUAL(TouchLayout_Hit(rects,rx,ry,1u<<TB_LOCK),TB_LOCK);
+				in.event=TOUCH_EDIT_ENTER; TouchEdit_State(&state,in); BOOST_CHECK(state.active);
+			}
+		}
+	}
+}
+
+BOOST_AUTO_TEST_CASE( lock_projection_survives_edges_rounding_and_geometry_changes )
+{
+	const float fixtures[][7]={{2868,1320,132,0,132,102,3},{1434,660,66,0,66,51,1.5f},
+		{2048,1536,0,0,0,0,2},{1024,768,0,0,0,0,1},
+		{2868,1320,144,30,44,90,3},{1434,660,72,15,22,45,1.5f}};
+	for (const auto &f : fixtures) {
+		for(int ix=0;ix<=8;++ix) for(int iy=0;iy<=8;++iy) {
+			touchLayoutOverrides_t o={};
+			BOOST_REQUIRE(TouchEdit_Drag(&o,TB_LOCK,f[0]*ix/8,f[1]*iy/8,f[0],f[1],f[2],f[3],f[4],f[5],f[6]));
+			char text[1024]; BOOST_REQUIRE(TouchEdit_Serialize(&o,text,sizeof(text)));
+			TouchEdit_Parse(text,&o);
+			for(int rotated=0;rotated<2;++rotated) {
+				const float l=rotated?f[4]:f[2],r=rotated?f[2]:f[4];
+				const auto slider=TouchEdit_SliderRect(f[0],f[1],l,f[3],r,f[5],f[6]);
+				touchRect_t rects[TB_COUNT]; TouchLayout_Build(f[0],f[1],l,f[3],r,f[5],f[6],rects,&o);
+				BOOST_CHECK(PlatesDisjoint(rects[TB_LOCK],slider));
+				BOOST_CHECK(PlatesDisjoint(rects[TB_LOCK],rects[TB_CONSOLE]));
+				BOOST_CHECK_GE(rects[TB_LOCK].x,l); BOOST_CHECK_GE(rects[TB_LOCK].y,f[3]);
+				BOOST_CHECK_LE(rects[TB_LOCK].x+rects[TB_LOCK].w,f[0]-r+.001f);
+				BOOST_CHECK_LE(rects[TB_LOCK].y+rects[TB_LOCK].h,f[1]-f[5]+.001f);
+			}
+		}
 	}
 }
 

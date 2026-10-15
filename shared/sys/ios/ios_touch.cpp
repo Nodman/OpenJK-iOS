@@ -68,6 +68,10 @@ static void IN_TouchUpdateLayout( void ) {
 		return;
 	IN_TouchReleaseAll();
 	TouchEdit_Parse( in_touchLayout->string, &layoutOverrides );
+	if ( TouchEdit_RepairLock(&layoutOverrides,(float)w,(float)h,l,t,r,b,p) ) {
+		char corrected[1024];
+		if ( TouchEdit_Serialize(&layoutOverrides,corrected,sizeof(corrected)) ) Cvar_Set("in_touchLayout",corrected);
+	}
 	layoutModification = in_touchLayout->modificationCount;
 	TouchLayout_Build( (float)w, (float)h, l, t, r, b, p, rects, &layoutOverrides );
 	viewW = w;

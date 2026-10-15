@@ -1,5 +1,6 @@
 #pragma once
 #include "ios_touch_layout.h"
+#include "ios_touch_edit_slider.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -58,15 +59,53 @@ IOS_TOUCH_INLINE int TouchEdit_Serialize( const touchLayoutOverrides_t *o, char 
 	return 1;
 }
 
-IOS_TOUCH_INLINE void TouchEdit_Apply( const touchLayoutOverrides_t *o, touchButtonDef_t defs[TB_COUNT] )
+IOS_TOUCH_INLINE int TouchEdit_ClearCenter( float x, float y, float half, const touchRect_t *r )
 {
-	int button;
-	for ( button = 0; button < TB_COUNT; ++button ) {
-		defs[button] = touchButtonDefs[button];
-		if ( o && TouchEdit_Editable(button) && (o->mask & (1u << button)) ) {
-			defs[button].cx = o->cx[button]; defs[button].cy = o->cy[button];
+	return r->w <= 0 || r->h <= 0 || x < r->x-half || x > r->x+r->w+half ||
+		y < r->y-half || y > r->y+r->h+half;
+}
+
+IOS_TOUCH_INLINE int TouchEdit_ClampCenter( int button, float *x, float *y,
+	float W, float H, float L, float T, float R, float B, float p )
+{
+	const float unit = TouchLayout_Unit(W-L-R,H-T-B,p);
+	float half;
+	if ( !TouchEdit_Editable(button) || unit <= 0 || !IOS_TouchFinite(*x) || !IOS_TouchFinite(*y) ) return 0;
+	half = fminf(fmaxf(touchButtonDefs[button].size * unit,44*p),fminf(W-L-R,H-T-B)) / 2;
+	*x = fmaxf(L+half,fminf(*x,W-R-half));
+	*y = fmaxf(T+half,fminf(*y,H-B-half));
+	if ( button == TB_LOCK ) {
+		touchRect_t blocked[2];
+		float xs[7], ys[7], bestX = *x, bestY = *y;
+		double bestDistance = 0;
+		int i, j, found = 0;
+		// One storage quantum keeps saved rounding outside the hit regions.
+		const float gap = .001f * unit + .01f;
+		IOS_TouchConsoleRectPixels(W,H,L,T,R,B,&blocked[0].x,&blocked[0].y,&blocked[0].w,&blocked[0].h);
+		blocked[1] = TouchEdit_SliderRect(W,H,L,T,R,B,p);
+		if ( TouchEdit_ClearCenter(*x,*y,half,&blocked[0]) && TouchEdit_ClearCenter(*x,*y,half,&blocked[1]) ) return 1;
+		xs[0] = *x; xs[1] = L+half; xs[2] = W-R-half;
+		ys[0] = *y; ys[1] = T+half; ys[2] = H-B-half;
+		for ( i = 0; i < 2; ++i ) {
+			xs[3+2*i] = blocked[i].x-half-gap;
+			xs[4+2*i] = blocked[i].x+blocked[i].w+half+gap;
+			ys[3+2*i] = blocked[i].y-half-gap;
+			ys[4+2*i] = blocked[i].y+blocked[i].h+half+gap;
 		}
+		for ( i = 0; i < 7; ++i ) for ( j = 0; j < 7; ++j ) {
+			const float cx = fmaxf(L+half,fminf(xs[i],W-R-half));
+			const float cy = fmaxf(T+half,fminf(ys[j],H-B-half));
+			const double dx = (double)cx-*x, dy = (double)cy-*y;
+			const double distance = dx*dx+dy*dy;
+			if ( TouchEdit_ClearCenter(cx,cy,half,&blocked[0]) && TouchEdit_ClearCenter(cx,cy,half,&blocked[1]) &&
+				(!found || distance < bestDistance) ) {
+				found = 1; bestDistance = distance; bestX = cx; bestY = cy;
+			}
+		}
+		if ( !found ) return 0;
+		*x = bestX; *y = bestY;
 	}
+	return 1;
 }
 
 IOS_TOUCH_INLINE int TouchEdit_Drag( touchLayoutOverrides_t *o, int button, float x, float y,
@@ -74,13 +113,40 @@ IOS_TOUCH_INLINE int TouchEdit_Drag( touchLayoutOverrides_t *o, int button, floa
 {
 	const float unit = TouchLayout_Unit(W-L-R,H-T-B,p);
 	const touchButtonDef_t *d;
-	float half;
-	if ( !TouchEdit_Editable(button) || unit <= 0 || !IOS_TouchFinite(x) || !IOS_TouchFinite(y) ) return 0;
+	if ( !TouchEdit_ClampCenter(button,&x,&y,W,H,L,T,R,B,p) ) return 0;
 	d = &touchButtonDefs[button];
-	half = fminf(fmaxf(d->size * unit,44*p),fminf(W-L-R,H-T-B)) / 2;
-	x = fmaxf(L+half,fminf(x,W-R-half)); y = fmaxf(T+half,fminf(y,H-B-half));
 	o->cx[button] = (d->anchor == TOUCH_ANCHOR_TR || d->anchor == TOUCH_ANCHOR_BR ? W-R-x : x-L) / unit;
 	o->cy[button] = (d->anchor == TOUCH_ANCHOR_BL || d->anchor == TOUCH_ANCHOR_BR ? H-B-y : y-T) / unit;
 	o->mask |= 1u << button;
 	return 1;
+}
+
+IOS_TOUCH_INLINE int TouchEdit_RepairLock( touchLayoutOverrides_t *o,
+	float W, float H, float L, float T, float R, float B, float p )
+{
+	const float unit = TouchLayout_Unit(W-L-R,H-T-B,p);
+	float x, y, oldX, oldY;
+	if ( !o || !(o->mask & (1u<<TB_LOCK)) || unit <= 0 ) return 0;
+	oldX = o->cx[TB_LOCK]; oldY = o->cy[TB_LOCK];
+	x = W-R-oldX*unit; y = T+oldY*unit;
+	if ( !TouchEdit_Drag(o,TB_LOCK,x,y,W,H,L,T,R,B,p) ) return 0;
+	return o->cx[TB_LOCK] != oldX || o->cy[TB_LOCK] != oldY;
+}
+
+IOS_TOUCH_INLINE void TouchEdit_Apply( const touchLayoutOverrides_t *o, touchButtonDef_t defs[TB_COUNT],
+	float W, float H, float L, float T, float R, float B, float p )
+{
+	int button;
+	touchLayoutOverrides_t repaired;
+	if ( o ) {
+		repaired = *o;
+		TouchEdit_RepairLock(&repaired,W,H,L,T,R,B,p);
+		o = &repaired;
+	}
+	for ( button = 0; button < TB_COUNT; ++button ) {
+		defs[button] = touchButtonDefs[button];
+		if ( o && TouchEdit_Editable(button) && (o->mask & (1u << button)) ) {
+			defs[button].cx = o->cx[button]; defs[button].cy = o->cy[button];
+		}
+	}
 }
