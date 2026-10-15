@@ -66,6 +66,8 @@
 - Tap the console button in a map or menu to open the console and keyboard. Tap it again to close both. Closing the console another way also closes its soft keyboard.
 - Hold the console button for at least 500 ms, keeping your finger on the button, to toggle the soft keyboard for menu text fields or the open console; a console hold does nothing with a hardware keyboard. Leaving the button cancels the gesture. All touch controls hide during full-screen cinematics and SP in-game videos. Tap anywhere to skip a video through the normal Escape path.
 - Pad sends the real TAB key; Chat sends the real Y key. Both follow your key rebinds.
+- If you unbind TAB or Y, its touch button does nothing. Restore Pad with `bind TAB datapad` in SP or `bind TAB +scores` in MP; restore MP Chat with `bind y messagemode`.
+- Empty AUX16–26 bindings regain their defaults at startup, after your saved settings and autoexec. Your nonempty rebinds are kept.
 - Touch button binds:
 
 | Button | Key | Default bind | Action |

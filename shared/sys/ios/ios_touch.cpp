@@ -186,6 +186,19 @@ static void IN_TouchTextInput( void ) {
 	lastTextDemand = demand;
 }
 
+void IN_TouchRestoreDefaultBinds( void ) {
+	for ( int button = 0; button < TB_COUNT; ++button ) {
+		if ( !touchButtonDefs[button].defaultBind )
+			continue;
+		const int key = IN_TouchButtonKey( button );
+		const char *command = TouchLayout_DefaultBind( button, Key_GetBinding( key ) );
+		if ( command ) {
+			Key_SetBinding( key, command );
+			Com_DPrintf( "Touch: restored AUX%d bind to %s\n", touchButtonDefs[button].key, command );
+		}
+	}
+}
+
 void IN_TouchInit( SDL_Window *window ) {
 	in_touchControls = Cvar_Get( "in_touchControls", "1", CVAR_ARCHIVE );
 	in_touchOpacity = Cvar_Get( "in_touchOpacity", "1.0", CVAR_ARCHIVE );

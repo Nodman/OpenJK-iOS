@@ -26,9 +26,17 @@ typedef struct {
 	int anchor;
 	float cx, cy, size;
 	int glyph, key;
+	const char *defaultBind;
 } touchButtonDef_t;
 
 extern const touchButtonDef_t touchButtonDefs[TB_COUNT];
+
+IOS_TOUCH_INLINE const char *TouchLayout_DefaultBind( int button, const char *binding )
+{
+	if ( button < 0 || button >= TB_COUNT || ( binding && binding[0] ) )
+		return 0;
+	return touchButtonDefs[button].defaultBind;
+}
 
 void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT] );
 int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons );

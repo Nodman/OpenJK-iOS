@@ -1035,6 +1035,9 @@ void Com_ExecuteCfg(void)
 		Cbuf_ExecuteText(EXEC_NOW, "exec autoexec_sp.cfg\n");
 		Cbuf_Execute();
 	}
+#ifdef OPENJK_IOS
+	IN_TouchRestoreDefaultBinds();
+#endif
 }
 
 /*

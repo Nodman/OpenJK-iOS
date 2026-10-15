@@ -4,21 +4,21 @@
 #include <math.h>
 
 const touchButtonDef_t touchButtonDefs[TB_COUNT] = {
-	{ "ATK",   TOUCH_ANCHOR_BR, .413f, .590f, .14f, TG_ATTACK, 16 },
-	{ "ALT",   TOUCH_ANCHOR_BR, .510f, .438f, .14f, TG_ALTATTACK, 17 },
-	{ "JUMP",  TOUCH_ANCHOR_BR, .246f, .659f, .14f, TG_JUMP, 18 },
-	{ "DUCK",  TOUCH_ANCHOR_BR, .40f, .08f, .12f, TG_CROUCH, 19 },
-	{ "USE",   TOUCH_ANCHOR_BL, .12f, .08f, .12f, TG_USE, 20 },
-	{ "FORCE", TOUCH_ANCHOR_TR, .49f, .26f, .12f, TG_FORCE, 21 },
-	{ "F>>",   TOUCH_ANCHOR_TR, .65f, .26f, .12f, TG_FORCENEXT, 22 },
-	{ "STYLE", TOUCH_ANCHOR_BR, .12f, .08f, .12f, TG_STYLE, 23 },
-	{ "<W",    TOUCH_ANCHOR_TR, .65f, .10f, .12f, TG_WEAPPREV, 24 },
-	{ "W>",    TOUCH_ANCHOR_TR, .33f, .10f, .12f, TG_WEAPNEXT, 25 },
-	{ "MENU",  TOUCH_ANCHOR_TL, .12f, .10f, .12f, TG_MENU, TOUCH_KEY_ESCAPE },
-	{ 0,    TOUCH_ANCHOR_TL, IOS_TOUCH_CONSOLE_CX, IOS_TOUCH_CONSOLE_CY, IOS_TOUCH_CONSOLE_SIZE, TG_CONSOLE, TOUCH_KEY_NONE },
-	{ "SABER", TOUCH_ANCHOR_TR, .49f, .10f, .12f, TG_SABER_SELECT, 26 },
-	{ "CHAT",  TOUCH_ANCHOR_TL, .28f, .10f, .12f, TG_CHAT, TOUCH_KEY_CHAT },
-	{ "PAD",   TOUCH_ANCHOR_TL, .12f, .26f, .12f, TG_PAD, TOUCH_KEY_TAB }
+	{ "ATK",   TOUCH_ANCHOR_BR, .413f, .590f, .14f, TG_ATTACK, 16, "+attack" },
+	{ "ALT",   TOUCH_ANCHOR_BR, .510f, .438f, .14f, TG_ALTATTACK, 17, "+altattack" },
+	{ "JUMP",  TOUCH_ANCHOR_BR, .246f, .659f, .14f, TG_JUMP, 18, "+moveup" },
+	{ "DUCK",  TOUCH_ANCHOR_BR, .40f, .08f, .12f, TG_CROUCH, 19, "+movedown" },
+	{ "USE",   TOUCH_ANCHOR_BL, .12f, .08f, .12f, TG_USE, 20, "+use" },
+	{ "FORCE", TOUCH_ANCHOR_TR, .49f, .26f, .12f, TG_FORCE, 21, "+useforce" },
+	{ "F>>",   TOUCH_ANCHOR_TR, .65f, .26f, .12f, TG_FORCENEXT, 22, "forcenext" },
+	{ "STYLE", TOUCH_ANCHOR_BR, .12f, .08f, .12f, TG_STYLE, 23, "saberAttackCycle" },
+	{ "<W",    TOUCH_ANCHOR_TR, .65f, .10f, .12f, TG_WEAPPREV, 24, "weapprev" },
+	{ "W>",    TOUCH_ANCHOR_TR, .33f, .10f, .12f, TG_WEAPNEXT, 25, "weapnext" },
+	{ "MENU",  TOUCH_ANCHOR_TL, .12f, .10f, .12f, TG_MENU, TOUCH_KEY_ESCAPE, 0 },
+	{ 0,    TOUCH_ANCHOR_TL, IOS_TOUCH_CONSOLE_CX, IOS_TOUCH_CONSOLE_CY, IOS_TOUCH_CONSOLE_SIZE, TG_CONSOLE, TOUCH_KEY_NONE, 0 },
+	{ "SABER", TOUCH_ANCHOR_TR, .49f, .10f, .12f, TG_SABER_SELECT, 26, "weapon 1" },
+	{ "CHAT",  TOUCH_ANCHOR_TL, .28f, .10f, .12f, TG_CHAT, TOUCH_KEY_CHAT, 0 },
+	{ "PAD",   TOUCH_ANCHOR_TL, .12f, .26f, .12f, TG_PAD, TOUCH_KEY_TAB, 0 }
 };
 
 void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT] )

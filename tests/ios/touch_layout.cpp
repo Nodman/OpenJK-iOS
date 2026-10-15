@@ -17,21 +17,21 @@ BOOST_AUTO_TEST_SUITE( touch_layout )
 BOOST_AUTO_TEST_CASE( button_definitions )
 {
 	const touchButtonDef_t expected[TB_COUNT] = {
-		{ "ATK", TOUCH_ANCHOR_BR, .413f, .590f, .14f, TG_ATTACK, 16 },
-		{ "ALT", TOUCH_ANCHOR_BR, .510f, .438f, .14f, TG_ALTATTACK, 17 },
-		{ "JUMP", TOUCH_ANCHOR_BR, .246f, .659f, .14f, TG_JUMP, 18 },
-		{ "DUCK", TOUCH_ANCHOR_BR, .40f, .08f, .12f, TG_CROUCH, 19 },
-		{ "USE", TOUCH_ANCHOR_BL, .12f, .08f, .12f, TG_USE, 20 },
-		{ "FORCE", TOUCH_ANCHOR_TR, .49f, .26f, .12f, TG_FORCE, 21 },
-		{ "F>>", TOUCH_ANCHOR_TR, .65f, .26f, .12f, TG_FORCENEXT, 22 },
-		{ "STYLE", TOUCH_ANCHOR_BR, .12f, .08f, .12f, TG_STYLE, 23 },
-		{ "<W", TOUCH_ANCHOR_TR, .65f, .10f, .12f, TG_WEAPPREV, 24 },
-		{ "W>", TOUCH_ANCHOR_TR, .33f, .10f, .12f, TG_WEAPNEXT, 25 },
-		{ "MENU", TOUCH_ANCHOR_TL, .12f, .10f, .12f, TG_MENU, TOUCH_KEY_ESCAPE },
-		{ NULL, TOUCH_ANCHOR_TL, .95f, .08f, .11f, TG_CONSOLE, TOUCH_KEY_NONE },
-		{ "SABER", TOUCH_ANCHOR_TR, .49f, .10f, .12f, TG_SABER_SELECT, 26 },
-		{ "CHAT", TOUCH_ANCHOR_TL, .28f, .10f, .12f, TG_CHAT, TOUCH_KEY_CHAT },
-		{ "PAD", TOUCH_ANCHOR_TL, .12f, .26f, .12f, TG_PAD, TOUCH_KEY_TAB }
+		{ "ATK", TOUCH_ANCHOR_BR, .413f, .590f, .14f, TG_ATTACK, 16, NULL },
+		{ "ALT", TOUCH_ANCHOR_BR, .510f, .438f, .14f, TG_ALTATTACK, 17, NULL },
+		{ "JUMP", TOUCH_ANCHOR_BR, .246f, .659f, .14f, TG_JUMP, 18, NULL },
+		{ "DUCK", TOUCH_ANCHOR_BR, .40f, .08f, .12f, TG_CROUCH, 19, NULL },
+		{ "USE", TOUCH_ANCHOR_BL, .12f, .08f, .12f, TG_USE, 20, NULL },
+		{ "FORCE", TOUCH_ANCHOR_TR, .49f, .26f, .12f, TG_FORCE, 21, NULL },
+		{ "F>>", TOUCH_ANCHOR_TR, .65f, .26f, .12f, TG_FORCENEXT, 22, NULL },
+		{ "STYLE", TOUCH_ANCHOR_BR, .12f, .08f, .12f, TG_STYLE, 23, NULL },
+		{ "<W", TOUCH_ANCHOR_TR, .65f, .10f, .12f, TG_WEAPPREV, 24, NULL },
+		{ "W>", TOUCH_ANCHOR_TR, .33f, .10f, .12f, TG_WEAPNEXT, 25, NULL },
+		{ "MENU", TOUCH_ANCHOR_TL, .12f, .10f, .12f, TG_MENU, TOUCH_KEY_ESCAPE, NULL },
+		{ NULL, TOUCH_ANCHOR_TL, .95f, .08f, .11f, TG_CONSOLE, TOUCH_KEY_NONE, NULL },
+		{ "SABER", TOUCH_ANCHOR_TR, .49f, .10f, .12f, TG_SABER_SELECT, 26, NULL },
+		{ "CHAT", TOUCH_ANCHOR_TL, .28f, .10f, .12f, TG_CHAT, TOUCH_KEY_CHAT, NULL },
+		{ "PAD", TOUCH_ANCHOR_TL, .12f, .26f, .12f, TG_PAD, TOUCH_KEY_TAB, NULL }
 	};
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		BOOST_CHECK_EQUAL( touchButtonDefs[i].anchor, expected[i].anchor );
@@ -170,6 +170,57 @@ BOOST_AUTO_TEST_CASE( explicit_key_map_and_paired_pad_chat_trace )
 			BOOST_CHECK_EQUAL( out.keys[0].down, event == TOUCH_DOWN );
 		}
 	}
+}
+
+BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
+{
+	const char *commands[] = { "+attack", "+altattack", "+moveup", "+movedown", "+use", "+useforce",
+		"forcenext", "saberAttackCycle", "weapprev", "weapnext", "weapon 1" };
+	const char *bindings[TB_COUNT] = {};
+	const auto restore = [&]() {
+		int count = 0;
+		for ( int button = 0; button < TB_COUNT; ++button ) {
+			const char *command = TouchLayout_DefaultBind( button, bindings[button] );
+			if ( command ) {
+				bindings[button] = command;
+				++count;
+			}
+		}
+		return count;
+	};
+	BOOST_CHECK_EQUAL( restore(), 11 );
+	for ( int button = 0; button < TB_COUNT; ++button ) {
+		const int key = touchButtonDefs[button].key;
+		if ( key >= 16 && key <= 26 ) {
+			BOOST_REQUIRE( bindings[button] );
+			BOOST_CHECK_EQUAL( bindings[button], commands[key - 16] );
+			BOOST_CHECK( TouchLayout_DefaultBind( button, "custom action" ) == NULL );
+			BOOST_CHECK( TouchLayout_DefaultBind( button, " " ) == NULL );
+		} else {
+			BOOST_CHECK( bindings[button] == NULL );
+			BOOST_CHECK( TouchLayout_DefaultBind( button, "" ) == NULL );
+		}
+	}
+	BOOST_CHECK_EQUAL( restore(), 0 );
+	bindings[TB_SABER_SELECT] = "";
+	bindings[TB_ATTACK] = "+altattack";
+	bindings[TB_PAD] = "datapad";
+	bindings[TB_CHAT] = "messagemode";
+	BOOST_CHECK_EQUAL( restore(), 1 );
+	BOOST_CHECK_EQUAL( bindings[TB_SABER_SELECT], "weapon 1" );
+	BOOST_CHECK_EQUAL( bindings[TB_ATTACK], "+altattack" );
+	BOOST_CHECK_EQUAL( bindings[TB_PAD], "datapad" );
+	BOOST_CHECK_EQUAL( bindings[TB_CHAT], "messagemode" );
+	bindings[TB_SABER_SELECT] = "weapon 3";
+	bindings[TB_PAD] = bindings[TB_CHAT] = "";
+	BOOST_CHECK_EQUAL( restore(), 0 );
+	BOOST_CHECK_EQUAL( bindings[TB_SABER_SELECT], "weapon 3" );
+	BOOST_CHECK_EQUAL( bindings[TB_PAD], "" );
+	BOOST_CHECK_EQUAL( bindings[TB_CHAT], "" );
+	for ( int button = 0; button < TB_COUNT; ++button ) bindings[button] = "";
+	BOOST_CHECK_EQUAL( restore(), 11 );
+	BOOST_CHECK( TouchLayout_DefaultBind( -1, NULL ) == NULL );
+	BOOST_CHECK( TouchLayout_DefaultBind( TB_COUNT, NULL ) == NULL );
 }
 
 BOOST_AUTO_TEST_CASE( fps_clears_console )

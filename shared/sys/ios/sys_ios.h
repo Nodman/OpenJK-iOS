@@ -41,6 +41,7 @@ void Sys_IOS_InitLifecycle( void );
 
 // ios_touch.cpp (stubs P0b; filled P4)
 void IN_TouchInit( struct SDL_Window *window );
+void IN_TouchRestoreDefaultBinds( void );
 void IN_TouchShutdown( void );
 void IN_TouchHandleEvent( const union SDL_Event *e );
 void IN_TouchFrame( void );
