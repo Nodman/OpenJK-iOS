@@ -50,6 +50,8 @@ void IN_TouchResetState( void );
 void IN_GamepadReleaseAll( void );
 int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems );
 float IN_TouchGetOpacity( void );
+qboolean IN_TouchIsEditing( void );
+void IN_TouchEndEdit( void );
 void SCR_RegisterTouchMedia( void );
 
 // ios_gamepad.cpp (P4)

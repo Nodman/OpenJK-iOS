@@ -28,7 +28,7 @@ IOS_TOUCH_INLINE touchAtlasUV_t TouchAtlas_UV( int glyph )
 #define IOS_TOUCH_MAX_DRAW_ITEMS 32
 
 typedef enum {
-	TOUCH_DRAW_BUTTON, TOUCH_DRAW_STICK_BASE, TOUCH_DRAW_STICK_KNOB
+	TOUCH_DRAW_BUTTON, TOUCH_DRAW_STICK_BASE, TOUCH_DRAW_STICK_KNOB, TOUCH_DRAW_DIM, TOUCH_DRAW_HIGHLIGHT
 } touchDrawKind_t;
 
 typedef struct {
@@ -43,6 +43,7 @@ typedef struct {
 	const touchGestureState_t *gestures;
 	unsigned int visibleButtons, pressedButtons;
 	int sticks, styleColor;
+	int editing, dragButton;
 } touchDrawInput_t;
 
 IOS_TOUCH_INLINE float TouchDraw_Opacity( float value )
@@ -67,6 +68,11 @@ IOS_TOUCH_INLINE void TouchDraw_StyleRGB( int style, float rgb[3] )
 
 IOS_TOUCH_INLINE void TouchDraw_Color( const touchDrawItem_t *item, int glyphLayer, float opacity, float rgba[4] )
 {
+	if ( item->kind == TOUCH_DRAW_DIM || item->kind == TOUCH_DRAW_HIGHLIGHT ) {
+		rgba[0]=rgba[1]=rgba[2]=item->kind==TOUCH_DRAW_DIM ? 0.0f : 1.0f;
+		rgba[3]=item->kind==TOUCH_DRAW_DIM ? .35f : .75f;
+		return;
+	}
 	const int glyph = item->kind == TOUCH_DRAW_BUTTON && glyphLayer;
 	int i;
 	for ( i = 0; i < 3; ++i ) rgba[i] = glyph ? item->rgb[i] : 1;
@@ -104,10 +110,15 @@ IOS_TOUCH_INLINE int TouchDraw_Build( const touchDrawInput_t *input, touchDrawIt
 	if ( !input || !items || capacity <= 0 || !input->layout || !input->rects || !input->gestures || input->layout->W <= 0 || input->layout->H <= 0 )
 		return 0;
 	if ( capacity > IOS_TOUCH_MAX_DRAW_ITEMS ) capacity = IOS_TOUCH_MAX_DRAW_ITEMS;
+	if ( input->editing )
+		TouchDraw_Add(input,items,&count,capacity,0,0,(float)input->layout->W,(float)input->layout->H,TOUCH_DRAW_DIM,TG_PLATE,0,TOUCH_STYLE_UNKNOWN);
 	for ( button = 0; button < TB_COUNT; ++button ) {
 		const touchRect_t *r = &input->rects[button];
 		int pressed = ( input->pressedButtons & ( 1u << button ) ) != 0;
-		if ( !( input->visibleButtons & ( 1u << button ) ) ) continue;
+		if ( !input->editing && !( input->visibleButtons & ( 1u << button ) ) ) continue;
+		if ( input->editing && button==TB_LOCK ) pressed=1;
+		if ( input->editing && button==input->dragButton )
+			TouchDraw_Add(input,items,&count,capacity,r->x-.04f*r->w,r->y-.04f*r->h,1.08f*r->w,1.08f*r->h,TOUCH_DRAW_HIGHLIGHT,TG_PLATE,0,TOUCH_STYLE_UNKNOWN);
 		for ( i = 0; i < IOS_TOUCH_GESTURE_FINGERS; ++i ) {
 			const touchGestureFinger_t *f = &input->gestures->fingers[i];
 			if ( TouchGesture_IsButton( f->role ) && f->button == button ) pressed = 1;
@@ -115,7 +126,7 @@ IOS_TOUCH_INLINE int TouchDraw_Build( const touchDrawInput_t *input, touchDrawIt
 		TouchDraw_Add( input, items, &count, capacity, r->x, r->y, r->w, r->h, TOUCH_DRAW_BUTTON,
 			touchButtonDefs[button].glyph, pressed, button == TB_STYLE ? input->styleColor : TOUCH_STYLE_UNKNOWN );
 	}
-	if ( input->sticks ) {
+	if ( input->sticks && !input->editing ) {
 		const int owners[2] = { input->gestures->moveOwner, input->gestures->lookOwner };
 		for ( i = 0; i < 2; ++i ) {
 			const touchGestureFinger_t *f;

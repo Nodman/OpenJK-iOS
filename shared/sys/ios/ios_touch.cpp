@@ -1,6 +1,7 @@
 #include "sys_ios.h"
 #include "ios_touch_layout.h"
 #include "ios_touch_layout_edit.h"
+#include "ios_touch_edit_state.h"
 #include "ios_touch_state.h"
 #include "ios_touch_visibility.h"
 #include "qcommon/qcommon.h"
@@ -8,7 +9,7 @@
 #include "client/client.h"
 #include <SDL.h>
 
-enum { ROLE_NONE, ROLE_GAMEPLAY, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP };
+enum { ROLE_NONE, ROLE_GAMEPLAY, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP, ROLE_EDIT_LOCK };
 #define MAX_TOUCH_FINGERS 10
 #define CONSOLE_HOLD_MS 500
 
@@ -26,6 +27,7 @@ static touchFinger_t fingers[MAX_TOUCH_FINGERS];
 static touchGestureState_t gestures = { {}, -1, -1 };
 static touchRect_t rects[TB_COUNT];
 static touchLayoutOverrides_t layoutOverrides;
+static touchEditState_t editState;
 static int layoutModification = -1;
 static int viewW, viewH;
 static float safeL, safeT, safeR, safeB;
@@ -83,7 +85,9 @@ static int IN_TouchButtonKey( int button ) {
 }
 
 static unsigned int IN_TouchVisibleButtons( void ) {
-	return TouchCaps_ButtonMask( &visibility );
+	unsigned int mask = TouchCaps_ButtonMask( &visibility );
+	if ( TouchEdit_LockVisible(cls.state==CA_ACTIVE,lastHidden,CL_TouchUIMode(),CL_TouchCinematic()) ) mask |= 1u << TB_LOCK;
+	return mask;
 }
 
 static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, float x, float y ) {
@@ -119,15 +123,36 @@ static void IN_TouchRelease( touchFinger_t *f ) {
 	f->role = ROLE_NONE;
 }
 
+static void IN_TouchSaveEdit( void ) {
+	if ( !editState.active ) return;
+	touchEditInput_t input = {}; input.event=TOUCH_EDIT_EXIT;
+	TouchEdit_State(&editState,input);
+	char text[1024];
+	if ( in_touchLayout && TouchEdit_Serialize(&layoutOverrides,text,sizeof(text)) ) {
+		Cvar_Set("in_touchLayout",text);
+		layoutModification=in_touchLayout->modificationCount;
+	}
+}
+
 void IN_TouchReleaseAll( void ) {
+	IN_TouchSaveEdit();
 	for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ )
 		IN_TouchRelease( &fingers[i] );
 	IN_TouchStep( TOUCH_CANCEL_ALL, 0, TOUCH_TARGET_IGNORE, 0, 0, 0 );
 	IN_GamepadSendAxes();
 }
 
+qboolean IN_TouchIsEditing( void ) { return editState.active ? qtrue : qfalse; }
+
+void IN_TouchEndEdit( void ) {
+	if ( !editState.active ) return;
+	IN_TouchReleaseAll();
+	IN_GamepadZeroAxes();
+}
+
 static void IN_TouchSyncMode( void ) {
 	qboolean uiMode = CL_TouchUIMode(), hidden = IN_TouchHidden(), cinematic = CL_TouchCinematic();
+	if ( editState.active && cls.state!=CA_ACTIVE ) IN_TouchEndEdit();
 	if ( uiMode != lastUIMode || hidden != lastHidden || cinematic != lastCinematic ) {
 		IN_TouchReleaseAll();
 		if ( cinematic && !lastCinematic ) {
@@ -151,7 +176,7 @@ static void IN_TouchSyncVisibility( void ) {
 		lastHidden, CL_TouchUIMode(), CL_TouchCinematic(), (unsigned int)cls.realtime );
 	if ( visibility.logMissing )
 		Com_Printf( "Touch controls: no cgame state for 1000ms; using full controls\n" );
-	IN_TouchStep( TOUCH_REFRESH, 0, TOUCH_TARGET_IGNORE, 0, 0, 0 );
+	if ( !editState.active ) IN_TouchStep( TOUCH_REFRESH, 0, TOUCH_TARGET_IGNORE, 0, 0, 0 );
 }
 
 void IN_TouchResetState( void ) {
@@ -205,6 +230,7 @@ void IN_TouchRestoreDefaultBinds( void ) {
 }
 
 static void IN_TouchLayoutReset( void ) {
+	IN_TouchEndEdit();
 	Cvar_Set( "in_touchLayout", "" );
 	layoutModification = -1;
 	if ( touchWindow ) IN_TouchUpdateLayout();
@@ -313,6 +339,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		return;
 	} else {
 		int hit = TouchLayout_Hit( rects, x, y, IN_TouchVisibleButtons() );
+		if (TouchLayout_Hit(rects,x,y,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK) hit=TB_LOCK;
 		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
 		int target = TOUCH_TARGET_IGNORE;
 		if ( hit >= 0 )
@@ -321,8 +348,12 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 			target = TOUCH_TARGET_MOVE;
 		else if ( zone == TOUCH_ZONE_AIM )
 			target = TOUCH_TARGET_AIM;
+		if (hit==TB_LOCK) {
+			f->role=ROLE_EDIT_LOCK; f->cancelled=qfalse;
+		} else {
 		f->role = ROLE_GAMEPLAY;
 		IN_TouchStep( TOUCH_DOWN, tf->fingerId, target, hit, x, y );
+		}
 	}
 	f->id = tf->fingerId;
 	f->ox = f->x = x;
@@ -335,7 +366,10 @@ static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
 		return;
 	f->x = tf->x * viewW;
 	f->y = tf->y * viewH;
-	if ( f->role == ROLE_CONSOLE ) {
+	if (f->role==ROLE_EDIT_LOCK) {
+		const float dx=f->x-f->ox,dy=f->y-f->oy,slop=6*pixelsPerPoint;
+		if(dx*dx+dy*dy>slop*slop) f->cancelled=qtrue;
+	} else if ( f->role == ROLE_CONSOLE ) {
 		if ( !IN_TouchOnConsole( f->x, f->y ) )
 			f->cancelled = qtrue;
 	} else if ( f->role == ROLE_CINEMATIC_TAP ) {
@@ -352,12 +386,38 @@ static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
 	}
 }
 
+static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
+	touchEditInput_t input = {};
+	input.event=event; input.finger=tf->fingerId; input.x=tf->x*viewW; input.y=tf->y*viewH;
+	input.button=TouchLayout_Hit(rects,input.x,input.y,IOS_TOUCH_ALL_BUTTONS);
+	if (TouchLayout_Hit(rects,input.x,input.y,1u<<TB_LOCK)==TB_LOCK) input.button=TB_LOCK;
+	input.slop=6*pixelsPerPoint;
+	if ( input.button>=0 ) {
+		const touchRect_t *r=&rects[input.button]; input.cx=r->x+r->w/2; input.cy=r->y+r->h/2;
+	}
+	const touchEditOutput_t out=TouchEdit_State(&editState,input);
+	if ( out.move && TouchEdit_Drag(&layoutOverrides,out.button,out.x,out.y,(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint) )
+		TouchLayout_Build((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,rects,&layoutOverrides);
+	if ( out.save ) {
+		char text[1024];
+		if ( TouchEdit_Serialize(&layoutOverrides,text,sizeof(text)) ) Cvar_Set("in_touchLayout",text);
+		layoutModification=in_touchLayout->modificationCount;
+		IN_TouchReleaseAll(); IN_GamepadZeroAxes();
+	}
+}
+
 void IN_TouchHandleEvent( const SDL_Event *e ) {
 	if ( !touchWindow )
 		return;
 	IN_TouchUpdateLayout();
 	IN_TouchSyncMode();
 	IN_TouchSyncVisibility();
+	if ( editState.active ) {
+		if (e->type==SDL_FINGERDOWN) IN_TouchEditEvent(&e->tfinger,TOUCH_EDIT_DOWN);
+		else if (e->type==SDL_FINGERMOTION) IN_TouchEditEvent(&e->tfinger,TOUCH_EDIT_MOVE);
+		else if (e->type==SDL_FINGERUP) IN_TouchEditEvent(&e->tfinger,TOUCH_EDIT_UP);
+		return;
+	}
 	switch ( e->type ) {
 	case SDL_FINGERDOWN:
 		IN_TouchFingerDown( &e->tfinger );
@@ -368,6 +428,12 @@ void IN_TouchHandleEvent( const SDL_Event *e ) {
 	case SDL_FINGERUP: {
 		touchFinger_t *f = IN_TouchFind( e->tfinger.fingerId );
 		if ( f ) {
+			if ( f->role==ROLE_EDIT_LOCK && !f->cancelled &&
+				TouchLayout_Hit(rects,e->tfinger.x*viewW,e->tfinger.y*viewH,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK ) {
+				IN_TouchReleaseAll(); IN_GamepadZeroAxes();
+				touchEditInput_t input = {}; input.event=TOUCH_EDIT_ENTER;
+				TouchEdit_State(&editState,input);
+			}
 			if ( f->role == ROLE_CINEMATIC_TAP && !f->cancelled && e->tfinger.timestamp - f->downTime < CONSOLE_HOLD_MS ) {
 				float dx = e->tfinger.x * viewW - f->ox, dy = e->tfinger.y * viewH - f->oy;
 				float slop = 0.02f * safeH;
@@ -401,6 +467,7 @@ void IN_TouchFrame( void ) {
 	IN_TouchSyncVisibility();
 
 	IN_TouchTextInput();
+	if ( editState.active ) return;
 
 	for ( int i = 0; i < MAX_TOUCH_FINGERS; i++ ) {
 		if ( fingers[i].role == ROLE_CONSOLE && !fingers[i].cancelled && !fingers[i].longPressed &&
@@ -430,6 +497,8 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	input.gestures = &gestures;
 	input.visibleButtons = IN_TouchVisibleButtons();
 	input.sticks = visibility.sticks;
+	input.editing = editState.active;
+	input.dragButton = editState.dragging ? editState.button : -1;
 	input.styleColor = visibility.styleColor;
 	for ( int i = 0; i < MAX_TOUCH_FINGERS; ++i ) {
 		if ( fingers[i].role == ROLE_CONSOLE )

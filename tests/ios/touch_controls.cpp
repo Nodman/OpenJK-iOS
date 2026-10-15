@@ -466,7 +466,7 @@ BOOST_AUTO_TEST_CASE( decoded_button_mask_and_selective_capability_loss )
 	facts.legalStyleCount = facts.selectableForceCount = facts.ownedWeaponCount = 2;
 	facts.chatAvailable = 1;
 	const auto full = TouchCaps_Visible( TouchCaps_Pack( &facts, 1 ), 1 );
-	BOOST_CHECK_EQUAL( TouchCaps_ButtonMask( &full ), IOS_TOUCH_ALL_BUTTONS );
+	BOOST_CHECK_EQUAL( TouchCaps_ButtonMask( &full ), IOS_TOUCH_ALL_BUTTONS & ~(1u<<TB_LOCK) );
 	touchGestureState_t state;
 	TouchGesture_Reset( &state );
 	TouchGesture_Step( &state, Input( TOUCH_DOWN, 1, TOUCH_TARGET_BUTTON, TB_FORCE ) );

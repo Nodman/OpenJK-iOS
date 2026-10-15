@@ -31,7 +31,8 @@ BOOST_AUTO_TEST_CASE( button_definitions )
 		{ NULL, TOUCH_ANCHOR_TL, .95f, .08f, .11f, TG_CONSOLE, TOUCH_KEY_NONE, NULL },
 		{ "SABER", TOUCH_ANCHOR_TR, .49f, .10f, .12f, TG_SABER_SELECT, 26, NULL },
 		{ "CHAT", TOUCH_ANCHOR_TL, .28f, .10f, .12f, TG_CHAT, TOUCH_KEY_CHAT, NULL },
-		{ "PAD", TOUCH_ANCHOR_TL, .12f, .26f, .12f, TG_PAD, TOUCH_KEY_TAB, NULL }
+		{ "PAD", TOUCH_ANCHOR_TL, .12f, .26f, .12f, TG_PAD, TOUCH_KEY_TAB, NULL },
+		{ NULL, TOUCH_ANCHOR_TR, .11f, .34f, .12f, TG_LOCK, TOUCH_KEY_NONE, NULL }
 	};
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		BOOST_CHECK_EQUAL( touchButtonDefs[i].anchor, expected[i].anchor );
@@ -144,11 +145,11 @@ BOOST_AUTO_TEST_CASE( console_geometry_matches_layout )
 BOOST_AUTO_TEST_CASE( explicit_key_map_and_paired_pad_chat_trace )
 {
 	const int expected[TB_COUNT] = { A_AUX16, A_AUX17, A_AUX18, A_AUX19, A_AUX20, A_AUX21, A_AUX22,
-		A_AUX23, A_AUX24, A_AUX25, A_ESCAPE, 0, A_AUX26, 'y', A_TAB };
+		A_AUX23, A_AUX24, A_AUX25, A_ESCAPE, 0, A_AUX26, 'y', A_TAB, 0 };
 	const int expectedMP[TB_COUNT] = { mp_touch_keys::A_AUX16, mp_touch_keys::A_AUX17, mp_touch_keys::A_AUX18,
 		mp_touch_keys::A_AUX19, mp_touch_keys::A_AUX20, mp_touch_keys::A_AUX21, mp_touch_keys::A_AUX22,
 		mp_touch_keys::A_AUX23, mp_touch_keys::A_AUX24, mp_touch_keys::A_AUX25, mp_touch_keys::A_ESCAPE,
-		0, mp_touch_keys::A_AUX26, 'y', mp_touch_keys::A_TAB };
+		0, mp_touch_keys::A_AUX26, 'y', mp_touch_keys::A_TAB, 0 };
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		BOOST_CHECK_EQUAL( TouchLayout_Key( i, A_AUX16, A_ESCAPE, A_TAB ), expected[i] );
 		BOOST_CHECK_EQUAL( TouchLayout_Key( i, mp_touch_keys::A_AUX16, mp_touch_keys::A_ESCAPE, mp_touch_keys::A_TAB ), expectedMP[i] );
@@ -245,6 +246,9 @@ BOOST_AUTO_TEST_CASE( fps_clears_console )
 				const aspectPoint_t origin = AspectLayout_ToPixels( &layout,
 					(int)( right - width ), (int)( layout.fullRect.y + 2 ) );
 				const aspectPoint_t size = AspectLayout_SizeToPixels( &layout, width, 18 * scale );
+				touchRect_t buttons[TB_COUNT];
+				TouchLayout_Build(layout.W,layout.H,L,0,R,layout.safeB,1.5f*factor,buttons);
+				BOOST_CHECK_GE(buttons[TB_LOCK].y,origin.y+size.y);
 				BOOST_CHECK_LE( origin.x + size.x, con.x - 6 + 1e-3 );
 				BOOST_CHECK_LE( origin.x + size.x, layout.W - R );
 				BOOST_CHECK( origin.x + size.x <= con.x || origin.x >= con.x + con.w ||

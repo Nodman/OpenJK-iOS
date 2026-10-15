@@ -562,6 +562,7 @@ static void SCR_PublishSafeArea( void ) {
 static qhandle_t touchShader;
 
 void SCR_RegisterTouchMedia( void ) {
+	IN_TouchEndEdit();
 	touchShader = re.RegisterShaderNoMip( IOS_TOUCH_ATLAS_NAME );
 }
 
@@ -573,12 +574,16 @@ static void CL_DrawTouchQuad( const touchDrawItem_t *item, int glyph ) {
 static void CL_DrawTouchControls( void ) {
 	touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
 	const int n = IN_TouchGetDrawList( items, IOS_TOUCH_MAX_DRAW_ITEMS );
-	const float opacity = IN_TouchGetOpacity();
+	const float opacity = IN_TouchIsEditing() ? 1.0f : IN_TouchGetOpacity();
 	if ( !touchShader || opacity <= 0 )
 		return;
 	for ( int i = 0; i < n; ++i ) {
 		vec4_t colour;
 		TouchDraw_Color( &items[i], 0, opacity, colour );
+		if ( items[i].kind==TOUCH_DRAW_DIM ) {
+			SCR_FillRect(items[i].x,items[i].y,items[i].w,items[i].h,colour);
+			continue;
+		}
 		re.SetColor( colour );
 		CL_DrawTouchQuad( &items[i], TG_PLATE );
 		if ( items[i].kind == TOUCH_DRAW_BUTTON ) {

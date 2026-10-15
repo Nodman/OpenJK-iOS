@@ -73,7 +73,7 @@ static touchDrawInput_t DrawInput( const aspectLayout_t *layout, const touchRect
 	return input;
 }
 
-BOOST_AUTO_TEST_CASE( full_nineteen_records_and_raw_knobs_round_trip )
+BOOST_AUTO_TEST_CASE( full_twenty_records_and_raw_knobs_round_trip )
 {
 	touchRect_t rects[TB_COUNT];
 	TouchLayout_Build( 2868, 1320, 132, 0, 132, 102, 3, rects );
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE( full_nineteen_records_and_raw_knobs_round_trip )
 		const auto layout = AspectLayout_Build( 2868, 1320, corrected, 1.5f, 132, 0, 132, 102 );
 		auto input = DrawInput( &layout, rects, &gestures );
 		touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
-		BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, IOS_TOUCH_MAX_DRAW_ITEMS ), 19 );
+		BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, IOS_TOUCH_MAX_DRAW_ITEMS ), TB_COUNT+4 );
 		for ( int i = 0; i < TB_COUNT; ++i ) {
 			BOOST_CHECK_EQUAL( items[i].kind, TOUCH_DRAW_BUTTON );
 			BOOST_CHECK_EQUAL( items[i].glyph, touchButtonDefs[i].glyph );
@@ -98,16 +98,16 @@ BOOST_AUTO_TEST_CASE( full_nineteen_records_and_raw_knobs_round_trip )
 		BOOST_CHECK_EQUAL( items[TB_CONSOLE].pressed, 1 );
 		BOOST_CHECK_SMALL( items[TB_STYLE].rgb[0] - .567f, 1e-6f );
 		BOOST_CHECK_EQUAL( items[TB_ATTACK].rgb[0], 1 );
-		for ( int i = 15; i < 19; ++i ) {
+		for ( int i = TB_COUNT; i < TB_COUNT+4; ++i ) {
 			BOOST_CHECK_EQUAL( items[i].glyph, TG_PLATE );
-			BOOST_CHECK_EQUAL( items[i].kind, i % 2 ? TOUCH_DRAW_STICK_BASE : TOUCH_DRAW_STICK_KNOB );
+			BOOST_CHECK_EQUAL( items[i].kind, (i-TB_COUNT) % 2 ? TOUCH_DRAW_STICK_KNOB : TOUCH_DRAW_STICK_BASE );
 			const auto centre = AspectLayout_ToPixels( &layout, items[i].x + items[i].w / 2, items[i].y + items[i].h / 2 );
 			const auto size = AspectLayout_SizeToPixels( &layout, items[i].w, items[i].h );
 			const float expectedX[] = { 400, 450, 2000, 2060 }, expectedY[] = { 800, 800, 800, 720 };
-			BOOST_CHECK_SMALL( centre.x - expectedX[i - 15], 1e-3 );
-			BOOST_CHECK_SMALL( centre.y - expectedY[i - 15], 1e-3 );
-			BOOST_CHECK_SMALL( size.x - ( i % 2 ? 200 : 60 ), 1e-3 );
-			BOOST_CHECK_SMALL( size.y - ( i % 2 ? 200 : 60 ), 1e-3 );
+			BOOST_CHECK_SMALL( centre.x - expectedX[i - TB_COUNT], 1e-3 );
+			BOOST_CHECK_SMALL( centre.y - expectedY[i - TB_COUNT], 1e-3 );
+			BOOST_CHECK_SMALL( size.x - ( (i-TB_COUNT) % 2 ? 60 : 200 ), 1e-3 );
+			BOOST_CHECK_SMALL( size.y - ( (i-TB_COUNT) % 2 ? 60 : 200 ), 1e-3 );
 		}
 		BOOST_CHECK_EQUAL( gestures.fingers[gestures.lookOwner].role, TOUCH_FIRE_AIM );
 	}
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE( capacity_clips_whole_records_and_hidden_controls )
 		touchDrawItem_t items[34], sentinel;
 		std::memset( items, 0x5a, sizeof( items ) );
 		std::memset( &sentinel, 0x5a, sizeof( sentinel ) );
-		const int expected = capacity < 0 ? 0 : capacity < 19 ? capacity : 19;
+		const int expected = capacity < 0 ? 0 : capacity < TB_COUNT+4 ? capacity : TB_COUNT+4;
 		BOOST_CHECK_EQUAL( TouchDraw_Build( &input, items, capacity ), expected );
 		BOOST_CHECK_EQUAL( std::memcmp( &items[expected], &sentinel, sizeof( sentinel ) ), 0 );
 		if ( expected > 0 ) BOOST_CHECK_EQUAL( items[0].kind, TOUCH_DRAW_BUTTON );
@@ -159,12 +159,12 @@ BOOST_AUTO_TEST_CASE( held_and_promoted_fire_remain_pressed_at_zero_opacity )
 	TouchGesture_Step( &gestures, event );
 	auto input = DrawInput( &layout, rects, &gestures );
 	touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
-	BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, 32 ), 15 );
+	BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, 32 ), TB_COUNT );
 	BOOST_CHECK_EQUAL( items[TB_ATTACK].pressed, 1 );
 	event.event = TOUCH_MOTION;
 	event.x = 100;
 	TouchGesture_Step( &gestures, event );
-	BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, 32 ), 17 );
+	BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, 32 ), TB_COUNT+2 );
 	BOOST_CHECK_EQUAL( items[TB_ATTACK].pressed, 1 );
 	float colour[4];
 	TouchDraw_Color( &items[TB_ATTACK], 1, 0, colour );
