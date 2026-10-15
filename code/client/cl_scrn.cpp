@@ -632,6 +632,7 @@ This will be called twice if rendering in stereo mode
 */
 void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 #ifdef OPENJK_IOS
+	TouchForceFrameScope forceFrame;
 	SCR_PublishSafeArea();
 #endif
 	SCR_GetAspectLayout( qtrue );
@@ -697,6 +698,8 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 	Con_DrawConsole ();
 
 #ifdef OPENJK_IOS
+	if(uiFullscreen || cls.state!=CA_ACTIVE) IN_TouchClearForceFrame();
+	forceFrame.Finish();
 	CL_DrawTouchControls();
 #endif
 
@@ -715,6 +718,9 @@ text to the screen.
 ==================
 */
 void SCR_UpdateScreen( void ) {
+#ifdef OPENJK_IOS
+	TouchForceUpdateScope forceUpdate;
+#endif
 	static int	recursive;
 
 	if ( !scr_initialized ) {

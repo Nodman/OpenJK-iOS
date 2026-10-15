@@ -53,6 +53,12 @@ static void Expect( const char *name, const char *value, const char *reset ) {
 
 int main() {
 	cvar_cheats = Cvar_Get( "host_cheats", "1", 0 );
+	Cvar_Get("ui_touchForceAPI","1",CVAR_ROM|CVAR_PLATFORM_DEFAULT);
+	Cvar_Get("ui_touchForceAPI","0",CVAR_ROM|CVAR_VM_CREATED);
+	Cvar_Restart(qtrue);
+	Expect("ui_touchForceAPI","1","1");
+	assert(Cvar_FindVar("ui_touchForceAPI")->flags & CVAR_PLATFORM_DEFAULT);
+
 	// Desktop registration still adopts the code default after an ordinary seta.
 	Seta( "host_desktop", "0" );
 	cvar_t *desktop = Cvar_Get( "host_desktop", "1", CVAR_ARCHIVE_ND );

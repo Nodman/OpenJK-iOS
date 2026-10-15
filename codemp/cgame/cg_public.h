@@ -717,6 +717,9 @@ typedef struct cgameImport_s {
 	struct {
 		float			(*R_Font_StrLenPixels)					( const char *text, const int iFontIndex, const float scale );
 	} ext;
+#ifdef OPENJK_IOS
+	void (*TouchForceReport)(int version, int mask, int selected, int equipment);
+#endif
 } cgameImport_t;
 
 typedef struct cgameExport_s {

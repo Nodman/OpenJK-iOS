@@ -943,5 +943,8 @@ static void TranslateSyscalls( void ) {
 	trap->G2API_OverrideServer				= trap_G2API_OverrideServer;
 	trap->G2API_GetSurfaceName				= trap_G2API_GetSurfaceName;
 
+	#ifdef OPENJK_IOS
+	trap->TouchForceReport = NULL;
+	#endif
 	trap->ext.R_Font_StrLenPixels			= trap_R_Font_StrLenPixelsFloat;
 }

@@ -2259,10 +2259,16 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView ) {
 		cg.refdefViewAngles[YAW] = -360 * cg_pano.integer/cg_panoNumShots.integer;	//choose angle
 		AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
 		CG_DrawActive( stereoView );
+#ifdef OPENJK_IOS
+	CG_UpdateTouchState(qtrue);
+#endif
 		cg.levelShot = qfalse;
 	} 	else {
 		// actually issue the rendering calls
 		CG_DrawActive( stereoView );
+#ifdef OPENJK_IOS
+	CG_UpdateTouchState(qtrue);
+#endif
 	}
 	/*
 	if ( in_camera && !cg_skippingcin.integer )

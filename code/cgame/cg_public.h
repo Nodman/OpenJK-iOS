@@ -221,6 +221,9 @@ Ghoul2 Insert End
 
 	CG_OPENJK_MENU_PAINT,
 	CG_OPENJK_GETMENU_BYNAME,
+#ifdef OPENJK_IOS
+	CG_IOS_TOUCH_FORCE_REPORT,
+#endif
 } cgameImport_t;
 
 #ifdef JK2_MODE

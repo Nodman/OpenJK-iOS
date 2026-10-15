@@ -1072,6 +1072,11 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return CL_GetCurrentCmdNumber();
 	case CG_GETUSERCMD:
 		return CL_GetUserCmd( args[1], (usercmd_s *) VMA(2) );
+	#ifdef OPENJK_IOS
+	case CG_IOS_TOUCH_FORCE_REPORT:
+		IN_TouchReportForce(args[1],args[2],args[3],args[4]);
+		return 0;
+	#endif
 	case CG_SETUSERCMDVALUE:
 		CL_SetUserCmdValue( args[1], VMF(2), VMF(3), VMF(4) );
 		return 0;

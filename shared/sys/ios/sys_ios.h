@@ -1,6 +1,7 @@
 #pragma once
 #include "ios/touch/touch_atlas.h"
 #include "ios_touch_settings.h"
+#include "ios_touch_force.h"
 #include "qcommon/q_shared.h"	// per-app copy (codemp/ or code/) via include path
 
 struct SDL_Window;
@@ -69,3 +70,26 @@ void IN_GamepadShutdown( void );
 void IN_GamepadHandleEvent( const union SDL_Event *e );
 void IN_GamepadFrame( void );
 qboolean IN_GamepadActive( void );
+
+void IN_TouchReportForce(int version,int mask,int selected,int equipment);
+void IN_TouchClearForceFrame(void);
+touchForceToken_t IN_TouchBeginForceUpdate(void);
+touchForceToken_t IN_TouchBeginForceFrame(void);
+void IN_TouchEndForceUpdate(touchForceToken_t token);
+void IN_TouchEndForceFrame(touchForceToken_t token);
+touchForceReport_t IN_TouchGetForceReport(void);
+
+class TouchForceUpdateScope {
+	touchForceToken_t token;
+public:
+	TouchForceUpdateScope():token(IN_TouchBeginForceUpdate()) {}
+	~TouchForceUpdateScope() { IN_TouchEndForceUpdate(token); }
+};
+class TouchForceFrameScope {
+	touchForceToken_t token;
+	bool finished;
+public:
+	TouchForceFrameScope():token(IN_TouchBeginForceFrame()),finished(false) {}
+	void Finish() { if(!finished) { finished=true; IN_TouchEndForceFrame(token); } }
+	~TouchForceFrameScope() { Finish(); }
+};

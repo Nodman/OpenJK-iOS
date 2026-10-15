@@ -58,6 +58,16 @@ IOS_TOUCH_INLINE int TouchGesture_IsButton( int role )
 	return role == TOUCH_BUTTON || role == TOUCH_FIRE_HELD || role == TOUCH_FIRE_AIM;
 }
 
+IOS_TOUCH_INLINE int TouchGesture_HoldsButton( const touchGestureState_t *state, long long finger, int button )
+{
+	int i;
+	for ( i = 0; i < IOS_TOUCH_GESTURE_FINGERS; ++i ) {
+		const touchGestureFinger_t *f = &state->fingers[i];
+		if ( f->id == finger && TouchGesture_IsButton( f->role ) && f->button == button ) return 1;
+	}
+	return 0;
+}
+
 IOS_TOUCH_INLINE void TouchGesture_Release( touchGestureState_t *state, int index, touchGestureActions_t *out, int role )
 {
 	touchGestureFinger_t *f = &state->fingers[index];

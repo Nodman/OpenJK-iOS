@@ -26,7 +26,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "cg_local.h"
 #ifdef OPENJK_IOS
 #include "sys/ios/ios_touch_visibility.h"
+#include "sys/ios/ios_touch_force_producer.h"
 static vmCvar_t cg_touchState;
+static vmCvar_t cg_touchForceAPI;
 static int cg_lastTouchMask = -1;
 #endif
 
@@ -144,6 +146,13 @@ void CG_UpdateTouchState( qboolean valid ) {
 		}
 	}
 	CG_PublishTouchState( TouchCaps_Pack( &facts, 1 ) );
+	touchForceReport_t report=TouchForce_Empty();
+	if(facts.equipmentAllowed) {
+		const playerState_t *ps=&cg.predictedPlayerState;
+		report=TouchForce_Produce(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,cg.forceSelect,ps->fd.forcePowerSelected,1);
+	}
+	if(cg_touchForceAPI.integer==TOUCH_FORCE_API && trap->TouchForceReport)
+		trap->TouchForceReport(TOUCH_FORCE_API,(int)report.learned,report.selected,report.equipment);
 }
 #endif
 
@@ -2463,6 +2472,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
 
 #ifdef OPENJK_IOS
 	trap->Cvar_Register( &cg_touchState, "ui_touchState", "0", CVAR_ROM );
+	trap->Cvar_Register( &cg_touchForceAPI, "ui_touchForceAPI", "0", CVAR_ROM );
 	CG_ResetTouchState();
 #endif
 

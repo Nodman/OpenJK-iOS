@@ -42,6 +42,19 @@ static qboolean lastHwKeyboard, lastTextDemand;
 static cvar_t *in_touchControls, *in_touchOpacity, *ui_touchState, *in_touchLayout;
 static touchBridgeState_t bridgeState;
 static touchVisibility_t visibility;
+static touchForceBridge_t forceBridge;
+static touchForceReport_t lastForceReport;
+
+void IN_TouchReportForce(int version,int mask,int selected,int equipment) {
+	TouchForce_Report(&forceBridge,version,mask,selected,equipment);
+}
+void IN_TouchClearForceFrame(void) { TouchForce_ClearPending(&forceBridge); }
+touchForceToken_t IN_TouchBeginForceUpdate(void) { return TouchForce_BeginUpdate(&forceBridge); }
+touchForceToken_t IN_TouchBeginForceFrame(void) { return TouchForce_BeginField(&forceBridge); }
+touchForceReport_t IN_TouchGetForceReport(void) { return TouchForce_Current(&forceBridge,(unsigned int)cls.realtime); }
+void IN_TouchEndForceUpdate(touchForceToken_t token) { TouchForce_EndUpdate(&forceBridge,token,(unsigned int)cls.realtime); }
+void IN_TouchEndForceFrame(touchForceToken_t token) { TouchForce_EndField(&forceBridge,token,(unsigned int)cls.realtime); }
+
 
 static qboolean IN_TouchHidden( void ) {
 	return ( in_touchControls->integer == 0 || ( in_touchControls->integer == 1 &&
@@ -130,6 +143,15 @@ static void IN_TouchRelease( touchFinger_t *f ) {
 	f->role = ROLE_NONE;
 }
 
+static void IN_TouchCancelUnavailableForce(void) {
+	const touchForceReport_t report=IN_TouchGetForceReport();
+	const int cancel=TouchForce_ShouldCancel(&forceBridge,lastForceReport,report);
+	lastForceReport=report;
+	if(!cancel) return;
+	for(int i=0;i<MAX_TOUCH_FINGERS;++i)
+		if(fingers[i].role==ROLE_GAMEPLAY && TouchGesture_HoldsButton(&gestures,fingers[i].id,TB_FORCE)) IN_TouchRelease(&fingers[i]);
+}
+
 static void IN_TouchSaveEdit( void ) {
 	if ( !editState.active ) return;
 	touchEditInput_t input = {}; input.event=TOUCH_EDIT_EXIT;
@@ -182,12 +204,15 @@ static void IN_TouchSyncVisibility( void ) {
 	const unsigned int mask = ui_touchState ? (unsigned int)ui_touchState->integer : 0;
 	visibility = TouchBridge_Step( &bridgeState, mask, multiplayer, cls.state == CA_ACTIVE,
 		lastHidden, CL_TouchUIMode(), CL_TouchCinematic(), (unsigned int)cls.realtime );
+	IN_TouchCancelUnavailableForce();
 	if ( visibility.logMissing )
 		Com_Printf( "Touch controls: no cgame state for 1000ms; using full controls\n" );
 	if ( !editState.active ) IN_TouchStep( TOUCH_REFRESH, 0, TOUCH_TARGET_IGNORE, 0, 0, 0 );
 }
 
 void IN_TouchResetState( void ) {
+	TouchForce_Reset(&forceBridge);
+	lastForceReport=TouchForce_Empty();
 	if ( !ui_touchState )
 		ui_touchState = Cvar_Get( "ui_touchState", "0", CVAR_ROM );
 	Cvar_Set( "ui_touchState", "0" );
