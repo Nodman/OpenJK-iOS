@@ -158,7 +158,7 @@ int main() {
 	assert(!TouchForce_Produce(~0u,levels,FP_PUSH,-1,0).equipment);
 	memset(levels,0,sizeof(levels));
 	assert(!TouchForce_Produce(~0u,levels,FP_PUSH,-1,1).learned);
-#ifndef _JK2EXE
+#if !defined(_JK2EXE) && !defined(SP_GAME)
 	levels[FP_TEAM_HEAL]=1;
 	report=TouchForce_Produce(1u<<FP_TEAM_HEAL,levels,FP_TEAM_HEAL,-1,1);
 	assert(report.selected==13 && !report.learned);

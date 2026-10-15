@@ -6,7 +6,7 @@ static inline int TouchForce_Canonical(int power) {
 	case FP_PUSH:return 1; case FP_PULL:return 2; case FP_SPEED:return 3; case FP_SEE:return 4;
 	case FP_ABSORB:return 5; case FP_HEAL:return 6; case FP_TELEPATHY:return 7; case FP_PROTECT:return 8;
 	case FP_DRAIN:return 9; case FP_GRIP:return 10; case FP_LIGHTNING:return 11; case FP_RAGE:return 12;
-#ifndef _JK2EXE
+#if !defined(_JK2EXE) && !defined(SP_GAME)
 	case FP_TEAM_HEAL:return 13; case FP_TEAM_FORCE:return 14;
 #endif
 	default:return 0;
