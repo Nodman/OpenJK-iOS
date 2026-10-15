@@ -22,7 +22,7 @@ names = ('menu', 'chat', 'pad', 'prev', 'saber', 'next', 'ring', 'force-use',
          'console', 'alt-attack', 'attack', 'jump', 'crouch', 'style-blue', 'use', 'plate',
          'lock', 'gun-attack', 'style-red', 'rect-plate')
 # Fits use the source alpha bounds, the 8.5..247.5 UV crop, and a one-texel edge margin.
-transforms = {4: (0.776416612, 0), 7: (0.850418701, 0), 10: (0.755092724, 0),
+transforms = {4: (0.776416612, 0), 7: (0.945172502, 0), 10: (0.755092724, 0), 11: (0.900929398, 0),
               13: (0.776416612, -35), 17: (0.858732719, 0), 18: (0.776416612, 45)}
 if not ((source / '04-saber.svg').read_bytes() == (source / '13-style-blue.svg').read_bytes()
         == (source / '18-style-red.svg').read_bytes()):
