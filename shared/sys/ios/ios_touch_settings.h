@@ -1,5 +1,6 @@
 #pragma once
 #include "ios_touch_layout.h"
+#include "ios_touch_force_slots.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -8,15 +9,16 @@
 
 typedef enum { TOUCH_SETTINGS_DOWN, TOUCH_SETTINGS_MOVE, TOUCH_SETTINGS_UP } touchSettingsEvent_t;
 typedef enum { TOUCH_SETTINGS_NONE, TOUCH_SETTINGS_APPEARANCE, TOUCH_SETTINGS_AIM, TOUCH_SETTINGS_FORCE, TOUCH_SETTINGS_DONE,
-	TOUCH_SETTINGS_OPACITY = 10, TOUCH_SETTINGS_PERCENT = 20 } touchSettingsControl_t;
-typedef struct { touchRect_t rect; int control, selected; char label[32]; } touchSettingsItem_t;
+	TOUCH_SETTINGS_SLOT = 40, TOUCH_SETTINGS_POWER = 50, TOUCH_SETTINGS_OPACITY = 10, TOUCH_SETTINGS_PERCENT = 20 } touchSettingsControl_t;
+typedef struct { touchRect_t rect; int control, selected, force; char label[32]; } touchSettingsItem_t;
 typedef struct {
+	int picker, slots[4]; unsigned int learned;
 	int tab, dropdown, capture[IOS_TOUCH_SETTINGS_FINGERS], control, moved;
 	long long fingers[IOS_TOUCH_SETTINGS_FINGERS];
 	float startX, startY, lastY, scroll;
 } touchSettingsState_t;
 typedef struct { touchRect_t bar, panel; touchSettingsItem_t items[IOS_TOUCH_SETTINGS_ITEMS]; int count; float maxScroll, p; } touchSettingsLayout_t;
-typedef struct { int consumed, cancelDrag, done, opacity; } touchSettingsAction_t;
+typedef struct { int consumed, cancelDrag, done, opacity, assign, slot, power; } touchSettingsAction_t;
 
 IOS_TOUCH_INLINE int TouchSettings_Contains( const touchRect_t *r, float x, float y )
 {
@@ -38,6 +40,7 @@ IOS_TOUCH_INLINE void TouchSettings_Add( touchSettingsLayout_t *layout, touchRec
 	touchSettingsItem_t *item;
 	if ( layout->count >= IOS_TOUCH_SETTINGS_ITEMS || rect.w <= 0 || rect.h <= 0 ) return;
 	item = &layout->items[layout->count++];
+	item->force=0;
 	item->rect = rect; item->control = control; item->selected = selected;
 	snprintf( item->label, sizeof(item->label), "%s", label );
 }
@@ -55,6 +58,11 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 	gap = state->tab ? fminf( 4*p, fmaxf( 0,H-T-B-out->bar.h ) ) : 0;
 	content = state->tab ? 52*p : 0;
 	if ( state->tab == TOUCH_SETTINGS_APPEARANCE && state->dropdown ) content += 132*p;
+	if(state->tab==TOUCH_SETTINGS_FORCE) {
+		int choices=1,id;
+		for(id=1;id<=12;++id) if(state->learned & (1u<<id)) ++choices;
+		content=(8+4*44+(state->picker?((choices+2)/3)*44+4:0))*p;
+	}
 	panelH = fminf( content, fmaxf( 0,H-T-B-out->bar.h-gap ) );
 	groupH = out->bar.h + gap + panelH;
 	out->bar.y = fmaxf( T, fminf( (H-groupH)/2, H-B-groupH ) );
@@ -89,6 +97,28 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 			TouchSettings_Add(out,clipped,control,selected,clipped.h>=24*p?label:"");
 		}
 	}
+	if(state->tab==TOUCH_SETTINGS_FORCE) {
+		int index=0,id;
+		for(i=0;i<4;++i) {
+			char label[32];touchRect_t r={out->panel.x+4*p,out->panel.y+(4+i*44)*p-scroll,out->panel.w-8*p,44*p};
+			const int power=state->slots[i];
+			snprintf(label,sizeof(label),"Slot %d: %s",i+1,TouchForceSlots_Name(power));
+			r.h=fminf(r.y+r.h,out->panel.y+out->panel.h)-fmaxf(r.y,out->panel.y);r.y=fmaxf(r.y,out->panel.y);
+			const int before=out->count;
+			TouchSettings_Add(out,r,TOUCH_SETTINGS_SLOT+i,state->picker==i+1,r.h>=24*p?label:"");
+			if(out->count>before && r.h>=24*p) out->items[out->count-1].force=power;
+		}
+		if(state->picker) for(id=0;id<=12;++id) {
+			touchRect_t r;
+			if(id && !(state->learned & (1u<<id))) continue;
+			r.x=out->panel.x+4*p+(index%3)*(out->panel.w-8*p)/3;
+			r.y=out->panel.y+(184+(index/3)*44)*p-scroll;r.w=(out->panel.w-8*p)/3;r.h=44*p;++index;
+			r.h=fminf(r.y+r.h,out->panel.y+out->panel.h)-fmaxf(r.y,out->panel.y);r.y=fmaxf(r.y,out->panel.y);
+			const int before=out->count;
+			TouchSettings_Add(out,r,TOUCH_SETTINGS_POWER+id,state->slots[state->picker-1]==id,r.h>=24*p?TouchForceSlots_Name(id):"");
+			if(out->count>before && r.h>=24*p) out->items[out->count-1].force=id;
+		}
+	}
 }
 
 IOS_TOUCH_INLINE int TouchSettings_Hit( const touchSettingsLayout_t *layout, float x, float y )
@@ -109,7 +139,7 @@ IOS_TOUCH_INLINE int TouchSettings_ModalContains( const touchSettingsLayout_t *l
 IOS_TOUCH_INLINE touchSettingsAction_t TouchSettings_Step( touchSettingsState_t *state,
 	const touchSettingsLayout_t *layout, int event, long long finger, float x, float y )
 {
-	touchSettingsAction_t action = {0,0,0,0};
+	touchSettingsAction_t action = {0,0,0,0,0,0,0};
 	int i,found=-1,freeSlot=-1,owned=0;
 	for(i=0;i<IOS_TOUCH_SETTINGS_FINGERS;++i) {
 		if(state->capture[i]) { if(state->fingers[i]==finger) found=i; ++owned; }
@@ -133,8 +163,12 @@ IOS_TOUCH_INLINE touchSettingsAction_t TouchSettings_Step( touchSettingsState_t 
 				state->scroll=fmaxf(0,fminf(state->scroll+state->lastY-y,layout->maxScroll));
 			state->lastY=y;
 		} else if(event==TOUCH_SETTINGS_UP && !state->moved && TouchSettings_Hit(layout,x,y)==state->control) {
-			if(state->control>=1 && state->control<=3) { state->tab=state->tab==state->control?0:state->control; state->dropdown=0; state->scroll=0; }
-			else if(state->control==TOUCH_SETTINGS_DONE) action.done=1;
+			if(state->control>=1 && state->control<=3) { state->tab=state->tab==state->control?0:state->control; state->dropdown=state->picker=0; state->scroll=0; }
+			else if(state->control>=TOUCH_SETTINGS_SLOT && state->control<TOUCH_SETTINGS_SLOT+4) {
+				state->picker=state->picker==state->control-TOUCH_SETTINGS_SLOT+1?0:state->control-TOUCH_SETTINGS_SLOT+1;state->scroll=0;
+			} else if(state->control>=TOUCH_SETTINGS_POWER && state->control<=TOUCH_SETTINGS_POWER+12 && state->picker) {
+				action.assign=1;action.slot=state->picker-1;action.power=state->control-TOUCH_SETTINGS_POWER;state->picker=0;state->scroll=0;
+			} else if(state->control==TOUCH_SETTINGS_DONE) action.done=1;
 			else if(state->control==TOUCH_SETTINGS_OPACITY) { state->dropdown=!state->dropdown; state->scroll=0; }
 			else if(state->control>=TOUCH_SETTINGS_PERCENT && state->control<TOUCH_SETTINGS_PERCENT+9) {
 				action.opacity=20+(state->control-TOUCH_SETTINGS_PERCENT)*10; state->dropdown=0; state->scroll=0;

@@ -593,11 +593,20 @@ static void CL_DrawTouchSettings( void ) {
 		const touchRect_t r=TouchLayout_RectToVirtual(&layout,items[i].rect);
 		const vec4_t background={items[i].selected?.30f:.06f,items[i].selected?.25f:.06f,.08f,.95f};
 		SCR_FillRect(r.x,r.y,r.w,r.h,background);
+		const qhandle_t icon=TouchForceMedia_Resolve(&touchForceMedia,items[i].force,touchForceMediaLive && cls.rendererStarted && touchShader,
+			SCR_TouchForceReadable,SCR_TouchForceRegister,NULL);
+		float iconWidth=0;
+		if(icon) {
+			const aspectPoint_t square=AspectLayout_SizeToVirtual(&layout,items[i].rect.h*.65f,items[i].rect.h*.65f);
+			const vec4_t white={1,1,1,1};re->SetColor(white);
+			re->DrawStretchPic(r.x+square.x*.15f,r.y+(r.h-square.y)/2,square.x,square.y,0,0,1,1,icon);
+			iconWidth=square.x*1.3f;
+		}
 		const size_t length=strlen(items[i].label);
 		if(!length) continue;
 		const aspectPoint_t glyph=AspectLayout_SizeToVirtual(&layout,6*p,12*p);
-		const float width=fminf((float)glyph.x,(r.w*.9f)/length),height=fminf((float)glyph.y,r.h*.8f);
-		const float x=r.x+(r.w-width*length)/2,y=r.y+(r.h-height)/2;
+		const float width=fminf((float)glyph.x,((r.w-iconWidth)*.9f)/length),height=fminf((float)glyph.y,r.h*.8f);
+		const float x=r.x+iconWidth+(r.w-iconWidth-width*length)/2,y=r.y+(r.h-height)/2;
 		const vec4_t white={1,1,1,1};
 		re->SetColor(white);
 		for(size_t j=0;j<length;++j) {
@@ -628,13 +637,19 @@ static void CL_DrawTouchControls( void ) {
 		if ( items[i].kind == TOUCH_DRAW_BUTTON && items[i].glyph >= 0 ) {
 			TouchDraw_Color( &items[i], 1, opacity, colour );
 			re->SetColor( colour );
-			const int force=items[i].button==TB_FORCE ? items[i].force : 0;
+			const int force=items[i].force;
 			const qhandle_t shader=TouchForceMedia_Resolve(&touchForceMedia,force,touchForceMediaLive && cls.rendererStarted && touchShader,
 				SCR_TouchForceReadable,SCR_TouchForceRegister,NULL);
 			if(shader) {
 				const touchForceQuad_t quad=TouchForceMedia_Quad(items[i].x,items[i].y,items[i].w,items[i].h);
 				re->DrawStretchPic(quad.x,quad.y,quad.w,quad.h,0,0,1,1,shader);
 			} else CL_DrawTouchQuad( &items[i], items[i].glyph );
+		}
+		if(IN_TouchIsEditing() && items[i].button>=TB_FORCE_SLOT1 && items[i].button<=TB_FORCE_SLOT4) {
+			const unsigned char ch='1'+items[i].button-TB_FORCE_SLOT1;
+			const float u=(ch&15)/16.0f,v=(ch>>4)/16.0f;
+			const vec4_t white={1,1,1,1};re->SetColor(white);
+			re->DrawStretchPic(items[i].x+items[i].w*.70f,items[i].y+items[i].h*.60f,items[i].w*.20f,items[i].h*.30f,u,v,u+.03125f,v+.0625f,cls.charSetShader);
 		}
 	}
 	CL_DrawTouchSettings();

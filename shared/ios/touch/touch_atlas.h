@@ -56,7 +56,7 @@ typedef struct {
 	unsigned int visibleButtons, pressedButtons;
 	int sticks, styleColor, weaponClass;
 	int editing, dragButton;
-	int selectedForce;
+	int selectedForce, quickForces[4];
 } touchDrawInput_t;
 
 IOS_TOUCH_INLINE int TouchDraw_WeaponGlyph( int button,int weaponClass )
@@ -172,7 +172,13 @@ IOS_TOUCH_INLINE int TouchDraw_Build( const touchDrawInput_t *input, touchDrawIt
 		const int before=count;
 		TouchDraw_Add( input, items, &count, capacity, r->x, r->y, r->w, r->h, TOUCH_DRAW_BUTTON,
 			TouchDraw_ButtonGlyph(button,input->weaponClass,input->styleColor), TouchDraw_ButtonPlate(button), pressed, button == TB_STYLE ? input->styleColor : TOUCH_STYLE_UNKNOWN );
-		if(count>before) { items[count-1].button=button; items[count-1].force=button==TB_FORCE ? input->selectedForce : 0; }
+		if(count>before) {
+			items[count-1].button=button;items[count-1].force=button==TB_FORCE ? input->selectedForce : 0;
+			if(button>=TB_FORCE_SLOT1 && button<=TB_FORCE_SLOT4) {
+				items[count-1].force=input->quickForces[button-TB_FORCE_SLOT1];
+				if(items[count-1].force) items[count-1].glyph=TG_FORCE;
+			}
+		}
 	}
 	if ( input->sticks && !input->editing ) {
 		const int owners[2] = { input->gestures->moveOwner, input->gestures->lookOwner };

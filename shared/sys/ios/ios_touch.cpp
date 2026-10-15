@@ -44,6 +44,9 @@ static touchBridgeState_t bridgeState;
 static touchVisibility_t visibility;
 static touchForceBridge_t forceBridge;
 static touchForceReport_t lastForceReport;
+static cvar_t *in_touchForceSlots;
+static touchForceSlots_t forceSlots;
+static int forceSlotsModification=-1;
 
 void IN_TouchReportForce(int version,int mask,int selected,int equipment) {
 	TouchForce_Report(&forceBridge,version,mask,selected,equipment);
@@ -104,8 +107,22 @@ static int IN_TouchButtonKey( int button ) {
 	return TouchLayout_Key( button, A_AUX16, A_ESCAPE, A_TAB );
 }
 
+static void IN_TouchSyncForceSlots(void) {
+	if(!in_touchForceSlots || forceSlotsModification==in_touchForceSlots->modificationCount) return;
+	TouchForceSlots_Parse(in_touchForceSlots->string,&forceSlots);
+	forceSlotsModification=in_touchForceSlots->modificationCount;
+}
+static void IN_TouchSettingsForce(void) {
+	IN_TouchSyncForceSlots();
+	settingsState.learned=IN_TouchGetForceReport().learned;
+	for(int i=0;i<4;++i) settingsState.slots[i]=TouchForceSlots_Visible(&forceSlots,i,settingsState.learned);
+}
 static unsigned int IN_TouchVisibleButtons( void ) {
 	unsigned int mask = TouchCaps_ButtonMask( &visibility );
+	IN_TouchSyncForceSlots();
+	const touchForceReport_t report=IN_TouchGetForceReport();
+	if(cls.state==CA_ACTIVE && report.equipment && !lastHidden && !CL_TouchUIMode() && !CL_TouchCinematic())
+		for(int i=0;i<4;++i) if(TouchForceSlots_Visible(&forceSlots,i,report.learned)) mask|=1u<<(TB_FORCE_SLOT1+i);
 	if ( TouchEdit_LockVisible(cls.state==CA_ACTIVE,lastHidden,CL_TouchUIMode(),CL_TouchCinematic()) ) mask |= 1u << TB_LOCK;
 	return mask;
 }
@@ -271,6 +288,8 @@ static void IN_TouchLayoutReset( void ) {
 }
 
 void IN_TouchInit( SDL_Window *window ) {
+	in_touchForceSlots=Cvar_Get("in_touchForceSlots","v1:1,2,3,4",CVAR_ARCHIVE);
+	IN_TouchSyncForceSlots();
 	in_touchLayout = Cvar_Get( "in_touchLayout", "", CVAR_ARCHIVE );
 	Cmd_RemoveCommand( "touchLayoutReset" );
 	Cmd_AddCommand( "touchLayoutReset", IN_TouchLayoutReset );
@@ -378,7 +397,9 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		if (TouchLayout_Hit(rects,x,y,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK) hit=TB_LOCK;
 		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
 		int target = TOUCH_TARGET_IGNORE;
-		if ( hit >= 0 )
+		if ( hit >= TB_FORCE_SLOT1 && hit <= TB_FORCE_SLOT4 )
+			target = TOUCH_TARGET_IGNORE;
+		else if ( hit >= 0 )
 			target = hit == TB_ATTACK || hit == TB_ALTATTACK ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
 		else if ( zone == TOUCH_ZONE_MOVE )
 			target = TOUCH_TARGET_MOVE;
@@ -424,10 +445,17 @@ static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
 
 static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 	touchSettingsLayout_t panel;
+	IN_TouchSettingsForce();
 	TouchSettings_Build(&settingsState,IN_TouchGetOpacity(),(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);
 	const int panelEvent=event==TOUCH_EDIT_DOWN?TOUCH_SETTINGS_DOWN:event==TOUCH_EDIT_MOVE?TOUCH_SETTINGS_MOVE:TOUCH_SETTINGS_UP;
 	const touchSettingsAction_t action=TouchSettings_Step(&settingsState,&panel,panelEvent,tf->fingerId,tf->x*viewW,tf->y*viewH);
 	if(action.cancelDrag) { editState.dragging=0; editState.button=-1; }
+	if(action.assign) {
+		char text[64];
+		TouchForceSlots_Assign(&forceSlots,action.slot,action.power,IN_TouchGetForceReport().learned);
+		TouchForceSlots_Save(&forceSlots,text,sizeof(text));Cvar_Set("in_touchForceSlots",text);
+		forceSlotsModification=in_touchForceSlots->modificationCount;
+	}
 	if(action.opacity) Cvar_SetValue("in_touchOpacity",action.opacity*.01f);
 	if(action.done) { IN_TouchEndEdit(); return; }
 	if(action.consumed) return;
@@ -543,7 +571,9 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	input.gestures = &gestures;
 	input.visibleButtons = IN_TouchVisibleButtons();
 	input.sticks = visibility.sticks;
-	input.selectedForce = cls.state==CA_ACTIVE && !editState.active ? IN_TouchGetForceReport().selected : 0;
+	const touchForceReport_t report=IN_TouchGetForceReport();
+	input.selectedForce = cls.state==CA_ACTIVE && !editState.active ? report.selected : 0;
+	for(int i=0;i<4;++i) input.quickForces[i]=TouchForceSlots_Visible(&forceSlots,i,report.learned);
 	input.editing = editState.active;
 	input.dragButton = editState.dragging ? editState.button : -1;
 	input.styleColor = visibility.styleColor;
@@ -558,6 +588,7 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 int IN_TouchGetSettingsDrawList( touchSettingsItem_t *items, int capacity, float *pointScale ) {
 	if(!editState.active || !layoutReady || !items || capacity<=0) return 0;
 	touchSettingsLayout_t panel;
+	IN_TouchSettingsForce();
 	TouchSettings_Build(&settingsState,IN_TouchGetOpacity(),(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);
 	const int count=panel.count<capacity?panel.count:capacity;
 	memcpy(items,panel.items,count*sizeof(*items));

@@ -1,4 +1,5 @@
 #include "sys/ios/ios_touch_force_media.h"
+#include "sys/ios/ios_touch_force_slots.h"
 #include "ios/touch/touch_atlas.h"
 #include <boost/test/unit_test.hpp>
 #include <cmath>
@@ -38,6 +39,24 @@ BOOST_AUTO_TEST_CASE(retail_quad_stays_inside_physical_circle) {
 		BOOST_CHECK(std::hypot(physical.x/2,physical.y/2)<=40.00001);
 		BOOST_CHECK_CLOSE(physical.x,physical.y,.001);
 	}
+}
+BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(ios)
+BOOST_AUTO_TEST_SUITE(force_slots)
+BOOST_AUTO_TEST_CASE(storage_privacy_and_move) {
+	touchForceSlots_t slots;TouchForceSlots_Parse("",&slots);
+	for(int i=0;i<4;++i) BOOST_CHECK_EQUAL(slots.powers[i],i+1);
+	TouchForceSlots_Parse("v1:0,12,99,12",&slots);
+	BOOST_CHECK_EQUAL(slots.powers[0],0);BOOST_CHECK_EQUAL(slots.powers[1],12);
+	BOOST_CHECK_EQUAL(slots.powers[2],0);BOOST_CHECK_EQUAL(slots.powers[3],0);
+	BOOST_CHECK_EQUAL(TouchForceSlots_Visible(&slots,1,0),0);BOOST_CHECK_EQUAL(slots.powers[1],12);
+	TouchForceSlots_Assign(&slots,3,12,1u<<12);BOOST_CHECK_EQUAL(slots.powers[1],0);BOOST_CHECK_EQUAL(slots.powers[3],12);
+	TouchForceSlots_Assign(&slots,3,1,0);BOOST_CHECK_EQUAL(slots.powers[3],12);
+	TouchForceSlots_Assign(&slots,3,0,0);char text[64];TouchForceSlots_Save(&slots,text,sizeof(text));
+	BOOST_CHECK_EQUAL(text,"v1:0,0,0,0");
+	TouchForceSlots_Parse("v1:1,2,3,4junk",&slots);BOOST_CHECK_EQUAL(slots.powers[3],4);
 }
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()

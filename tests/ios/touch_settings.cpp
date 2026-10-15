@@ -126,3 +126,39 @@ BOOST_AUTO_TEST_CASE( sideways_drag_cancels_tap_and_secondary_never_promotes )
 
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(ios)
+BOOST_AUTO_TEST_SUITE(force_picker)
+BOOST_AUTO_TEST_CASE(slot_tap_then_empty_assignment) {
+	touchSettingsState_t state={};state.tab=TOUCH_SETTINGS_FORCE;state.learned=1u<<1;state.slots[0]=1;
+	touchSettingsLayout_t layout;
+	TouchSettings_Build(&state,.5f,844,390,0,0,0,0,1,&layout);
+	for(int control: {TOUCH_SETTINGS_SLOT,TOUCH_SETTINGS_POWER}) {
+		TouchSettings_Build(&state,.5f,844,390,0,0,0,0,1,&layout);
+		touchRect_t rect={};
+		for(int i=0;i<layout.count;++i) if(layout.items[i].control==control) rect=layout.items[i].rect;
+		BOOST_REQUIRE(rect.w>0 && rect.h>0);
+		TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,7,rect.x+rect.w/2,rect.y+rect.h/2);
+		const auto action=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,7,rect.x+rect.w/2,rect.y+rect.h/2);
+		if(control==TOUCH_SETTINGS_SLOT) BOOST_CHECK_EQUAL(state.picker,1);
+		else { BOOST_CHECK(action.assign);BOOST_CHECK_EQUAL(action.slot,0);BOOST_CHECK_EQUAL(action.power,0);BOOST_CHECK_EQUAL(state.picker,0); }
+	}
+}
+BOOST_AUTO_TEST_CASE(learned_only_modal_choices) {
+	touchSettingsState_t state={};state.tab=TOUCH_SETTINGS_FORCE;state.picker=1;
+	state.learned=(1u<<1)|(1u<<12);state.slots[0]=1;
+	touchSettingsLayout_t layout;TouchSettings_Build(&state,.5f,844,390,0,0,0,0,1,&layout);
+	int choices=0;
+	for(int i=0;i<layout.count;++i) {
+		const auto &item=layout.items[i];
+		if(item.control>=TOUCH_SETTINGS_POWER && item.control<=TOUCH_SETTINGS_POWER+12) {
+			BOOST_CHECK(item.control==TOUCH_SETTINGS_POWER || item.control==TOUCH_SETTINGS_POWER+1 || item.control==TOUCH_SETTINGS_POWER+12);++choices;
+		}
+	}
+	BOOST_CHECK_EQUAL(choices,3);
+	state.learned=0;memset(state.slots,0,sizeof(state.slots));
+	TouchSettings_Build(&state,.5f,844,390,0,0,0,0,1,&layout);
+	for(int i=0;i<layout.count;++i) { BOOST_CHECK_EQUAL(layout.items[i].force,0);BOOST_CHECK(!strstr(layout.items[i].label,"Push")); }
+}
+BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END()
