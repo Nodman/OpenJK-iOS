@@ -16,30 +16,34 @@
 #include "../../code/client/cl_keys.cpp"
 #endif
 #include "../../shared/sys/ios/ios_touch.cpp"
+#define lastUIMode gamepadLastUIMode
+#include "../../shared/sys/ios/ios_gamepad.cpp"
+#undef lastUIMode
 
 static cvar_t testLayoutVar,testSlotsVar,testControlsVar,testOpacityVar,testCapsVar;
+static cvar_t aimVars[4];static std::string aimTexts[4];
+static const char *aimNames[4]={"in_touchAimMode","in_touchAimCurve","in_touchLookScale","in_touchDragScale"};
+static int drawableScale=1;
 static std::string testLayoutText,testSlotsText;
 static cvar_t *SetTouchVar(const char *name,const char *value) {
 	cvar_t *var=NULL;std::string *text=NULL;
 	if(!strcmp(name,"in_touchLayout")) { var=&testLayoutVar;text=&testLayoutText; }
 	if(!strcmp(name,"in_touchForceSlots")) { var=&testSlotsVar;text=&testSlotsText; }
-	if(var) { *text=value;var->string=const_cast<char *>(text->c_str());++var->modificationCount; }
+	for(int i=0;i<4;++i) if(!strcmp(name,aimNames[i])) {var=&aimVars[i];text=&aimTexts[i];}
+	if(var) { *text=value;var->string=const_cast<char *>(text->c_str());var->value=atof(value);var->integer=atoi(value);++var->modificationCount; }
 	return var;
 }
-void SDL_GL_GetDrawableSize(SDL_Window *,int *w,int *h) { *w=844;*h=390; }
+void SDL_GL_GetDrawableSize(SDL_Window *,int *w,int *h) { *w=844*drawableScale;*h=390*drawableScale; }
 void Sys_IOS_GetSafeAreaPixels(SDL_Window *,float *l,float *t,float *r,float *b) { *l=*t=*r=*b=0; }
 void Sys_IOS_GetViewPointSize(SDL_Window *,float *w,float *h) { *w=844;*h=390; }
 qboolean Sys_IOS_HardwareKeyboardConnected(void) { return qfalse; }
 qboolean Sys_IOS_PointerConnected(void) { return qfalse; }
-qboolean IN_GamepadActive(void) { return qfalse; }
-void IN_GamepadSetTouchMove(int,int) {}
-void IN_GamepadSetTouchLook(int,int) {}
-void IN_GamepadSendAxes(void) {}
-void IN_GamepadZeroTouchAxes(void) {}
 void SDL_StopTextInput(void) {}
 void SDL_StartTextInput(void) {}
 SDL_bool SDL_IsTextInputActive(void) { return SDL_FALSE; }
 static int testTime=100;
+int com_frameTime;
+Uint32 SDL_GetTicks(void) { return testTime; }
 #ifdef TEST_MP
 static const int centralButton=9;
 #else
@@ -87,7 +91,7 @@ void UIVM_KeyEvent(int,qboolean) { assert(false); }
 void CGVM_EventHandling(int) { assert(false); }
 void CL_CursorButton(int) { assert(false); }
 void CL_AddReliableCommand(const char *,qboolean) { assert(false); }
-cvar_t *Cvar_SetValue(const char *,float) { assert(false);return NULL; }
+cvar_t *Cvar_SetValue(const char *name,float value) { char s[32];snprintf(s,sizeof(s),"%.8g",value);return SetTouchVar(name,s); }
 qboolean CGVM_IncomingConsoleCommand(void) { return qtrue; }
 #else
 void CL_ForwardCommandToServer(void) { fprintf(stderr,"forward: %s\n",Cmd_Argv(0));abort(); }
@@ -111,7 +115,7 @@ uint8_t ConvertUTF32ToExpectedCharset(uint32_t) { assert(false);return 0; }
 void _UI_KeyEvent(int,qboolean) { assert(false); }
 void Cvar_Set(const char *name,const char *value) { SetTouchVar(name,value); }
 float Cvar_VariableValue(const char *) { return 0; }
-void Cvar_SetValue(const char *,float) { assert(false); }
+void Cvar_SetValue(const char *name,float value) { char s[32];snprintf(s,sizeof(s),"%.8g",value);SetTouchVar(name,s); }
 void UI_SetActiveMenu(const char *,const char *) { assert(false); }
 void SCR_StopCinematic(qboolean) { assert(false); }
 int Cvar_VariableIntegerValue(const char *) { return 0; }
@@ -120,7 +124,8 @@ qboolean CL_IsRunningInGameCinematic(void) { return qfalse; }
 static void ExpandEvents(void) {
 	while(!events.empty()) {
 		const auto e=events.front();events.pop_front();
-		if(e.evType==SE_KEY) CL_KeyEvent(e.evValue,e.evValue2?qtrue:qfalse,e.evTime);
+		if(e.evType==SE_JOYSTICK_AXIS) CL_JoystickEvent(e.evValue,e.evValue2,e.evTime);
+		else if(e.evType==SE_KEY) CL_KeyEvent(e.evValue,e.evValue2?qtrue:qfalse,e.evTime);
 		else if(e.evType==SE_CONSOLE) { Cbuf_AddText((char *)e.evPtr);Cbuf_AddText("\n");free(e.evPtr); }
 	}
 }
@@ -148,7 +153,6 @@ float Cvar_VariableValue(const char *) { return 0; }
 int Cvar_VariableIntegerValue(const char *) { return 0; }
 float AngleNormalize180(float x) { return x; }
 float AngleNormalize360(float x) { return x; }
-void VectorCopy(const vec3_t a,vec3_t b) { memcpy(b,a,sizeof(vec3_t)); }
 cvar_t *cl_packetdup=&packetdup,*cl_showSend=&showSend;
 void MSG_Init(msg_t *msg,byte *data,int length) { memset(msg,0,sizeof(*msg));msg->data=data;msg->maxsize=length; }
 void MSG_Bitstream(msg_t *) {}
@@ -305,7 +309,10 @@ static void PacketTiming(void) {
 }
 #endif
 static void SDLFixture(void) {
-	Reset();cls.realtime=100;cls.cgameStarted=qfalse;
+	Reset();cls.realtime=100;cls.cgameStarted=qfalse;drawableScale=1;
+	memset(&axesState,0,sizeof(axesState));dragX=dragY=0;
+	for(int i=0;i<4;++i) {SetTouchVar(aimNames[i],i==1?"2":i==0?"0":"1");aimRevisions[i]=aimVars[i].modificationCount;}
+	touchAimMode=&aimVars[0];touchAimCurve=&aimVars[1];touchLookScale=in_touchLookScale=&aimVars[2];touchDragScale=&aimVars[3];
 	memset(&testLayoutVar,0,sizeof(testLayoutVar));memset(&testSlotsVar,0,sizeof(testSlotsVar));
 	SetTouchVar("in_touchLayout","");SetTouchVar("in_touchForceSlots","v1:1,2,3,4");
 	testControlsVar.integer=2;testOpacityVar.value=1;
@@ -328,7 +335,7 @@ static void SDLFixture(void) {
 }
 static void SDLEvent(Uint32 type,long long finger,float x,float y) {
 	SDL_Event event={};event.type=type;event.tfinger.type=type;event.tfinger.fingerId=finger;
-	event.tfinger.timestamp=testTime;event.tfinger.x=x/844;event.tfinger.y=y/390;IN_TouchHandleEvent(&event);
+	event.tfinger.timestamp=testTime;event.tfinger.x=x/viewW;event.tfinger.y=y/viewH;IN_TouchHandleEvent(&event);
 }
 static void SDLButton(Uint32 type,long long finger,int button) {
 	SDLEvent(type,finger,rects[button].x+rects[button].w/2,rects[button].y+rects[button].h/2);
@@ -380,12 +387,114 @@ static void SDLEditorSlotRouting(void) {
 	assert(settingsState.picker==4 && !settingsState.learned && !layoutOverrides.mask && events.empty());
 	touchWindow=NULL;
 }
+static cvar_t inputZero,inputOne,inputSpeed,inputJoystick;
+cvar_t *m_filter,*m_yaw,*m_pitch,*m_forward,*m_side,*cl_sensitivity,*cl_mouseAccel,*cl_showMouseRate;
+#ifdef TEST_MP
+cvar_t *cl_mouseAccelOffset,*cl_mouseAccelStyle,*m_pitchVeh;
+#endif
+cvar_t *in_joystick=&inputJoystick;
+#ifndef TEST_MP
+cvar_t *cl_debugMove=&inputZero,*cl_freelook=&inputOne;
+#endif
+void SCR_DebugGraph(float,int) {}
+static void AimFixture(int mode=1) {
+	SDLFixture();SetTouchVar("in_touchAimMode",mode?"1":"0");IN_TouchSyncAim();Drain();
+	inputOne.value=1;inputOne.integer=1;inputSpeed.value=140;inputJoystick.integer=1;
+	cl_anglespeedkey=cl_run=j_twinStick=j_lookSpeed=&inputOne;
+	cl_yawspeed=cl_pitchspeed=&inputSpeed;
+	cl_forwardspeed=cl_sidespeed=cl_upspeed=&inputSpeed;
+	m_filter=m_yaw=m_pitch=m_forward=m_side=cl_sensitivity=&inputOne;cl_mouseAccel=cl_showMouseRate=&inputZero;
+	cl.cgameSensitivity=1;cls.frametime=16;frame_msec=16;com_frameTime=116;
+}
+static void CommandFrame(int ms=16) {
+	cls.frametime=ms;frame_msec=ms;com_frameTime+=ms;
+	IN_TouchFrame();IN_GamepadSendAxes();Drain();CL_CreateCmd();
+}
+static void SDLAimCommandRouting(void) {
+	for(int enabled : {0,1}) {
+		AimFixture(0);j_twinStick=&inputZero;inputJoystick.integer=enabled;
+		SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERMOTION,50,500+IOS_TOUCH_STICK_RADIUS*touchUnit,300);
+		CommandFrame(10);assert(fabsf(cl.viewangles[YAW]+2.1f)<.001f);IN_TouchReleaseAll();Drain();
+	}
+	for(int frames : {1,6,12}) {
+		AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);
+		for(int i=1;i<=frames;++i) {SDLEvent(SDL_FINGERMOTION,50,500+36.f*i/frames,300+18.f*i/frames);CommandFrame(96/frames);}
+		SDLEvent(SDL_FINGERUP,50,536,318);CommandFrame();
+		assert(fabsf(cl.viewangles[YAW]+7.2f)<.001f && fabsf(cl.viewangles[PITCH]-3.6f)<.001f);
+	}
+	for(int frames : {6,12}) {
+		AimFixture(0);SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERMOTION,50,500+IOS_TOUCH_STICK_RADIUS*touchUnit,300);
+		for(int i=0;i<frames;++i) CommandFrame(96/frames);
+		assert(fabsf(cl.viewangles[YAW]+20.16f)<.001f);IN_TouchReleaseAll();Drain();
+	}
+	AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERMOTION,50,520,310);SDLEvent(SDL_FINGERUP,50,520,310);
+	CommandFrame();assert(fabsf(cl.viewangles[YAW]+4)<.001f && fabsf(cl.viewangles[PITCH]-2)<.001f);
+	CommandFrame();assert(fabsf(cl.viewangles[YAW]+4)<.001f);
+	AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);
+	for(int i=1;i<=4;++i) {SDLEvent(SDL_FINGERMOTION,50,500+i*5,300+i*2.5f);CommandFrame(4);}
+	assert(fabsf(cl.viewangles[YAW]+4)<.001f && fabsf(cl.viewangles[PITCH]-2)<.001f);
+	SDLEvent(SDL_FINGERUP,50,520,310);CommandFrame();
+	AimFixture();drawableScale=3;IN_TouchUpdateLayout();Drain();
+	SDLEvent(SDL_FINGERDOWN,50,1500,900);SDLEvent(SDL_FINGERMOTION,50,1560,930);SDLEvent(SDL_FINGERUP,50,1560,930);CommandFrame(33);
+	assert(fabsf(cl.viewangles[YAW]+4)<.001f && fabsf(cl.viewangles[PITCH]-2)<.001f);
+	AimFixture();SDLButton(SDL_FINGERDOWN,51,TB_ATTACK);Drain();assert(in_buttons[0].active);
+	const auto fire=rects[TB_ATTACK];const float x=fire.x+fire.w/2,y=fire.y+fire.h/2;
+	SDLEvent(SDL_FINGERMOTION,51,x+30,y);CommandFrame();assert(!cl.viewangles[YAW]);
+	SDLEvent(SDL_FINGERMOTION,51,x+40,y);SDLButton(SDL_FINGERUP,51,TB_ATTACK);CommandFrame();assert(fabsf(cl.viewangles[YAW]+2)<.001f && !in_buttons[0].active);
+	AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERMOTION,50,520,310);
+	axesState.pad[2]=127;CommandFrame();assert(fabsf(cl.viewangles[YAW]+2.24f)<.001f);assert(!dragX && axesState.pad[2]==127 && !axesState.touch[2]);
+	const float hardwareYaw=cl.viewangles[YAW];axesState.pad[2]=0;CommandFrame();assert(cl.viewangles[YAW]==hardwareYaw);
+	SDLEvent(SDL_FINGERMOTION,50,530,310);IN_TouchReleaseAll();CommandFrame();assert(cl.viewangles[YAW]==hardwareYaw);
+	AimFixture();axesState.pad[0]=64;axesState.pad[2]=127;Hardware("+attack",77,100);Cbuf_Execute();
+	SetTouchVar("in_touchDragScale","2");IN_TouchSyncAim();Drain();assert(axesState.pad[0]==64 && axesState.pad[2]==127 && in_buttons[0].active && in_buttons[0].down[0]==77);
+	Hardware("-attack",77,120);Cbuf_Execute();
+	AimFixture(0);SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERMOTION,50,500+IOS_TOUCH_STICK_RADIUS*touchUnit,300);
+	j_lookSpeed=&inputZero;inputSpeed.value=999;CommandFrame(10);assert(fabsf(cl.viewangles[YAW]+2.1f)<.001f);
+	CommandFrame(10);assert(fabsf(cl.viewangles[YAW]+4.2f)<.001f);
+	IN_TouchReleaseAll();Drain();
+	AimFixture(0);SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERMOTION,50,500+IOS_TOUCH_STICK_RADIUS*touchUnit,300);
+	CommandFrame(20);assert(fabsf(cl.viewangles[YAW]+4.2f)<.001f);
+	SetTouchVar("in_touchAimMode","1");CommandFrame();assert(fabsf(cl.viewangles[YAW]+4.2f)<.001f && !axesState.touch[2] && gestures.lookOwner<0);
+	SDLEvent(SDL_FINGERMOTION,50,600,320);CommandFrame();assert(fabsf(cl.viewangles[YAW]+4.2f)<.001f);
+	AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERMOTION,50,520,310);
+	SetTouchVar("in_touchAimCurve","1");CommandFrame();assert(!cl.viewangles[YAW] && !cl.viewangles[PITCH]);
+	AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERDOWN,51,550,300);
+	SDLEvent(SDL_FINGERMOTION,51,570,310);CommandFrame();assert(!cl.viewangles[YAW]);
+	SDLEvent(SDL_FINGERUP,50,500,300);SDLEvent(SDL_FINGERMOTION,51,580,310);CommandFrame();assert(!cl.viewangles[YAW]);
+	SDLEvent(SDL_FINGERUP,51,580,310);
+	AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERMOTION,50,520,310);
+	SDLButton(SDL_FINGERDOWN,52,TB_LOCK);SDLButton(SDL_FINGERUP,52,TB_LOCK);CommandFrame();assert(editState.active && !cl.viewangles[YAW]);
+	IN_TouchEndEdit();Drain();touchWindow=NULL;
+}
+static void SDLPanelTap(int control,long long id=80) {
+	IN_TouchSettingsForce();touchSettingsLayout_t layout;
+	TouchSettings_Build(&settingsState,1,viewW,viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&layout);
+	for(int i=0;i<layout.count;++i) if(layout.items[i].control==control) {
+		const auto r=layout.items[i].rect;SDLEvent(SDL_FINGERDOWN,id,r.x+r.w/2,r.y+r.h/2);SDLEvent(SDL_FINGERUP,id,r.x+r.w/2,r.y+r.h/2);return;
+	}
+	assert(false);
+}
+static void SDLAimSettingsRouting(void) {
+	AimFixture();editState.active=1;axesState.pad[0]=64;axesState.pad[2]=127;
+	Hardware("+attack",77,100);Cbuf_Execute();
+	SetTouchVar("in_touchLookScale","1.17");SetTouchVar("in_touchDragScale","2.33");IN_TouchSyncAim();Drain();
+	SDLPanelTap(TOUCH_SETTINGS_AIM);SDLPanelTap(TOUCH_SETTINGS_SENSITIVITY);
+	assert(fabsf(touchDragScale->value-2.33f)<.001f && fabsf(touchLookScale->value-1.17f)<.001f);
+	SDLPanelTap(TOUCH_SETTINGS_SCALE_CHOICE+5);Drain();
+	assert(touchDragScale->value==1.5f && fabsf(touchLookScale->value-1.17f)<.001f && editState.active);
+	SDLPanelTap(TOUCH_SETTINGS_MODE);SDLPanelTap(TOUCH_SETTINGS_MODE_CHOICE);Drain();assert(touchAimMode->integer==0);
+	SDLPanelTap(TOUCH_SETTINGS_CURVE);SDLPanelTap(TOUCH_SETTINGS_CURVE_CHOICE+4);Drain();assert(touchAimCurve->integer==4);
+	assert(axesState.pad[0]==64 && axesState.pad[2]==127 && in_buttons[0].active && in_buttons[0].down[0]==77);
+	assert(!layoutOverrides.mask && !settingsState.picker && !CL_TouchForceBusy() && commandsSeen.empty());
+	SDLPanelTap(TOUCH_SETTINGS_DONE);Drain();assert(!editState.active);
+	Hardware("-attack",77,120);Cbuf_Execute();touchWindow=NULL;
+}
 int main() {
 	cls.state=CA_ACTIVE;Cbuf_Init();Register();
 	CommandNamesAndTap();CancellationAndSourcePulses();SelectionAndAssignment();CentralAndReset();
 #ifdef TEST_MP
 	PacketTiming();
 #endif
-	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();
-	puts("PASS: SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
+	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();
+	puts("PASS: actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
 }

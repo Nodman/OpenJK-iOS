@@ -5,10 +5,31 @@
 #define IOS_TOUCH_STICK_RADIUS .12f
 #define IOS_TOUCH_AIM_DEADZONE .08f
 #define IOS_TOUCH_AIM_EXPONENT 1.6f
+#define IOS_TOUCH_AIM_RATE 210.0f
+#define IOS_TOUCH_DRAG_DEGREES_PER_POINT .20f
 
 IOS_TOUCH_INLINE int TouchStick_Finite( float value )
 {
 	return value >= -FLT_MAX && value <= FLT_MAX;
+}
+
+IOS_TOUCH_INLINE float TouchAim_Sensitivity(float value)
+{
+	return TouchStick_Finite(value) ? fmaxf(.1f,fminf(value,10)) : 1;
+}
+
+IOS_TOUCH_INLINE float TouchAim_Response(float q,int curve)
+{
+	if(!TouchStick_Finite(q) || curve<0 || curve>5) return 0;
+	q=fmaxf(0,fminf(q,1));
+	switch(curve) {
+	case 0:return q;
+	case 1:return sqrtf(q);
+	case 2:return powf(q,IOS_TOUCH_AIM_EXPONENT);
+	case 3:return .6f*q;
+	case 4:return q>0?1:0;
+	default:return q*q*(3-2*q);
+	}
 }
 
 IOS_TOUCH_INLINE void TouchStick_Response( float dx, float dy, float radius, int curve, float *x, float *y )
@@ -16,25 +37,25 @@ IOS_TOUCH_INLINE void TouchStick_Response( float dx, float dy, float radius, int
 	double length, magnitude;
 	float r;
 	*x = *y = 0;
-	if ( !TouchStick_Finite( dx ) || !TouchStick_Finite( dy ) || !TouchStick_Finite( radius ) || radius <= 0 )
+	if ( curve < -1 || curve > 5 || !TouchStick_Finite( dx ) || !TouchStick_Finite( dy ) || !TouchStick_Finite( radius ) || radius <= 0 )
 		return;
 	length = sqrt( (double)dx * dx + (double)dy * dy );
 	if ( length <= 0 )
 		return;
 	r = (float)fmin( length / radius, 1 );
-	magnitude = curve ? pow( fmin( fmax( ( r - IOS_TOUCH_AIM_DEADZONE ) / ( 1 - IOS_TOUCH_AIM_DEADZONE ), 0 ), 1 ), IOS_TOUCH_AIM_EXPONENT ) : fmin( r, 1 );
+	magnitude = curve >= 0 ? TouchAim_Response((r-IOS_TOUCH_AIM_DEADZONE)/(1-IOS_TOUCH_AIM_DEADZONE),curve) : r;
 	*x = (float)( dx / length * magnitude );
 	*y = (float)( dy / length * magnitude );
 }
 
 IOS_TOUCH_INLINE void TouchStick_Curve( float dx, float dy, float radius, float *x, float *y )
 {
-	TouchStick_Response( dx, dy, radius, 1, x, y );
+	TouchStick_Response( dx, dy, radius, 2, x, y );
 }
 
 IOS_TOUCH_INLINE void TouchStick_Clamp( float dx, float dy, float radius, float *x, float *y )
 {
-	TouchStick_Response( dx, dy, radius, 0, x, y );
+	TouchStick_Response( dx, dy, radius, -1, x, y );
 }
 
 IOS_TOUCH_INLINE int TouchStick_Quantize( float value )

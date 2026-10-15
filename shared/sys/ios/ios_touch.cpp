@@ -47,6 +47,33 @@ static touchForceReport_t lastForceReport;
 static cvar_t *in_touchForceSlots;
 static touchForceSlots_t forceSlots;
 static int forceSlotsModification=-1;
+static cvar_t *touchAimMode,*touchAimCurve,*touchLookScale,*touchDragScale;
+static int aimRevisions[4]={-1,-1,-1,-1};
+static float dragX,dragY;
+
+void IN_TouchConsumeLookDelta(float *yaw,float *pitch) {
+	const float scale=IOS_TOUCH_DRAG_DEGREES_PER_POINT*TouchAim_Sensitivity(touchDragScale?touchDragScale->value:1);
+	*yaw=dragX*scale;*pitch=dragY*scale;
+	if(!TouchStick_Finite(*yaw) || !TouchStick_Finite(*pitch)) *yaw=*pitch=0;
+	dragX=dragY=0;
+}
+
+static void IN_TouchRelease(touchFinger_t *f,int event);
+
+static void IN_TouchSyncAim(void) {
+	cvar_t *vars[4]={touchAimMode,touchAimCurve,touchLookScale,touchDragScale};
+	int changed=0;
+	for(int i=0;i<4;++i) if(vars[i] && aimRevisions[i]!=vars[i]->modificationCount) {
+		aimRevisions[i]=vars[i]->modificationCount;changed=1;
+	}
+	if(!changed) return;
+	editState.dragging=0;editState.button=-1;
+	CL_TouchCancelAllSources();
+	for(int i=0;i<MAX_TOUCH_FINGERS;++i) IN_TouchRelease(&fingers[i],TOUCH_CANCEL);
+	TouchGesture_Reset(&gestures);
+	dragX=dragY=0;
+	IN_GamepadZeroTouchAxes();
+}
 
 void IN_TouchReportForce(int version,int mask,int selected,int equipment) {
 	TouchForce_Report(&forceBridge,version,mask,selected,equipment);
@@ -117,6 +144,11 @@ static void IN_TouchSyncForceSlots(void) {
 	TouchForceSlots_Parse(in_touchForceSlots->string,&forceSlots);
 }
 static void IN_TouchSettingsForce(void) {
+	IN_TouchSyncAim();
+	settingsState.aimMode=touchAimMode?touchAimMode->integer==1:0;
+	settingsState.aimCurve=touchAimCurve?touchAimCurve->integer:2;
+	settingsState.lookScale=TouchAim_Sensitivity(touchLookScale?touchLookScale->value:1);
+	settingsState.dragScale=TouchAim_Sensitivity(touchDragScale?touchDragScale->value:1);
 	IN_TouchSyncForceSlots();
 	settingsState.learned=IN_TouchGetForceReport().learned;
 	for(int i=0;i<4;++i) settingsState.slots[i]=TouchForceSlots_Visible(&forceSlots,i,settingsState.learned);
@@ -134,6 +166,9 @@ static unsigned int IN_TouchVisibleButtons( void ) {
 static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, float x, float y ) {
 	touchGestureInput_t input = {};
 	input.event = event;
+	input.aimMode=touchAimMode?touchAimMode->integer==1:0;
+	input.aimCurve=touchAimCurve?touchAimCurve->integer:2;
+	if(input.aimCurve<0 || input.aimCurve>5 || (touchAimCurve && !TouchStick_Finite(touchAimCurve->value))) input.aimCurve=-2;
 	input.finger = id;
 	input.target = target;
 	input.button = button;
@@ -166,6 +201,13 @@ static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, fl
 			Sys_QueEvent(0,SE_KEY,key,down?qtrue:qfalse,0,NULL);
 			if(!down && event!=TOUCH_UP) CL_TouchCancelSource(key);
 		}
+	}
+	if(actions.cancelLook || event==TOUCH_CANCEL_ALL) {
+		dragX=dragY=0;
+		IN_GamepadZeroTouchAxes();
+	} else if(pixelsPerPoint>0) {
+		dragX+=actions.deltaX/pixelsPerPoint;dragY+=actions.deltaY/pixelsPerPoint;
+		if(!TouchStick_Finite(dragX) || !TouchStick_Finite(dragY)) dragX=dragY=0;
 	}
 	IN_GamepadSetTouchMove( actions.moveX, -actions.moveY );
 	IN_GamepadSetTouchLook( actions.lookX, actions.lookY );
@@ -233,6 +275,7 @@ void IN_TouchEndEdit( void ) {
 }
 
 static void IN_TouchSyncMode( void ) {
+	IN_TouchSyncAim();
 	qboolean uiMode = CL_TouchUIMode(), hidden = IN_TouchHidden(), cinematic = CL_TouchCinematic();
 	if ( editState.active && cls.state!=CA_ACTIVE ) IN_TouchEndEdit();
 	if ( uiMode != lastUIMode || hidden != lastHidden || cinematic != lastCinematic ) {
@@ -326,6 +369,11 @@ static void IN_TouchLayoutReset( void ) {
 void IN_TouchInit( SDL_Window *window ) {
 	in_touchForceSlots=Cvar_Get("in_touchForceSlots","v1:1,2,3,4",CVAR_ARCHIVE);
 	IN_TouchSyncForceSlots();
+	touchAimMode=Cvar_Get("in_touchAimMode","0",CVAR_ARCHIVE);
+	touchAimCurve=Cvar_Get("in_touchAimCurve","2",CVAR_ARCHIVE);
+	touchLookScale=Cvar_Get("in_touchLookScale","1.0",CVAR_ARCHIVE);
+	touchDragScale=Cvar_Get("in_touchDragScale","1.0",CVAR_ARCHIVE);
+	IN_TouchSyncAim();
 	in_touchLayout = Cvar_Get( "in_touchLayout", "", CVAR_ARCHIVE );
 	Cmd_RemoveCommand( "touchLayoutReset" );
 	Cmd_AddCommand( "touchLayoutReset", IN_TouchLayoutReset );
@@ -491,6 +539,11 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 		TouchForceSlots_Save(&forceSlots,text,sizeof(text));Cvar_Set("in_touchForceSlots",text);
 		forceSlotsModification=in_touchForceSlots->modificationCount;
 	}
+	if(action.aimSetting) {
+		const char *name=action.aimSetting==1?"in_touchAimMode":action.aimSetting==2?(settingsState.aimMode?"in_touchDragScale":"in_touchLookScale"):"in_touchAimCurve";
+		Cvar_SetValue(name,action.aimValue);
+		IN_TouchSyncAim();
+	}
 	if(action.opacity) Cvar_SetValue("in_touchOpacity",action.opacity*.01f);
 	if(action.done) { IN_TouchEndEdit(); return; }
 	if(action.consumed) return;
@@ -607,7 +660,9 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	touchDrawInput_t input = {};
 	input.layout = &touchLayout;
 	input.rects = rects;
-	input.gestures = &gestures;
+	touchGestureState_t drawingGestures=gestures;
+	if(touchAimMode && touchAimMode->integer==1) drawingGestures.lookOwner=-1;
+	input.gestures = &drawingGestures;
 	input.visibleButtons = IN_TouchVisibleButtons();
 	input.sticks = visibility.sticks;
 	const touchForceReport_t report=IN_TouchGetForceReport();

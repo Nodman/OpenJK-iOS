@@ -33,6 +33,7 @@ typedef struct {
 	float x, y, radius, slop;
 	unsigned int visibleButtons;
 	int moveEnabled, lookEnabled;
+	int aimMode, aimCurve;
 } touchGestureInput_t;
 
 typedef struct { int button, down; } touchKeyAction_t;
@@ -41,6 +42,8 @@ typedef struct {
 	touchKeyAction_t keys[IOS_TOUCH_GESTURE_FINGERS];
 	int keyCount;
 	int moveX, moveY, lookX, lookY;
+	float deltaX, deltaY;
+	int cancelLook;
 } touchGestureActions_t;
 
 IOS_TOUCH_INLINE void TouchGesture_Reset( touchGestureState_t *state )
@@ -82,15 +85,17 @@ IOS_TOUCH_INLINE void TouchGesture_Release( touchGestureState_t *state, int inde
 
 IOS_TOUCH_INLINE touchGestureActions_t TouchGesture_Step( touchGestureState_t *state, touchGestureInput_t in )
 {
-	touchGestureActions_t out = { { { 0, 0 } }, 0, 0, 0, 0, 0 };
+	touchGestureActions_t out = { { { 0, 0 } }, 0, 0, 0, 0, 0, 0, 0, 0 };
 	int i, found = -1, freeSlot = -1;
 	for ( i = 0; i < IOS_TOUCH_GESTURE_FINGERS; ++i ) {
 		touchGestureFinger_t *f = &state->fingers[i];
 		const int lostButton = TouchGesture_IsButton( f->role ) && !( in.visibleButtons & ( 1u << f->button ) );
 		const int lostMove = f->role == TOUCH_MOVE && !in.moveEnabled;
 		const int lostLook = ( f->role == TOUCH_AIM || f->role == TOUCH_FIRE_AIM ) && !in.lookEnabled;
-		if ( in.event == TOUCH_CANCEL_ALL || lostButton || lostMove || lostLook )
+		if ( in.event == TOUCH_CANCEL_ALL || lostButton || lostMove || lostLook ) {
+			if(f->role!=TOUCH_IDLE && f->role!=TOUCH_IGNORED) out.cancelLook=1;
 			TouchGesture_Release( state, i, &out, in.event == TOUCH_CANCEL_ALL ? TOUCH_IDLE : TOUCH_IGNORED );
+		}
 		if ( f->role != TOUCH_IDLE && f->id == in.finger ) found = i;
 		if ( f->role == TOUCH_IDLE && freeSlot < 0 ) freeSlot = i;
 	}
@@ -126,8 +131,12 @@ IOS_TOUCH_INLINE touchGestureActions_t TouchGesture_Step( touchGestureState_t *s
 	} else if ( found >= 0 ) {
 		touchGestureFinger_t *f = &state->fingers[found];
 		if ( in.event == TOUCH_UP || in.event == TOUCH_CANCEL ) {
+			if(in.event==TOUCH_CANCEL) out.cancelLook=1;
 			TouchGesture_Release( state, found, &out, TOUCH_IDLE );
 		} else if ( in.event == TOUCH_MOTION ) {
+			if(in.aimMode==1 && state->lookOwner==found && TouchStick_Finite(in.x) && TouchStick_Finite(in.y) && TouchStick_Finite(f->x) && TouchStick_Finite(f->y)) {
+				out.deltaX=in.x-f->x;out.deltaY=in.y-f->y;
+			}
 			f->x = in.x;
 			f->y = in.y;
 			if ( f->role == TOUCH_FIRE_HELD && !f->slopCrossed && TouchStick_Finite( in.x ) && TouchStick_Finite( in.y ) ) {
@@ -150,8 +159,8 @@ IOS_TOUCH_INLINE touchGestureActions_t TouchGesture_Step( touchGestureState_t *s
 			out.moveX = TouchStick_Quantize( x );
 			out.moveY = TouchStick_Quantize( y );
 		}
-		if ( state->lookOwner == i ) {
-			TouchStick_Curve( f->x - f->ox, f->y - f->oy, f->radius, &x, &y );
+		if ( state->lookOwner == i && in.aimMode!=1 ) {
+			TouchStick_Response( f->x - f->ox, f->y - f->oy, f->radius, in.aimCurve, &x, &y );
 			out.lookX = TouchStick_Quantize( x );
 			out.lookY = TouchStick_Quantize( y );
 		}

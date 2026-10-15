@@ -13,6 +13,8 @@ strings = out / 'q_string.o'
 subprocess.run(['clang', '-std=c99', '-ffunction-sections', '-fdata-sections',
                 '-Ishared', '-c', 'shared/qcommon/q_string.c', '-o', str(strings)],
                cwd=root, check=True)
+maths = out / 'q_math.o'
+subprocess.run(['clang', '-std=c99', '-ffunction-sections', '-fdata-sections', '-Ishared', '-c', 'shared/qcommon/q_math.c', '-o', str(maths)], cwd=root, check=True)
 for tree, target in [('code', 'openjk_sp.arm64'), ('codemp', 'openjk.arm64')]:
     flags = {}
     for line in (build / tree / 'CMakeFiles' / (target + '.dir') / 'flags.make').read_text().splitlines():
@@ -26,7 +28,7 @@ for tree, target in [('code', 'openjk_sp.arm64'), ('codemp', 'openjk.arm64')]:
     command += ['-I' + tree + '/qcommon', '-UNDEBUG']
     if tree == 'codemp':
         command += ['-DTEST_MP']
-    command += ['tests/ios/touch_force_dispatch_host.cc', 'shared/sys/ios/ios_touch_layout.cpp', str(strings), '-Wl,-dead_strip', '-o', str(binary)]
+    command += ['tests/ios/touch_force_dispatch_host.cc', 'shared/sys/ios/ios_touch_layout.cpp', str(strings), str(maths), '-Wl,-dead_strip', '-o', str(binary)]
     print(tree + ': ' + shlex.join(command), flush=True)
     subprocess.run(command, cwd=root, check=True)
     subprocess.run([str(binary)], cwd=root, check=True)

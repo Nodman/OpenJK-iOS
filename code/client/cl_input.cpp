@@ -521,6 +521,15 @@ CL_JoystickMove
 void CL_JoystickMove( usercmd_t *cmd ) {
 	float	anglespeed;
 
+#ifdef OPENJK_IOS
+	const qboolean touchLook=IN_GamepadTouchLookActive();
+	if(touchLook) {
+		const float rate=.001f*cls.frametime*IOS_TOUCH_AIM_RATE*TouchAim_Sensitivity(in_touchLookScale->value);
+		cl.viewangles[YAW]-=rate*TouchAxes_NormalizeLook(cl.joystickAxis[AXIS_YAW],0,1);
+		cl.viewangles[PITCH]+=rate*TouchAxes_NormalizeLook(cl.joystickAxis[AXIS_PITCH],0,1);
+	}
+#endif
+
 	if ( !in_joystick->integer )
 	{
 		return;
@@ -539,13 +548,14 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 #ifdef OPENJK_IOS
 	if ( j_twinStick->integer ) {
 		float frameScale = 0.001f * cls.frametime * j_lookSpeed->value;
-		const qboolean touchLook = IN_GamepadTouchLookActive();
-		const float yaw = TouchAxes_NormalizeLook( cl.joystickAxis[AXIS_YAW], touchLook, in_touchLookScale->value );
-		const float pitch = TouchAxes_NormalizeLook( cl.joystickAxis[AXIS_PITCH], touchLook, in_touchLookScale->value );
+		const float yaw = TouchAxes_NormalizeLook( cl.joystickAxis[AXIS_YAW], 0, 1 );
+		const float pitch = TouchAxes_NormalizeLook( cl.joystickAxis[AXIS_PITCH], 0, 1 );
 		cmd->rightmove = ClampChar( cmd->rightmove + cl.joystickAxis[AXIS_SIDE] );
 		cmd->forwardmove = ClampChar( cmd->forwardmove + cl.joystickAxis[AXIS_FORWARD] );
-		cl.viewangles[YAW] -= frameScale * cl_yawspeed->value * yaw;
-		cl.viewangles[PITCH] += frameScale * cl_pitchspeed->value * pitch;
+		if(!touchLook) {
+			cl.viewangles[YAW] -= frameScale*cl_yawspeed->value*yaw;
+			cl.viewangles[PITCH] += frameScale*cl_pitchspeed->value*pitch;
+		}
 		return;
 	}
 #endif
@@ -756,6 +766,15 @@ usercmd_t CL_CreateCmd( void ) {
 
 	// get basic movement from joystick
 	CL_JoystickMove( &cmd );
+
+#ifdef OPENJK_IOS
+	float dragYaw,dragPitch;
+	IN_TouchConsumeLookDelta(&dragYaw,&dragPitch);
+	if(!IN_GamepadPadLookActive()) {
+		cl.viewangles[YAW]-=dragYaw;
+		cl.viewangles[PITCH]+=dragPitch;
+	}
+#endif
 
 	// check to make sure the angles haven't wrapped
 	if ( cl.viewangles[PITCH] - oldAngles[PITCH] > 90 ) {

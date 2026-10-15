@@ -66,6 +66,7 @@ static touchGestureInput_t Input( int event, long long finger = 1, int target = 
 	in.button = button;
 	in.x = x;
 	in.y = y;
+	in.aimCurve=2;
 	in.radius = 100;
 	in.slop = 10;
 	in.visibleButtons = ~0u;

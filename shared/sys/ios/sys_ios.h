@@ -62,6 +62,7 @@ void IN_GamepadSetTouchMove( int side, int fwd );
 void IN_GamepadSetTouchLook( int yaw, int pitch );
 qboolean IN_GamepadTouchLookActive( void );
 qboolean IN_GamepadPadLookActive( void );
+void IN_TouchConsumeLookDelta(float *yaw,float *pitch);
 void IN_GamepadZeroTouchAxes( void );
 void IN_GamepadSendAxes( void );
 void IN_GamepadZeroAxes( void );
