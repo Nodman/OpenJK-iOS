@@ -71,17 +71,19 @@ static touchSettingsAction_t Tap(touchSettingsState_t &state,int control)
 }
 BOOST_AUTO_TEST_CASE(mode_specific_panel_choices_and_custom_scale)
 {
-	touchSettingsState_t state={};state.tab=TOUCH_SETTINGS_AIM;state.lookScale=1.17f;state.dragScale=2.33f;state.aimCurve=2;
+	touchSettingsState_t state={};state.tab=TOUCH_SETTINGS_AIM;state.lookScale=1.17f;state.dragScale=2.33f;state.lookScaleY=.73f;state.dragScaleY=1.93f;state.aimCurve=2;
 	touchSettingsLayout_t layout;TouchSettings_Build(&state,1,1024,768,0,0,0,0,1,&layout);
 	for(int mode:{0,1}) {
 		state.aimMode=mode;TouchSettings_Build(&state,1,1024,768,0,0,0,0,1,&layout);
-		for(int i=0;i<layout.count;++i) if(layout.items[i].control==TOUCH_SETTINGS_SENSITIVITY) {
-			const auto &item=layout.items[i];const auto r=item.rect;
-			BOOST_CHECK_SMALL(item.fill-((mode?2.33f:1.17f)-.25f)/3.75f,1e-6f);
+		for(int i=0;i<layout.count;++i) if(layout.items[i].control==TOUCH_SETTINGS_SENSITIVITY || layout.items[i].control==TOUCH_SETTINGS_SENSITIVITY_Y) {
+			const auto &item=layout.items[i];const auto r=item.rect;const int axis=item.control==TOUCH_SETTINGS_SENSITIVITY_Y;
+			const float value=mode?(axis?1.93f:2.33f):(axis?.73f:1.17f);
+			BOOST_CHECK_SMALL(item.fill-(value-.25f)/3.75f,1e-6f);
+			BOOST_CHECK(strstr(item.label,axis?"Vertical:":"Horizontal:")!=NULL);
 			for(float fraction:{0.f,.42f,1.f}) {
 				const auto out=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,1,r.x+r.w*fraction,r.y+r.h/2);
-				BOOST_CHECK_EQUAL(out.aimSetting,2);BOOST_CHECK_EQUAL(out.aimMode,mode);BOOST_CHECK_CLOSE(out.aimValue,.25f+fraction*3.75f,.001f);
-				BOOST_CHECK_EQUAL(state.lookScale,1.17f);BOOST_CHECK_EQUAL(state.dragScale,2.33f);
+				BOOST_CHECK_EQUAL(out.aimSetting,2);BOOST_CHECK_EQUAL(out.aimMode,mode);BOOST_CHECK_EQUAL(out.aimAxis,axis);BOOST_CHECK_CLOSE(out.aimValue,.25f+fraction*3.75f,.001f);
+				BOOST_CHECK_EQUAL(state.lookScale,1.17f);BOOST_CHECK_EQUAL(state.dragScale,2.33f);BOOST_CHECK_EQUAL(state.lookScaleY,.73f);BOOST_CHECK_EQUAL(state.dragScaleY,1.93f);
 				TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,1,r.x,r.y);
 			}
 			TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,1,r.x,r.y);
@@ -89,13 +91,18 @@ BOOST_AUTO_TEST_CASE(mode_specific_panel_choices_and_custom_scale)
 			BOOST_CHECK(!TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_MOVE,1,r.x+r.w,r.y).aimSetting);
 			state.aimMode=mode;
 			BOOST_CHECK(!TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,1,r.x+r.w,r.y).aimSetting);
+			TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,1,r.x,r.y);
+			state.tab=TOUCH_SETTINGS_APPEARANCE;
+			BOOST_CHECK(!TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_MOVE,1,r.x+r.w,r.y).aimSetting);
+			state.tab=TOUCH_SETTINGS_AIM;
+			BOOST_CHECK(!TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,1,r.x+r.w,r.y).aimSetting);
 		}
 	}
 	state.aimMode=0;
 	for(int i=0;i<6;++i) {state.dropdown=3;const auto out=Tap(state,TOUCH_SETTINGS_CURVE_CHOICE+i);BOOST_CHECK_EQUAL(out.aimSetting,3);BOOST_CHECK_EQUAL(out.aimValue,i);}
 	Tap(state,TOUCH_SETTINGS_MODE);const auto out=Tap(state,TOUCH_SETTINGS_MODE_CHOICE+1);BOOST_CHECK_EQUAL(out.aimSetting,1);BOOST_CHECK_EQUAL(out.aimValue,1);
-	state.aimMode=1;TouchSettings_Build(&state,1,1024,768,0,0,0,0,1,&layout);
-	for(int i=0;i<layout.count;++i) BOOST_CHECK_NE(layout.items[i].control,TOUCH_SETTINGS_CURVE);
+	state.aimMode=1;state.dropdown=3;TouchSettings_Build(&state,1,1024,768,0,0,0,0,1,&layout);
+	for(int i=0;i<layout.count;++i) {BOOST_CHECK_NE(layout.items[i].control,TOUCH_SETTINGS_CURVE);BOOST_CHECK(layout.items[i].control<TOUCH_SETTINGS_CURVE_CHOICE || layout.items[i].control>=TOUCH_SETTINGS_CURVE_CHOICE+6);}
 }
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()

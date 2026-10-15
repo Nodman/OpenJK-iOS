@@ -128,6 +128,21 @@ BOOST_AUTO_TEST_CASE( small_panel_scrolls_without_selecting_and_keeps_done )
 	BOOST_CHECK_GT(Control(scrolled,TOUCH_SETTINGS_DONE).h,0);
 }
 
+BOOST_AUTO_TEST_CASE( short_joystick_panel_scrolls_four_rows_and_curve_choices )
+{
+	touchSettingsState_t state={};state.tab=TOUCH_SETTINGS_AIM;state.dropdown=3;
+	const auto layout=Build(state,400,180,1);BOOST_CHECK_GT(layout.maxScroll,0);
+	const float x=layout.panel.x+1,y=layout.panel.y+layout.panel.h-1;
+	TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,1,x,y);
+	TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_MOVE,1,x,y-1000);
+	const auto action=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,1,x,y-1000);
+	BOOST_CHECK(!action.aimSetting && !action.done);
+	const auto scrolled=Build(state,400,180,1);
+	BOOST_CHECK_GT(Control(scrolled,TOUCH_SETTINGS_CURVE_CHOICE+5).h,0);
+	BOOST_CHECK_GT(Control(scrolled,TOUCH_SETTINGS_DONE).h,0);
+	for(int i=0;i<scrolled.count;++i) {BOOST_CHECK_GE(scrolled.items[i].rect.y,10);BOOST_CHECK_LE(scrolled.items[i].rect.y+scrolled.items[i].rect.h,150);}
+}
+
 BOOST_AUTO_TEST_CASE( sideways_drag_cancels_tap_and_secondary_never_promotes )
 {
 	touchSettingsState_t state={};

@@ -9,19 +9,19 @@
 
 typedef enum { TOUCH_SETTINGS_DOWN, TOUCH_SETTINGS_MOVE, TOUCH_SETTINGS_UP } touchSettingsEvent_t;
 typedef enum { TOUCH_SETTINGS_NONE, TOUCH_SETTINGS_APPEARANCE, TOUCH_SETTINGS_AIM, TOUCH_SETTINGS_FORCE, TOUCH_SETTINGS_DONE,
-	TOUCH_SETTINGS_MODE = 70, TOUCH_SETTINGS_SENSITIVITY = 71, TOUCH_SETTINGS_CURVE = 72, TOUCH_SETTINGS_RESET_LAYOUT = 73,
+	TOUCH_SETTINGS_MODE = 70, TOUCH_SETTINGS_SENSITIVITY = 71, TOUCH_SETTINGS_CURVE = 72, TOUCH_SETTINGS_RESET_LAYOUT = 73, TOUCH_SETTINGS_SENSITIVITY_Y = 74,
 	TOUCH_SETTINGS_MODE_CHOICE = 80, TOUCH_SETTINGS_CURVE_CHOICE = 100, TOUCH_SETTINGS_SLOT = 40, TOUCH_SETTINGS_POWER = 50, TOUCH_SETTINGS_OPACITY = 10 } touchSettingsControl_t;
 typedef struct { touchRect_t rect; int control, selected, force; float fill; char label[32]; } touchSettingsItem_t;
 typedef struct {
 	int picker, slots[4]; unsigned int learned;
-	int aimMode,aimCurve;float lookScale,dragScale;
+	int aimMode,aimCurve;float lookScale,dragScale,lookScaleY,dragScaleY;
 	int tab, dropdown, capture[IOS_TOUCH_SETTINGS_FINGERS], control, moved;
 	long long fingers[IOS_TOUCH_SETTINGS_FINGERS];
 	float startX, startY, lastY, scroll;
-	int slider, sliderMode, sliderTab; touchRect_t sliderRect;
+	int slider, sliderMode, sliderAxis, sliderTab; touchRect_t sliderRect;
 } touchSettingsState_t;
 typedef struct { touchRect_t bar, panel; touchSettingsItem_t items[IOS_TOUCH_SETTINGS_ITEMS]; int count; float maxScroll, p; } touchSettingsLayout_t;
-typedef struct { int consumed, cancelDrag, done, setOpacity, assign, slot, power, aimSetting, aimMode, resetLayout;float opacity, aimValue; } touchSettingsAction_t;
+typedef struct { int consumed, cancelDrag, done, setOpacity, assign, slot, power, aimSetting, aimMode, aimAxis, resetLayout;float opacity, aimValue; } touchSettingsAction_t;
 
 static const char *const touchAimCurves[6]={"Default","Quick","Precise","Steady","Digital","Dynamic"};
 
@@ -64,8 +64,8 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 	content = state->tab ? 52*p : 0;
 	if(state->tab==TOUCH_SETTINGS_APPEARANCE) content=100*p;
 	if(state->tab==TOUCH_SETTINGS_AIM) {
-		const int rows=state->aimMode?2:3;
-		const int choices=state->dropdown==1?2:state->dropdown==3?6:0;
+		const int rows=state->aimMode?3:4;
+		const int choices=state->dropdown==1?2:!state->aimMode && state->dropdown==3?6:0;
 		content=(8+rows*44+((choices+2)/3)*44)*p;
 	}
 	if(state->tab==TOUCH_SETTINGS_FORCE) {
@@ -99,15 +99,17 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 		TouchSettings_Add(out,r,TOUCH_SETTINGS_RESET_LAYOUT,0,r.h>=24*p?"Reset layout":"");
 	}
 	if(state->tab==TOUCH_SETTINGS_AIM) {
-		const int rows=state->aimMode?2:3;
-		const int choices=state->dropdown==1?2:state->dropdown==3?6:0;
+		const int rows=state->aimMode?3:4;
+		const int choices=state->dropdown==1?2:!state->aimMode && state->dropdown==3?6:0;
 		for(i=0;i<rows+choices;++i) {
 			char label[32];int control,selected;
 			touchRect_t r={out->panel.x+4*p,out->panel.y+(4+i*44)*p-scroll,out->panel.w-8*p,44*p};
 			if(i<rows) {
-				control=TOUCH_SETTINGS_MODE+i;selected=state->dropdown==i+1;
+				const int controls[4]={TOUCH_SETTINGS_MODE,TOUCH_SETTINGS_SENSITIVITY,TOUCH_SETTINGS_SENSITIVITY_Y,TOUCH_SETTINGS_CURVE};
+				control=controls[i];selected=(i==0 && state->dropdown==1) || (i==3 && state->dropdown==3);
 				if(i==0) snprintf(label,sizeof(label),"Mode: %s",state->aimMode?"Free drag":"Joystick");
-				else if(i==1) snprintf(label,sizeof(label),"Sensitivity: %.4g",state->aimMode?state->dragScale:state->lookScale);
+				else if(i==1 || i==2) snprintf(label,sizeof(label),"%s: %.4g",i==1?"Horizontal":"Vertical",
+					state->aimMode?(i==2?state->dragScaleY:state->dragScale):(i==2?state->lookScaleY:state->lookScale));
 				else snprintf(label,sizeof(label),"Curve: %s",state->aimCurve>=0 && state->aimCurve<6?touchAimCurves[state->aimCurve]:"Invalid");
 			} else {
 				const int choice=i-rows;
@@ -125,8 +127,10 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 			r.h=fminf(r.y+r.h,out->panel.y+out->panel.h)-fmaxf(r.y,out->panel.y);r.y=fmaxf(r.y,out->panel.y);
 			const int before=out->count;
 			TouchSettings_Add(out,r,control,selected,r.h>=24*p?label:"");
-			if(out->count>before && control==TOUCH_SETTINGS_SENSITIVITY)
-				out->items[out->count-1].fill=fmaxf(0,fminf(1,((state->aimMode?state->dragScale:state->lookScale)-.25f)/3.75f));
+			if(out->count>before && (control==TOUCH_SETTINGS_SENSITIVITY || control==TOUCH_SETTINGS_SENSITIVITY_Y)) {
+				const float value=state->aimMode?(i==2?state->dragScaleY:state->dragScale):(i==2?state->lookScaleY:state->lookScale);
+				out->items[out->count-1].fill=fmaxf(0,fminf(1,(value-.25f)/3.75f));
+			}
 		}
 	}
 	if(state->tab==TOUCH_SETTINGS_FORCE) {
@@ -187,7 +191,7 @@ IOS_TOUCH_INLINE touchSettingsAction_t TouchSettings_Step( touchSettingsState_t 
 		state->slider=0;
 		for(i=0;i<layout->count;++i) if(layout->items[i].control==state->control && layout->items[i].fill>=0) {
 			state->slider=state->control;state->sliderRect=layout->items[i].rect;
-			state->sliderMode=state->aimMode;state->sliderTab=state->tab;break;
+			state->sliderMode=state->aimMode;state->sliderAxis=state->control==TOUCH_SETTINGS_SENSITIVITY_Y;state->sliderTab=state->tab;break;
 		}
 		found=freeSlot;
 	}
@@ -195,11 +199,11 @@ IOS_TOUCH_INLINE touchSettingsAction_t TouchSettings_Step( touchSettingsState_t 
 	action.consumed=1;
 	if(state->capture[found]==1) {
 		if(state->slider) {
-			if(state->tab!=state->sliderTab || (state->slider==TOUCH_SETTINGS_SENSITIVITY && state->aimMode!=state->sliderMode)) state->slider=-1;
+			if(state->tab!=state->sliderTab || ((state->slider==TOUCH_SETTINGS_SENSITIVITY || state->slider==TOUCH_SETTINGS_SENSITIVITY_Y) && state->aimMode!=state->sliderMode)) state->slider=-1;
 			if(state->slider>0) {
 				const float value=fmaxf(0,fminf(1,(x-state->sliderRect.x)/state->sliderRect.w));
 				if(state->slider==TOUCH_SETTINGS_OPACITY) {action.setOpacity=1;action.opacity=value;}
-				else {action.aimSetting=2;action.aimMode=state->sliderMode;action.aimValue=.25f+3.75f*value;}
+				else {action.aimSetting=2;action.aimMode=state->sliderMode;action.aimAxis=state->sliderAxis;action.aimValue=.25f+3.75f*value;}
 			}
 			if(event==TOUCH_SETTINGS_UP) {state->capture[found]=0;state->slider=0;}
 			return action;
@@ -220,7 +224,7 @@ IOS_TOUCH_INLINE touchSettingsAction_t TouchSettings_Step( touchSettingsState_t 
 				state->picker=state->picker==state->control-TOUCH_SETTINGS_SLOT+1?0:state->control-TOUCH_SETTINGS_SLOT+1;state->scroll=0;
 			} else if(state->control>=TOUCH_SETTINGS_POWER && state->control<=TOUCH_SETTINGS_POWER+12 && state->picker) {
 				action.assign=1;action.slot=state->picker-1;action.power=state->control-TOUCH_SETTINGS_POWER;state->picker=0;state->scroll=0;
-			} else if(state->control>=TOUCH_SETTINGS_MODE && state->control<=TOUCH_SETTINGS_CURVE) {
+			} else if(state->control==TOUCH_SETTINGS_MODE || state->control==TOUCH_SETTINGS_CURVE) {
 				const int dropdown=state->control-TOUCH_SETTINGS_MODE+1;
 				state->dropdown=state->dropdown==dropdown?0:dropdown;state->scroll=0;
 			} else if(state->control>=TOUCH_SETTINGS_MODE_CHOICE && state->control<TOUCH_SETTINGS_MODE_CHOICE+2) {

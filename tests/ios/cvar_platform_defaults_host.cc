@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <fstream>
+#include <sstream>
 
 #ifdef TEST_MP
 #include "../../codemp/qcommon/cvar.cpp"
@@ -49,6 +51,46 @@ static cvar_t *Seta( const char *name, const char *value ) {
 static void Expect( const char *name, const char *value, const char *reset ) {
 	cvar_t *var = Cvar_FindVar( name );
 	assert( var && !strcmp( var->string, value ) && !strcmp( var->resetString, reset ) );
+}
+
+static void ReadSetas(std::istream &input) {
+	std::string line;
+	while(std::getline(input,line)) {
+		std::istringstream fields(line);std::string command,name,value;
+		if(!(fields>>command>>name) || command!="seta") continue;
+		std::getline(fields>>std::ws,value);
+		if(value.size()>=2 && value.front()=='"' && value.back()=='"') value=value.substr(1,value.size()-2);
+		Seta(name.c_str(),value.c_str());
+	}
+}
+
+static void TouchPlatformDefaults(void) {
+	const char *names[]={"in_touchAimMode","in_touchLookScale","in_touchLookScaleY","in_touchDragScale","in_touchDragScaleY"};
+	const char *defaults[]={"1","1.0","0.6","3.0","1.8"};
+	auto fresh=[&]() {
+		while(cvar_vars) Cvar_Unset(cvar_vars);
+		cvar_cheats=Cvar_Get("host_cheats","1",0);
+		std::ifstream cfg("shared/ios/ios_default.cfg");assert(cfg.good());
+		Cvar_BeginPlatformDefaults();ReadSetas(cfg);Cvar_EndPlatformDefaults();
+		for(int i=0;i<5;++i) Expect(names[i],defaults[i],defaults[i]);
+	};
+	auto registration=[&]() {for(int i=0;i<5;++i) Cvar_Get(names[i],defaults[i],CVAR_ARCHIVE);};
+	fresh();registration();
+	Seta("in_touchAimMode","0");Seta("in_touchLookScale","1.17");Seta("in_touchDragScale","2.33");registration();
+	Expect("in_touchAimMode","0","1");Expect("in_touchLookScale","1.17","1.0");Expect("in_touchDragScale","2.33","3.0");
+	Expect("in_touchLookScaleY","0.6","0.6");Expect("in_touchDragScaleY","1.8","1.8");
+	Seta("in_touchLookScaleY","0.73");Seta("in_touchDragScaleY","2.17");registration();
+	savedConfig.clear();Cvar_WriteVariables(1);const std::string saved=savedConfig;
+	fresh();std::istringstream input(saved);ReadSetas(input);registration();
+	const char *custom[]={"0","1.17","0.73","2.33","2.17"};
+	for(int i=0;i<5;++i) {
+		Expect(names[i],custom[i],defaults[i]);
+		assert(Cvar_FindVar(names[i])->flags & CVAR_ARCHIVE);
+		assert(Cvar_FindVar(names[i])->flags & CVAR_PLATFORM_DEFAULT);
+	}
+	Cvar_Restart(qfalse);registration();for(int i=0;i<5;++i) Expect(names[i],defaults[i],defaults[i]);
+	while(cvar_vars) Cvar_Unset(cvar_vars);
+	puts("PASS: actual ios_default.cfg fresh touch mode/H/V, saved old H/mode and explicit new Y, archive/reload/custom Y, cvar_restart");
 }
 
 int main() {
@@ -129,4 +171,5 @@ int main() {
 	Expect( "r_flares", "1", "0" );
 	puts( "PASS: creation, late/early registration, unchanged/empty/latched defaults, outside-window seta, archive/relaunch, reset, restart, desktop control" );
 	while ( cvar_vars ) Cvar_Unset( cvar_vars );
+	TouchPlatformDefaults();
 }

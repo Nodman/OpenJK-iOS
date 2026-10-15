@@ -1010,7 +1010,7 @@ void CL_JoystickEvent( int axis, int value, int time ) {
 #ifdef OPENJK_IOS
 static cvar_t *j_twinStick;
 static cvar_t *j_lookSpeed;
-static cvar_t *in_touchLookScale;
+static cvar_t *in_touchLookScale,*in_touchLookScaleY;
 #endif
 
 /*
@@ -1025,9 +1025,9 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 #ifdef OPENJK_IOS
 	const qboolean touchLook=IN_GamepadTouchLookActive();
 	if(touchLook) {
-		const float rate=.001f*cls.frametime*IOS_TOUCH_AIM_RATE*TouchAim_Sensitivity(in_touchLookScale->value);
-		cl.viewangles[YAW]-=rate*TouchAxes_NormalizeLook(cl.joystickAxis[AXIS_YAW],0,1);
-		cl.viewangles[PITCH]+=rate*TouchAxes_NormalizeLook(cl.joystickAxis[AXIS_PITCH],0,1);
+		const float rate=.001f*cls.frametime*IOS_TOUCH_AIM_RATE;
+		cl.viewangles[YAW]-=rate*TouchAim_Sensitivity(in_touchLookScale->value)*TouchAxes_NormalizeLook(cl.joystickAxis[AXIS_YAW],0,1);
+		cl.viewangles[PITCH]+=rate*TouchAim_Sensitivity(in_touchLookScaleY->value)*TouchAxes_NormalizeLook(cl.joystickAxis[AXIS_PITCH],0,1);
 	}
 #endif
 
@@ -1868,6 +1868,7 @@ void CL_InitInput( void ) {
 	j_twinStick = Cvar_Get( "j_twinStick", "0", CVAR_ARCHIVE_ND, "Left stick moves, right stick looks" );
 	j_lookSpeed = Cvar_Get( "j_lookSpeed", "1.5", CVAR_ARCHIVE_ND, "Gamepad look speed scale" );
 	in_touchLookScale = Cvar_Get( "in_touchLookScale", "1.0", CVAR_ARCHIVE );
+	in_touchLookScaleY = Cvar_Get( "in_touchLookScaleY", "0.6", CVAR_ARCHIVE );
 #endif
 }
 
