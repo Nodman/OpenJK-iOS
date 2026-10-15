@@ -92,7 +92,7 @@ static void TouchLayout_FitGroup(float W,float H,touchRect_t rects[TB_COUNT],con
 	for(int i=0;i<count;++i) {rects[ids[i]].x+=dx;rects[ids[i]].y+=dy;}
 }
 
-static void TouchLayout_Phone(float W,float H,touchRect_t rects[TB_COUNT])
+static void TouchLayout_Phone(float W,float H,touchRect_t rects[TB_COUNT],float oldConsoleWidth)
 {
 	// Reference placements use full drawable height; safe insets only affect existing size rules.
 	const float scale=H/440;
@@ -102,9 +102,10 @@ static void TouchLayout_Phone(float W,float H,touchRect_t rects[TB_COUNT])
 	for(int i=0;i<7;++i) TouchLayout_Center(&rects[fixed[i]],i<5?W-offsets[i][0]*scale:offsets[i][0]*scale,H-offsets[i][1]*scale);
 	const int tools[4]={TB_CONSOLE,TB_MENU,TB_PAD,TB_CHAT};
 	float cursor=45.816424f*scale;
+	const float gap=30.333944f*scale+(oldConsoleWidth-rects[TB_CONSOLE].w)/3;
 	for(int i=0;i<4;++i) {
 		touchRect_t *r=&rects[tools[i]];
-		TouchLayout_Center(r,cursor+r->w/2,33.283250f*scale);cursor+=r->w+30.333944f*scale;
+		TouchLayout_Center(r,cursor+r->w/2,33.283250f*scale);cursor+=r->w+gap;
 	}
 	const int selectors[6]={TB_WEAPPREV,TB_SABER_SELECT,TB_WEAPNEXT,TB_FORCEPREV,TB_FORCE,TB_FORCENEXT};
 	const float center=W-95.151955f*scale;
@@ -115,12 +116,45 @@ static void TouchLayout_Phone(float W,float H,touchRect_t rects[TB_COUNT])
 	TouchLayout_FitGroup(W,H,rects,fixed,5);TouchLayout_FitGroup(W,H,rects,fixed+5,1);TouchLayout_FitGroup(W,H,rects,fixed+6,1);
 }
 
+static void TouchLayout_Tablet(float W,float H,touchRect_t rects[TB_COUNT])
+{
+	const float scale=H/834;
+	const float centers[TB_COUNT][2]={
+		{927.760686f,546.355068f},{891.932328f,667.900560f},{1124.165328f,485.006028f},
+		{1118.783970f,589.648008f},{198.828462f,619.310886f},{1051.720373f,368.314694f},
+		{1129.364700f,368.314694f},{1150.761678f,795.568446f},{974.076045f,274.266460f},
+		{1129.364700f,274.266460f},{48.969559f,62.470369f},{1154.501286f,41.258814f},
+		{1051.720373f,274.266460f},{107.335750f,62.470369f},{48.969559f,120.836560f},
+		{1160.990676f,92.486430f},{974.076045f,368.314694f},{81.212597f,288.569004f},
+		{156.728918f,288.569004f},{128.447834f,356.492466f},{203.964155f,356.492466f}};
+	for(int i=0;i<TB_COUNT;++i) {
+		const int right=i==TB_CONSOLE || i==TB_LOCK || i==TB_ATTACK || i==TB_ALTATTACK || i==TB_JUMP || i==TB_CROUCH ||
+			i==TB_STYLE || i==TB_FORCE || i==TB_FORCENEXT || i==TB_FORCEPREV || i==TB_WEAPPREV || i==TB_WEAPNEXT || i==TB_SABER_SELECT;
+		const int bottom=i==TB_ATTACK || i==TB_ALTATTACK || i==TB_JUMP || i==TB_CROUCH || i==TB_STYLE || i==TB_USE;
+		TouchLayout_Center(&rects[i],right?W-(1194-centers[i][0])*scale:centers[i][0]*scale,
+			bottom?H-(834-centers[i][1])*scale:centers[i][1]*scale);
+	}
+	const int tools[3]={TB_MENU,TB_CHAT,TB_PAD};
+	const int selectors[6]={TB_WEAPPREV,TB_SABER_SELECT,TB_WEAPNEXT,TB_FORCEPREV,TB_FORCE,TB_FORCENEXT};
+	const int slots[4]={TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4};
+	const int combat[5]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE};
+	const int singles[3]={TB_USE,TB_CONSOLE,TB_LOCK};
+	TouchLayout_FitGroup(W,H,rects,tools,3);TouchLayout_FitGroup(W,H,rects,selectors,6);
+	TouchLayout_FitGroup(W,H,rects,slots,4);TouchLayout_FitGroup(W,H,rects,combat,5);
+	for(int i=0;i<3;++i) TouchLayout_FitGroup(W,H,rects,&singles[i],1);
+}
+
 void TouchLayout_Defaults(float W,float H,float L,float T,float R,float B,float p,touchRect_t out[TB_COUNT],touchLayoutProfile_t profile)
 {
 	for(int i=0;i<TB_COUNT;++i) TouchEdit_DefaultRect(i,W,H,L,T,R,B,p,&out[i]);
 	if(TouchLayout_Unit(W-L-R,H-T-B,p)<=0) return;
-	if(profile==TOUCH_LAYOUT_PHONE) TouchLayout_Phone(W,H,out);
-	else TouchLayout_ForceRow(W,H,L,T,R,B,p,out);
+	if(profile==TOUCH_LAYOUT_LEGACY) {TouchLayout_ForceRow(W,H,L,T,R,B,p,out);return;}
+	const float oldConsoleWidth=out[TB_CONSOLE].w;
+	const float consoleX=out[TB_CONSOLE].x+out[TB_CONSOLE].w/2,consoleY=out[TB_CONSOLE].y+out[TB_CONSOLE].h/2;
+	out[TB_CONSOLE].w=out[TB_MENU].w;out[TB_CONSOLE].h=out[TB_MENU].h;
+	TouchLayout_Center(&out[TB_CONSOLE],consoleX,consoleY);
+	if(profile==TOUCH_LAYOUT_PHONE) TouchLayout_Phone(W,H,out,oldConsoleWidth);
+	else TouchLayout_Tablet(W,H,out);
 }
 
 void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT], const touchLayoutOverrides_t *overrides, touchLayoutProfile_t profile )
@@ -129,7 +163,7 @@ void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, floa
 	if ( overrides ) positions = *overrides;
 	const int legacy=positions.version!=2;
 	TouchEdit_Migrate( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p );
-	if(legacy) TouchEdit_RepairLock( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p, TOUCH_LAYOUT_TABLET );
+	if(legacy) TouchEdit_RepairLock( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p, TOUCH_LAYOUT_LEGACY );
 	if(!(positions.mask & (1u<<TB_LOCK))) TouchEdit_RepairLock( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p, profile );
 	TouchLayout_Defaults(viewW,viewH,safeL,safeT,safeR,safeB,p,out,profile);
 	for ( int i = 0; i < TB_COUNT; ++i ) {

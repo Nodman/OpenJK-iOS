@@ -20,7 +20,7 @@ typedef enum {
 #define IOS_TOUCH_ALL_BUTTONS ( ( 1u << TB_COUNT ) - 1u )
 
 typedef struct { float x, y, w, h; } touchRect_t;
-typedef enum { TOUCH_LAYOUT_TABLET, TOUCH_LAYOUT_PHONE } touchLayoutProfile_t;
+typedef enum { TOUCH_LAYOUT_TABLET, TOUCH_LAYOUT_PHONE, TOUCH_LAYOUT_LEGACY } touchLayoutProfile_t;
 
 IOS_TOUCH_INLINE float TouchLayout_ButtonScale( int button )
 {

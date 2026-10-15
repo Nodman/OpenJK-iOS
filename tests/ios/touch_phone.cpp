@@ -19,8 +19,8 @@ BOOST_AUTO_TEST_CASE(reference_matches_approved_cleanup_and_keeps_protected_cent
 	const float expected[TB_COUNT][2]={
 		{745.416144f,214.533000f},{684.668080f,306.373320f},{851.568472f,331.220120f},{897.210780f,401.733200f},
 		{104.169584f,398.733280f},{860.848045f,139.422360f},{928.006806f,139.422360f},{812.705160f,406.133200f},
-		{793.689284f,58.444467f},{928.006806f,58.444467f},{110.660368f,33.283250f},{56.981424f,33.283250f},
-		{860.848045f,58.444467f},{220.048256f,33.283250f},{165.354312f,33.283250f},{34.135892f,296.779120f},
+		{793.689284f,58.444467f},{928.006806f,58.444467f},{112.013701f,33.283250f},{57.996424f,33.283250f},
+		{860.848045f,58.444467f},{220.048256f,33.283250f},{166.030979f,33.283250f},{34.135892f,296.779120f},
 		{793.689284f,139.422360f},{111.695933f,117.866540f},{192.302507f,117.866540f},
 		{172.908135f,181.033380f},{253.514709f,181.033380f}};
 	touchRect_t phone[TB_COUNT],tablet[TB_COUNT];
@@ -62,6 +62,7 @@ BOOST_AUTO_TEST_CASE(compiled_phone_matrix_and_documented_320_point_stress) {
 		const int tools[4]={TB_CONSOLE,TB_MENU,TB_PAD,TB_CHAT};float gap=-1;
 		for(int i=1;i<4;++i) {
 			const float next=rects[tools[i]].x-rects[tools[i-1]].x-rects[tools[i-1]].w;
+			BOOST_CHECK_GE(next,0);
 			if(i>1) BOOST_CHECK_SMALL(next-gap,.001f);gap=next;
 			BOOST_CHECK_SMALL(Y(rects[tools[i]])-Y(rects[tools[0]]),.001f);
 		}

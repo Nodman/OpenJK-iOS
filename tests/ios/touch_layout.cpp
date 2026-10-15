@@ -10,9 +10,15 @@ namespace mp_touch_keys {
 #include <boost/test/unit_test.hpp>
 
 #include <math.h>
+#include "touch_tablet_fixture.h"
+#include <cstring>
+
+static void HistoricalLayout(float W,float H,float L,float T,float R,float B,float p,touchRect_t out[TB_COUNT],const touchLayoutOverrides_t *o=NULL) {
+	TouchLayout_Build(W,H,L,T,R,B,p,out,o,TOUCH_LAYOUT_LEGACY);
+}
 
 BOOST_AUTO_TEST_SUITE( ios )
-BOOST_AUTO_TEST_SUITE( touch_layout )
+BOOST_AUTO_TEST_SUITE( touch_layout_legacy )
 
 BOOST_AUTO_TEST_CASE( button_definitions )
 {
@@ -65,7 +71,7 @@ BOOST_AUTO_TEST_CASE( anchored_target_fixtures_and_arc_gaps )
 	};
 	for ( const auto &f : fixtures ) {
 		touchRect_t rects[TB_COUNT];
-		TouchLayout_Build( f[0], f[1], f[2], f[3], f[4], f[5], f[6], rects );
+		HistoricalLayout( f[0], f[1], f[2], f[3], f[4], f[5], f[6], rects );
 		const float unit = TouchLayout_Unit( f[0] - f[2] - f[4], f[1] - f[3] - f[5], f[6] );
 		for ( int i = 0; i < TB_COUNT; ++i ) {
 			const auto &r = rects[i];
@@ -104,7 +110,7 @@ BOOST_AUTO_TEST_CASE( small_windows_are_finite_safe_and_deterministic )
 {
 	for ( const auto &f : { touchRect_t{ 600, 400, 20, 30 }, touchRect_t{ 400, 1000, 20, 30 }, touchRect_t{ 60, 40, 2, 3 } } ) {
 		touchRect_t rects[TB_COUNT];
-		TouchLayout_Build( f.x, f.y, f.w, f.h, 4, 5, 3, rects );
+		HistoricalLayout( f.x, f.y, f.w, f.h, 4, 5, 3, rects );
 		for ( int i = 0; i < TB_COUNT; ++i ) {
 			if ( i == TB_CONSOLE ) continue;
 			BOOST_CHECK( IOS_TouchFinite( rects[i].x ) && IOS_TouchFinite( rects[i].y ) && IOS_TouchFinite( rects[i].w ) );
@@ -115,7 +121,7 @@ BOOST_AUTO_TEST_CASE( small_windows_are_finite_safe_and_deterministic )
 		}
 	}
 	touchRect_t rects[TB_COUNT];
-	TouchLayout_Build( 2048, 1536, 0, 0, 0, 0, 0, rects );
+	HistoricalLayout( 2048, 1536, 0, 0, 0, 0, 0, rects );
 	for ( int i = 0; i < TB_COUNT; ++i ) BOOST_CHECK_EQUAL( rects[i].w, 0 );
 	BOOST_CHECK_EQUAL( TouchLayout_Hit( rects, 0, 0, ~0u ), -1 );
 }
@@ -132,7 +138,7 @@ BOOST_AUTO_TEST_CASE( console_geometry_matches_layout )
 	};
 	for ( const auto &f : fixtures ) {
 		touchRect_t rects[TB_COUNT], con;
-		TouchLayout_Build( f[0], f[1], f[2], f[3], f[4], f[5], f[6], rects );
+		HistoricalLayout( f[0], f[1], f[2], f[3], f[4], f[5], f[6], rects );
 		IOS_TouchConsoleRectPixels( f[0], f[1], f[2], f[3], f[4], f[5], &con.x, &con.y, &con.w, &con.h );
 		con.x += con.w / 4;
 		con.y += con.h / 4;
@@ -156,7 +162,7 @@ BOOST_AUTO_TEST_CASE( combat_force_medium_sabers_and_default_row_clearance )
 	const float fixtures[][7]={{2868,1320,132,0,132,102,3},{1434,660,66,0,66,51,1.5f},{844,390,0,0,0,0,1},{667,320,0,0,0,0,1},{2048,1536,0,0,0,0,2},{2388,1668,0,0,0,0,2},{1024,768,0,0,0,0,2}};
 	const int row[7]={TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4,TB_FORCEPREV,TB_FORCE,TB_FORCENEXT};
 	for(const auto &f:fixtures) {
-		touchRect_t rects[TB_COUNT];TouchLayout_Build(f[0],f[1],f[2],f[3],f[4],f[5],f[6],rects,NULL);
+		touchRect_t rects[TB_COUNT];HistoricalLayout(f[0],f[1],f[2],f[3],f[4],f[5],f[6],rects,NULL);
 		BOOST_CHECK_EQUAL(rects[TB_FORCE].w,rects[TB_ATTACK].w);BOOST_CHECK_EQUAL(rects[TB_FORCE].h,rects[TB_ALTATTACK].h);
 		for(int button:{TB_STYLE,TB_SABER_SELECT,TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4}) {
 			const auto &d=touchButtonDefs[button];touchRect_t old;
@@ -175,7 +181,7 @@ BOOST_AUTO_TEST_CASE( combat_force_medium_sabers_and_default_row_clearance )
 		}
 		touchLayoutOverrides_t saved={};saved.version=2;saved.mask=(1u<<TB_FORCE)|(1u<<TB_STYLE)|(1u<<TB_SABER_SELECT)|(15u<<TB_FORCE_SLOT1);
 		for(int button:{TB_FORCE,TB_STYLE,TB_SABER_SELECT,TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4}) {saved.cx[button]=.25f;saved.cy[button]=.6f;}
-		TouchLayout_Build(f[0],f[1],f[2],f[3],f[4],f[5],f[6],rects,&saved);
+		HistoricalLayout(f[0],f[1],f[2],f[3],f[4],f[5],f[6],rects,&saved);
 		for(int button:{TB_FORCE,TB_STYLE,TB_SABER_SELECT,TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4}) {BOOST_CHECK_SMALL(rects[button].x+rects[button].w/2-f[0]*.25f,.001f);BOOST_CHECK_SMALL(rects[button].y+rects[button].h/2-f[1]*.6f,.001f);}
 	}
 }
@@ -203,7 +209,7 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 			touchButtonDef_t oldDefs[TB_COUNT];
 			TouchLegacy_Apply( &overrides, oldDefs, f[0], f[1], f[2], f[3], f[4], f[5], f[6] );
 			touchRect_t rects[TB_COUNT];
-			TouchLayout_Build( f[0], f[1], f[2], f[3], f[4], f[5], f[6], rects, &overrides );
+			HistoricalLayout( f[0], f[1], f[2], f[3], f[4], f[5], f[6], rects, &overrides );
 			for ( int button = 0; button < TB_COUNT; ++button ) {
 				touchRect_t old;
 				const auto &d = oldDefs[button];
@@ -249,7 +255,7 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 	touchLayoutOverrides_t edge = {};
 	edge.mask = 1u << TB_MENU;
 	touchRect_t rects[TB_COUNT];
-	TouchLayout_Build( 600, 400, 20, 10, 40, 30, 3, rects, &edge );
+	HistoricalLayout( 600, 400, 20, 10, 40, 30, 3, rects, &edge );
 	BOOST_CHECK_EQUAL( rects[TB_MENU].x, 53 );
 	BOOST_CHECK_EQUAL( rects[TB_MENU].y, 43 );
 	BOOST_CHECK_EQUAL( rects[TB_MENU].w, 66 );
@@ -348,7 +354,7 @@ BOOST_AUTO_TEST_CASE( fps_clears_lock_and_console_across_fixtures_and_stack_offs
 	};
 	for (const auto &f : fixtures) for (int corrected : {0,1}) {
 		const auto layout=AspectLayout_Build((int)f[0],(int)f[1],corrected,1.5f,(int)f[2],(int)f[3],(int)f[4],(int)f[5]);
-		touchRect_t buttons[TB_COUNT]; TouchLayout_Build(f[0],f[1],f[2],f[3],f[4],f[5],f[6],buttons);
+		touchRect_t buttons[TB_COUNT]; HistoricalLayout(f[0],f[1],f[2],f[3],f[4],f[5],f[6],buttons);
 		const auto &con=buttons[TB_CONSOLE]; const auto &lock=buttons[TB_LOCK];
 		const float scale=AspectLayout_SharpTextScale(&layout,18,22);
 		const double right=AspectLayout_ToVirtual(&layout,fminf(f[0]-f[4],con.x-6),0).x;
@@ -523,7 +529,7 @@ BOOST_AUTO_TEST_CASE( vertical_gutters )
 	CheckTouchRectRoundTrip( layout, top );
 	CheckTouchRectRoundTrip( layout, bottom );
 	touchRect_t rects[TB_COUNT];
-	TouchLayout_Build( 640, 600, 0, 0, 0, 0, 1, rects );
+	HistoricalLayout( 640, 600, 0, 0, 0, 0, 1, rects );
 	for ( int i = 0; i < TB_COUNT; ++i )
 		CheckTouchRectRoundTrip( layout, rects[i] );
 }
@@ -538,7 +544,7 @@ BOOST_AUTO_TEST_CASE( every_button_round_trips )
 	};
 	for ( const aspectLayout_t &layout : layouts ) {
 		touchRect_t rects[TB_COUNT];
-		TouchLayout_Build( layout.W, layout.H, layout.safeL, layout.safeT, layout.safeR, layout.safeB, 2, rects );
+		HistoricalLayout( layout.W, layout.H, layout.safeL, layout.safeT, layout.safeR, layout.safeB, 2, rects );
 		for ( int i = 0; i < TB_COUNT; ++i ) {
 			BOOST_TEST_CONTEXT( "button " << i << ", width " << layout.W << ", branch " << layout.branch ) {
 				CheckTouchRectRoundTrip( layout, rects[i] );
@@ -560,8 +566,8 @@ BOOST_AUTO_TEST_CASE( equal_size_rotation )
 	const aspectLayout_t before = AspectLayout_Build( 2868, 1320, 1, 1.5f, 144, 30, 44, 90 );
 	const aspectLayout_t after = AspectLayout_Build( 2868, 1320, 1, 1.5f, 44, 30, 144, 90 );
 	touchRect_t oldRects[TB_COUNT], newRects[TB_COUNT];
-	TouchLayout_Build( before.W, before.H, before.safeL, before.safeT, before.safeR, before.safeB, 3, oldRects );
-	TouchLayout_Build( after.W, after.H, after.safeL, after.safeT, after.safeR, after.safeB, 3, newRects );
+	HistoricalLayout( before.W, before.H, before.safeL, before.safeT, before.safeR, before.safeB, 3, oldRects );
+	HistoricalLayout( after.W, after.H, after.safeL, after.safeT, after.safeR, after.safeB, 3, newRects );
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		BOOST_CHECK_SMALL( newRects[i].x - oldRects[i].x + 100.0f, 1e-3f );
 		BOOST_CHECK_EQUAL( newRects[i].y, oldRects[i].y );
@@ -588,4 +594,98 @@ BOOST_AUTO_TEST_CASE( stick_zero_radius_and_nan_virtual )
 	BOOST_CHECK_EQUAL( vy, 480 );
 }
 
+BOOST_AUTO_TEST_SUITE_END()
+
+
+BOOST_AUTO_TEST_SUITE(ios)
+BOOST_AUTO_TEST_SUITE(touch_tablet)
+
+BOOST_AUTO_TEST_CASE(reference_fixed_centers_and_current_console_size) {
+	touchLayoutOverrides_t source;TouchEdit_Parse(touchTabletLayoutFixture,&source);
+	const int fixed[]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK,TB_CONSOLE};
+	for(float p:{1.f,1.5f,2.f}) for(float bottom:{0.f,20.f}) {
+		touchRect_t r[TB_COUNT];TouchLayout_Build(1194*p,834*p,0,0,0,bottom*p,p,r,NULL,TOUCH_LAYOUT_TABLET);
+		for(int i:fixed) {
+			BOOST_CHECK_SMALL((r[i].x+r[i].w/2)/p-source.cx[i]*1194,.001f);
+			BOOST_CHECK_SMALL((r[i].y+r[i].h/2)/p-source.cy[i]*834,.001f);
+		}
+		for(int i:{TB_MENU,TB_PAD,TB_CHAT,TB_LOCK}) {
+			BOOST_CHECK_EQUAL(r[TB_CONSOLE].w,r[i].w);BOOST_CHECK_EQUAL(r[TB_CONSOLE].h,r[i].h);
+		}
+		const int groups[][6]={{TB_MENU,TB_CHAT,TB_PAD,-1,-1,-1},{TB_WEAPPREV,TB_SABER_SELECT,TB_WEAPNEXT,TB_FORCEPREV,TB_FORCE,TB_FORCENEXT},{TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4,-1,-1}};
+		for(const auto &group:groups) {
+			float dx=0,dy=0;
+			for(int i:group) if(i>=0) {dx+=(r[i].x+r[i].w/2)/p-source.cx[i]*1194;dy+=(r[i].y+r[i].h/2)/p-source.cy[i]*834;}
+			BOOST_CHECK_SMALL(dx,.002f);BOOST_CHECK_SMALL(dy,.002f);
+		}
+		const float sourceStep=((source.cx[TB_CHAT]-source.cx[TB_MENU])*1194+(source.cy[TB_PAD]-source.cy[TB_MENU])*834)/2;
+		BOOST_CHECK_SMALL((r[TB_CHAT].x-r[TB_MENU].x)/p-sourceStep,.001f);
+	}
+}
+
+static float CenterX(const touchRect_t &r) {return r.x+r.w/2;}
+static float CenterY(const touchRect_t &r) {return r.y+r.h/2;}
+static bool Disjoint(const touchRect_t &a,const touchRect_t &b) {
+	return a.x+a.w<=b.x+.001f || b.x+b.w<=a.x+.001f || a.y+a.h<=b.y+.001f || b.y+b.h<=a.y+.001f;
+}
+
+BOOST_AUTO_TEST_CASE(compiled_tablet_matrix_matches_groups_and_documented_window_limits) {
+	const int sizes[][2]={{1194,834},{1210,834},{1024,768},{1366,1024},{1180,820},{1133,744},{834,1194},{768,1024},{744,1133},{694,768},{507,768},{320,768}};
+	const float insets[][4]={{0,0,0,20},{0,24,0,20},{0,0,0,0}};
+	int supported=0,stress=0;
+	for(const auto &size:sizes) for(float render:{1.f,.75f,.5f}) for(const auto &safe:insets) {
+		const float p=2*render,W=size[0]*p,H=size[1]*p;
+		touchRect_t r[TB_COUNT],again[TB_COUNT];TouchLayout_Build(W,H,safe[0]*p,safe[1]*p,safe[2]*p,safe[3]*p,p,r,NULL,TOUCH_LAYOUT_TABLET);
+		TouchLayout_Build(W,H,safe[0]*p,safe[1]*p,safe[2]*p,safe[3]*p,p,again,NULL,TOUCH_LAYOUT_TABLET);
+		BOOST_CHECK_EQUAL(memcmp(r,again,sizeof(r)),0);
+		const bool narrow=size[0]<=507;if(narrow) ++stress;else ++supported;
+		for(int i=0;i<TB_COUNT;++i) {
+			BOOST_CHECK(IOS_TouchFinite(r[i].x) && IOS_TouchFinite(r[i].y));
+			BOOST_CHECK_GE(r[i].x,-.001f);BOOST_CHECK_GE(r[i].y,-.001f);
+			BOOST_CHECK_LE(r[i].x+r[i].w,W+.001f);BOOST_CHECK_LE(r[i].y+r[i].h,H+.001f);
+			BOOST_CHECK_EQUAL(TouchLayout_Hit(r,CenterX(r[i]),CenterY(r[i]),1u<<i),i);
+			touchRect_t editor;TouchEdit_PositionRect(NULL,i,W,H,safe[0]*p,safe[1]*p,safe[2]*p,safe[3]*p,p,&editor,TOUCH_LAYOUT_TABLET);
+			BOOST_CHECK_EQUAL(memcmp(&editor,&r[i],sizeof(editor)),0);
+			for(int j=0;j<i;++j) {
+				const bool known=size[0]==507?(i==TB_USE && j==TB_ALTATTACK):size[0]==320 &&
+					((i==TB_FORCE_SLOT2 && j==TB_WEAPPREV) || (i==TB_FORCE_SLOT3 && j==TB_FORCEPREV) || (i==TB_FORCE_SLOT4 && j==TB_FORCE));
+				BOOST_CHECK_MESSAGE(Disjoint(r[i],r[j])!=known,"pair "<<i<<"/"<<j<<" in "<<size[0]<<"x"<<size[1]<<" render "<<render);
+			}
+		}
+		BOOST_CHECK_SMALL(CenterX(r[TB_MENU])-CenterX(r[TB_PAD]),.001f);
+		BOOST_CHECK_SMALL(CenterY(r[TB_MENU])-CenterY(r[TB_CHAT]),.001f);
+		BOOST_CHECK_SMALL((r[TB_CHAT].x-r[TB_MENU].x-r[TB_MENU].w)-(r[TB_PAD].y-r[TB_MENU].y-r[TB_MENU].h),.001f);
+		for(int i=0;i<3;++i) {const int top[]={TB_WEAPPREV,TB_SABER_SELECT,TB_WEAPNEXT},bottom[]={TB_FORCEPREV,TB_FORCE,TB_FORCENEXT};BOOST_CHECK_SMALL(CenterX(r[top[i]])-CenterX(r[bottom[i]]),.001f);}
+		BOOST_CHECK_SMALL(CenterY(r[TB_WEAPPREV])-CenterY(r[TB_WEAPNEXT]),.001f);
+		BOOST_CHECK_SMALL(CenterY(r[TB_FORCEPREV])-CenterY(r[TB_FORCENEXT]),.001f);
+		BOOST_CHECK_SMALL(CenterY(r[TB_FORCE_SLOT1])-CenterY(r[TB_FORCE_SLOT2]),.001f);
+		BOOST_CHECK_SMALL(CenterY(r[TB_FORCE_SLOT3])-CenterY(r[TB_FORCE_SLOT4]),.001f);
+		BOOST_CHECK_SMALL((CenterX(r[TB_FORCE_SLOT2])-CenterX(r[TB_FORCE_SLOT1]))-(CenterX(r[TB_FORCE_SLOT4])-CenterX(r[TB_FORCE_SLOT3])),.001f);
+		BOOST_CHECK_SMALL((CenterX(r[TB_FORCE_SLOT3])-CenterX(r[TB_FORCE_SLOT1]))-(CenterX(r[TB_FORCE_SLOT4])-CenterX(r[TB_FORCE_SLOT2])),.001f);
+		BOOST_CHECK_SMALL((CenterY(r[TB_FORCE_SLOT3])-CenterY(r[TB_FORCE_SLOT1]))-(CenterY(r[TB_FORCE_SLOT4])-CenterY(r[TB_FORCE_SLOT2])),.001f);
+	}
+	BOOST_CHECK_EQUAL(supported,90);BOOST_CHECK_EQUAL(stress,18);
+}
+
+BOOST_AUTO_TEST_CASE(saved_tablet_centers_and_partial_console_survive_current_profiles) {
+	touchLayoutOverrides_t saved;TouchEdit_Parse(touchTabletLayoutFixture,&saved);const auto original=saved;
+	for(auto profile:{TOUCH_LAYOUT_TABLET,TOUCH_LAYOUT_PHONE}) for(const auto &size:{touchRect_t{1194,834,0,0},touchRect_t{834,1194,0,0}}) for(float p:{1.f,2.f}) {
+		touchRect_t r[TB_COUNT];TouchLayout_Build(size.x*p,size.y*p,0,24*p,0,20*p,p,r,&saved,profile);
+		for(int i=0;i<TB_COUNT;++i) {
+			BOOST_CHECK_SMALL(CenterX(r[i])-saved.cx[i]*size.x*p,.002f);
+			BOOST_CHECK_SMALL(CenterY(r[i])-saved.cy[i]*size.y*p,.002f);
+		}
+	}
+	BOOST_CHECK_EQUAL(memcmp(&saved,&original,sizeof(saved)),0);
+	touchLayoutOverrides_t partial={};partial.version=2;partial.mask=1u<<TB_CONSOLE;partial.cx[TB_CONSOLE]=.5f;partial.cy[TB_CONSOLE]=.5f;
+	const auto untouched=partial;
+	for(auto profile:{TOUCH_LAYOUT_TABLET,TOUCH_LAYOUT_PHONE}) {
+		touchRect_t r[TB_COUNT];TouchLayout_Build(2388,1668,0,0,0,40,2,r,&partial,profile);
+		BOOST_CHECK_SMALL(CenterX(r[TB_CONSOLE])-1194,.001f);BOOST_CHECK_SMALL(CenterY(r[TB_CONSOLE])-834,.001f);
+		BOOST_CHECK_EQUAL(r[TB_CONSOLE].w,r[TB_MENU].w);
+	}
+	BOOST_CHECK_EQUAL(memcmp(&partial,&untouched,sizeof(partial)),0);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()

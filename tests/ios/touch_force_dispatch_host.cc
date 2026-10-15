@@ -1,4 +1,5 @@
 #include "touch_phone_fixture.h"
+#include "touch_tablet_fixture.h"
 #include <cassert>
 #include <cstdarg>
 #include <cstdio>
@@ -318,7 +319,7 @@ static void PacketTiming(void) {
 }
 #endif
 static void SDLFixture(void) {
-	Reset();cls.realtime=100;cls.cgameStarted=qfalse;drawableScale=1;testPointWidth=844;testPointHeight=390;testProfile=layoutProfile=TOUCH_LAYOUT_TABLET;
+	Reset();cls.realtime=100;cls.cgameStarted=qfalse;drawableScale=1;testPointWidth=844;testPointHeight=390;testProfile=layoutProfile=TOUCH_LAYOUT_LEGACY;
 	memset(&axesState,0,sizeof(axesState));dragX=dragY=0;
 	for(int i=0;i<4;++i) {SetTouchVar(aimNames[i],i==1?"2":i==0?"0":"1");aimRevisions[i]=aimVars[i].modificationCount;}
 	touchAimMode=&aimVars[0];touchAimCurve=&aimVars[1];touchLookScale=in_touchLookScale=&aimVars[2];touchDragScale=&aimVars[3];
@@ -335,7 +336,7 @@ static void SDLFixture(void) {
 	layoutModification=testLayoutVar.modificationCount;touchUnit=TouchLayout_Unit(844,390,1);layoutReady=qtrue;
 	touchWindow=reinterpret_cast<SDL_Window *>(1);lastHidden=lastUIMode=lastCinematic=qfalse;
 	touchLayout=AspectLayout_Build(844,390,0,1.5f,0,0,0,0);
-	TouchLayout_Build(844,390,0,0,0,0,1,rects,&layoutOverrides);
+	TouchLayout_Build(844,390,0,0,0,0,1,rects,&layoutOverrides,layoutProfile);
 	memset(&forceBridge,0,sizeof(forceBridge));
 	const auto update=IN_TouchBeginForceUpdate(),frame=IN_TouchBeginForceFrame();
 	IN_TouchReportForce(TOUCH_FORCE_API,TOUCH_FORCE_LEARNED,1,1);IN_TouchEndForceFrame(frame);IN_TouchEndForceUpdate(update);
@@ -730,12 +731,64 @@ static void SDLResetLayoutRouting(void) {
 	Hardware("-attack",77,120);Cbuf_Execute();IN_TouchEndEdit();Drain();touchWindow=NULL;
 }
 
+static void SDLTabletProfileDefaults(void) {
+	SDLFixture();testPointWidth=1194;testPointHeight=834;drawableScale=2;testProfile=TOUCH_LAYOUT_TABLET;
+	IN_TouchUpdateLayout();Drain();assert(layoutProfile==TOUCH_LAYOUT_TABLET && testLayoutText.empty());
+	touchRect_t defaults[TB_COUNT];memcpy(defaults,rects,sizeof(rects));
+	assert(rects[TB_CONSOLE].w==rects[TB_MENU].w && rects[TB_CONSOLE].h==rects[TB_PAD].h);
+	const auto console=rects[TB_CONSOLE];
+	assert(IN_TouchOnConsole(console.x+1,console.y+1));
+	assert(!IN_TouchOnConsole(console.x+console.w+1,console.y+console.h/2));
+	SDLButton(SDL_FINGERDOWN,240,TB_CONSOLE);assert(IN_TouchFind(240) && IN_TouchFind(240)->role==ROLE_CONSOLE);
+	IN_TouchReleaseAll();Drain();assert(commandsSeen.empty());
+	SetTouchVar("in_touchLayout",touchTabletLayoutFixture);const int savedRevision=testLayoutVar.modificationCount;
+	IN_TouchUpdateLayout();Drain();assert(testLayoutText==touchTabletLayoutFixture && testLayoutVar.modificationCount==savedRevision);
+	touchLayoutOverrides_t source;TouchEdit_Parse(touchTabletLayoutFixture,&source);
+	for(int i=0;i<TB_COUNT;++i) {
+		assert(fabsf(rects[i].x+rects[i].w/2-source.cx[i]*viewW)<.002f);
+		assert(fabsf(rects[i].y+rects[i].h/2-source.cy[i]*viewH)<.002f);
+	}
+	editState.active=1;touchDrawItem_t draw[IOS_TOUCH_MAX_DRAW_ITEMS];const int count=IN_TouchGetDrawList(draw,IOS_TOUCH_MAX_DRAW_ITEMS);
+	int seen=0;for(int i=0;i<count;++i) if(draw[i].kind==TOUCH_DRAW_BUTTON && draw[i].button==TB_CONSOLE) {
+		const auto expected=TouchLayout_RectToVirtual(&touchLayout,rects[TB_CONSOLE]);
+		assert(draw[i].x==expected.x && draw[i].y==expected.y && draw[i].w==expected.w && draw[i].h==expected.h);++seen;
+	}
+	assert(seen==1 && testLayoutVar.modificationCount==savedRevision);
+	const auto start=rects[TB_CONSOLE];const float cx=start.x+start.w/2,cy=start.y+start.h/2;
+	SDLEvent(SDL_FINGERDOWN,241,start.x+1,start.y+1);assert(editState.dragging && editState.button==TB_CONSOLE);
+	SDLEvent(SDL_FINGERMOTION,241,start.x-19,start.y+1);SDLEvent(SDL_FINGERUP,241,start.x-19,start.y+1);
+	assert(fabsf(rects[TB_CONSOLE].x+rects[TB_CONSOLE].w/2-(cx-20))<.002f);
+	assert(fabsf(rects[TB_CONSOLE].y+rects[TB_CONSOLE].h/2-cy)<.002f && rects[TB_CONSOLE].w==rects[TB_MENU].w);
+	IN_TouchEndEdit();Drain();
+	SetTouchVar("in_touchLayout",touchTabletLayoutFixture);IN_TouchUpdateLayout();
+	testPointWidth=834;testPointHeight=1194;IN_TouchUpdateLayout();
+	testProfile=TOUCH_LAYOUT_PHONE;IN_TouchUpdateLayout();testProfile=TOUCH_LAYOUT_TABLET;IN_TouchUpdateLayout();
+	assert(testLayoutText==touchTabletLayoutFixture);
+	testPointWidth=1194;testPointHeight=834;drawableScale=1;IN_TouchUpdateLayout();drawableScale=2;IN_TouchUpdateLayout();
+	assert(testLayoutText==touchTabletLayoutFixture);
+	memset(&layoutOverrides,0,sizeof(layoutOverrides));layoutModification=-1;IN_TouchUpdateLayout();assert(testLayoutText==touchTabletLayoutFixture);
+	editState.active=1;settingsState.tab=TOUCH_SETTINGS_APPEARANCE;
+	SDLPanelTap(TOUCH_SETTINGS_RESET_LAYOUT,242);Drain();assert(editState.active && testLayoutText.empty());
+	assert(!memcmp(defaults,rects,sizeof(rects)));
+	SDLPanelTap(TOUCH_SETTINGS_DONE,243);Drain();assert(!editState.active && testLayoutText=="v2;");
+	memset(&layoutOverrides,0,sizeof(layoutOverrides));layoutModification=-1;IN_TouchUpdateLayout();
+	assert(!memcmp(defaults,rects,sizeof(rects)));
+	for(const char *text:{"15:.1,.08;0:.4,.6;","15:.5,.5;10:0,0;","0:.1,.1;15:.8,.7;"}) {
+		touchLayoutOverrides_t migrated;TouchEdit_Parse(text,&migrated);
+		TouchEdit_Migrate(&migrated,viewW,viewH,0,0,0,0,pixelsPerPoint);
+		TouchEdit_RepairLock(&migrated,viewW,viewH,0,0,0,0,pixelsPerPoint,TOUCH_LAYOUT_LEGACY);
+		char expected[IOS_TOUCH_LAYOUT_TEXT];assert(TouchEdit_Serialize(&migrated,expected,sizeof(expected)));
+		SetTouchVar("in_touchLayout",text);IN_TouchUpdateLayout();assert(testLayoutText==expected);
+	}
+	IN_TouchReleaseAll();Drain();touchWindow=NULL;
+}
+
 int main() {
 	cls.state=CA_ACTIVE;Cbuf_Init();Register();
 	CommandNamesAndTap();CancellationAndSourcePulses();SelectionAndAssignment();CentralAndReset();
 #ifdef TEST_MP
 	PacketTiming();
 #endif
-	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();SDLHeldActionAim();SDLPhoneProfileDefaults();SDLResetLayoutRouting();
-	puts("PASS: actual Appearance Reset layout and held-finger cancellation; native profile cache/Console/editor/saved v2; late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
+	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();SDLHeldActionAim();SDLPhoneProfileDefaults();SDLResetLayoutRouting();SDLTabletProfileDefaults();
+	puts("PASS: tablet current Console draw/hit/drag/native migration/saved center/reset; actual Appearance Reset layout and held-finger cancellation; native profile cache/Console/editor/saved v2; late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
 }

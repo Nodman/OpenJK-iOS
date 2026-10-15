@@ -119,7 +119,7 @@ static void IN_TouchUpdateLayout( void ) {
 	TouchEdit_Parse( in_touchLayout->string, &layoutOverrides );
 	const int legacy=layoutOverrides.version!=2;
 	int repaired=TouchEdit_Migrate(&layoutOverrides,(float)w,(float)h,l,t,r,b,p);
-	if(legacy) repaired |= TouchEdit_RepairLock(&layoutOverrides,(float)w,(float)h,l,t,r,b,p,TOUCH_LAYOUT_TABLET);
+	if(legacy) repaired |= TouchEdit_RepairLock(&layoutOverrides,(float)w,(float)h,l,t,r,b,p,TOUCH_LAYOUT_LEGACY);
 	if ( repaired ) {
 		char corrected[IOS_TOUCH_LAYOUT_TEXT];
 		if ( TouchEdit_Serialize(&layoutOverrides,corrected,sizeof(corrected)) ) Cvar_Set("in_touchLayout",corrected);
