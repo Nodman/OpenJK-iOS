@@ -571,6 +571,31 @@ static void CL_DrawTouchQuad( const touchDrawItem_t *item, int glyph ) {
 	re.DrawStretchPic( item->x, item->y, item->w, item->h, uv.s1, uv.t1, uv.s2, uv.t2, touchShader );
 }
 
+static void CL_DrawTouchSettings( void ) {
+	touchSettingsItem_t items[IOS_TOUCH_SETTINGS_ITEMS];
+	float p=1;
+	const int count=IN_TouchGetSettingsDrawList(items,IOS_TOUCH_SETTINGS_ITEMS,&p);
+	const aspectLayout_t &layout=SCR_GetAspectLayout();
+	for(int i=0;i<count;++i) {
+		const touchRect_t r=TouchLayout_RectToVirtual(&layout,items[i].rect);
+		const vec4_t background={items[i].selected?.30f:.06f,items[i].selected?.25f:.06f,.08f,.95f};
+		SCR_FillRect(r.x,r.y,r.w,r.h,background);
+		const size_t length=strlen(items[i].label);
+		if(!length) continue;
+		const aspectPoint_t glyph=AspectLayout_SizeToVirtual(&layout,6*p,12*p);
+		const float width=fminf((float)glyph.x,(r.w*.9f)/length),height=fminf((float)glyph.y,r.h*.8f);
+		const float x=r.x+(r.w-width*length)/2,y=r.y+(r.h-height)/2;
+		const vec4_t white={1,1,1,1};
+		re.SetColor(white);
+		for(size_t j=0;j<length;++j) {
+			const unsigned char ch=(unsigned char)items[i].label[j];
+			const float u=(ch&15)/16.0f,v=(ch>>4)/16.0f;
+			re.DrawStretchPic(x+j*width,y,width,height,u,v,u+.03125f,v+.0625f,cls.charSetShader);
+		}
+	}
+	re.SetColor(NULL);
+}
+
 static void CL_DrawTouchControls( void ) {
 	touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
 	const int n = IN_TouchGetDrawList( items, IOS_TOUCH_MAX_DRAW_ITEMS );
@@ -586,12 +611,13 @@ static void CL_DrawTouchControls( void ) {
 		}
 		re.SetColor( colour );
 		CL_DrawTouchQuad( &items[i], items[i].plate );
-		if ( items[i].kind == TOUCH_DRAW_BUTTON ) {
+		if ( items[i].kind == TOUCH_DRAW_BUTTON && items[i].glyph >= 0 ) {
 			TouchDraw_Color( &items[i], 1, opacity, colour );
 			re.SetColor( colour );
 			CL_DrawTouchQuad( &items[i], items[i].glyph );
 		}
 	}
+	CL_DrawTouchSettings();
 	re.SetColor( NULL );
 }
 #endif

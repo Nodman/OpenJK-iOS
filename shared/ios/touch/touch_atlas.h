@@ -2,7 +2,6 @@
 
 #include "sys/ios/ios_touch_geometry.h"
 #include "sys/ios/ios_touch_layout.h"
-#include "sys/ios/ios_touch_edit_slider.h"
 
 #define IOS_TOUCH_ATLAS_NAME "*ios_touch_v2"
 #define IOS_TOUCH_ATLAS_WIDTH 1024
@@ -27,10 +26,10 @@ IOS_TOUCH_INLINE touchAtlasUV_t TouchAtlas_UV( int glyph )
 #include "sys/ios/ios_touch_state.h"
 #include "sys/ios/ios_touch_visibility.h"
 
-#define IOS_TOUCH_MAX_DRAW_ITEMS 32
+#define IOS_TOUCH_MAX_DRAW_ITEMS 48
 
 typedef enum {
-	TOUCH_DRAW_BUTTON, TOUCH_DRAW_STICK_BASE, TOUCH_DRAW_STICK_KNOB, TOUCH_DRAW_DIM, TOUCH_DRAW_HIGHLIGHT, TOUCH_DRAW_SLIDER_TRACK, TOUCH_DRAW_SLIDER_KNOB
+	TOUCH_DRAW_BUTTON, TOUCH_DRAW_STICK_BASE, TOUCH_DRAW_STICK_KNOB, TOUCH_DRAW_DIM, TOUCH_DRAW_HIGHLIGHT
 } touchDrawKind_t;
 
 typedef struct {
@@ -56,8 +55,6 @@ typedef struct {
 	unsigned int visibleButtons, pressedButtons;
 	int sticks, styleColor, weaponClass;
 	int editing, dragButton;
-	const touchRect_t *slider;
-	float opacity;
 } touchDrawInput_t;
 
 IOS_TOUCH_INLINE int TouchDraw_WeaponGlyph( int button,int weaponClass )
@@ -96,9 +93,6 @@ IOS_TOUCH_INLINE void TouchDraw_Color( const touchDrawItem_t *item, int glyphLay
 		rgba[0]=rgba[1]=rgba[2]=item->kind==TOUCH_DRAW_DIM ? 0.0f : 1.0f;
 		rgba[3]=item->kind==TOUCH_DRAW_DIM ? .35f : .75f;
 		return;
-	}
-	if (item->kind==TOUCH_DRAW_SLIDER_TRACK || item->kind==TOUCH_DRAW_SLIDER_KNOB) {
-		rgba[0]=rgba[1]=rgba[2]=1; rgba[3]=item->kind==TOUCH_DRAW_SLIDER_TRACK ? .5f : 1.0f; return;
 	}
 	const int glyph = item->kind == TOUCH_DRAW_BUTTON && glyphLayer;
 	int i;
@@ -153,11 +147,6 @@ IOS_TOUCH_INLINE int TouchDraw_Build( const touchDrawInput_t *input, touchDrawIt
 		}
 		TouchDraw_Add( input, items, &count, capacity, r->x, r->y, r->w, r->h, TOUCH_DRAW_BUTTON,
 			TouchDraw_WeaponGlyph(button,input->weaponClass), TouchDraw_ButtonPlate(button), pressed, button == TB_STYLE ? input->styleColor : TOUCH_STYLE_UNKNOWN );
-	}
-	if (input->editing && input->slider) {
-		const touchRect_t *r=input->slider;
-		TouchDraw_Add(input,items,&count,capacity,r->x+r->h/2,r->y+.45f*r->h,r->w-r->h,.1f*r->h,TOUCH_DRAW_SLIDER_TRACK,TG_PLATE,TG_PLATE,0,TOUCH_STYLE_UNKNOWN);
-		TouchDraw_Add(input,items,&count,capacity,TouchEdit_SliderX(input->opacity,r)-r->h/2,r->y,r->h,r->h,TOUCH_DRAW_SLIDER_KNOB,TG_PLATE,TG_PLATE,1,TOUCH_STYLE_UNKNOWN);
 	}
 	if ( input->sticks && !input->editing ) {
 		const int owners[2] = { input->gestures->moveOwner, input->gestures->lookOwner };

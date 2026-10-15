@@ -1,5 +1,6 @@
 #pragma once
 #include "ios/touch/touch_atlas.h"
+#include "ios_touch_settings.h"
 #include "qcommon/q_shared.h"	// per-app copy (codemp/ or code/) via include path
 
 struct SDL_Window;
@@ -50,6 +51,7 @@ void IN_TouchResetState( void );
 void IN_GamepadReleaseAll( void );
 int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems );
 float IN_TouchGetOpacity( void );
+int IN_TouchGetSettingsDrawList( touchSettingsItem_t *items, int capacity, float *pointScale );
 qboolean IN_TouchIsEditing( void );
 void IN_TouchEndEdit( void );
 void SCR_RegisterTouchMedia( void );

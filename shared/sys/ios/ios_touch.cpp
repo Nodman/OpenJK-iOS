@@ -28,8 +28,7 @@ static touchGestureState_t gestures = { {}, -1, -1 };
 static touchRect_t rects[TB_COUNT];
 static touchLayoutOverrides_t layoutOverrides;
 static touchEditState_t editState;
-static int sliderDragging;
-static SDL_FingerID sliderFinger;
+static touchSettingsState_t settingsState;
 static int layoutModification = -1;
 static int viewW, viewH;
 static float safeL, safeT, safeR, safeB;
@@ -135,7 +134,7 @@ static void IN_TouchSaveEdit( void ) {
 	if ( !editState.active ) return;
 	touchEditInput_t input = {}; input.event=TOUCH_EDIT_EXIT;
 	TouchEdit_State(&editState,input);
-	sliderDragging=0;
+	memset(&settingsState,0,sizeof(settingsState));
 	char text[IOS_TOUCH_LAYOUT_TEXT];
 	if ( in_touchLayout && TouchEdit_Serialize(&layoutOverrides,text,sizeof(text)) ) {
 		Cvar_Set("in_touchLayout",text);
@@ -398,35 +397,31 @@ static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
 }
 
 static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
-	const touchRect_t slider=TouchEdit_SliderRect((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint);
-	const float x=tf->x*viewW,y=tf->y*viewH;
-	if (event==TOUCH_EDIT_DOWN && !editState.dragging && !sliderDragging &&
-		x>=slider.x && x<=slider.x+slider.w && y>=slider.y && y<=slider.y+slider.h) {
-		sliderDragging=1; sliderFinger=tf->fingerId;
-	}
-	if (sliderDragging) {
-		if (sliderFinger==tf->fingerId) {
-			Cvar_SetValue("in_touchOpacity",TouchEdit_SliderValue(x,&slider));
-			if(event==TOUCH_EDIT_UP) sliderDragging=0;
-		}
-		return;
-	}
+	touchSettingsLayout_t panel;
+	TouchSettings_Build(&settingsState,IN_TouchGetOpacity(),(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);
+	const int panelEvent=event==TOUCH_EDIT_DOWN?TOUCH_SETTINGS_DOWN:event==TOUCH_EDIT_MOVE?TOUCH_SETTINGS_MOVE:TOUCH_SETTINGS_UP;
+	const touchSettingsAction_t action=TouchSettings_Step(&settingsState,&panel,panelEvent,tf->fingerId,tf->x*viewW,tf->y*viewH);
+	if(action.cancelDrag) { editState.dragging=0; editState.button=-1; }
+	if(action.opacity) Cvar_SetValue("in_touchOpacity",action.opacity*.01f);
+	if(action.done) { IN_TouchEndEdit(); return; }
+	if(action.consumed) return;
 
 	touchEditInput_t input = {};
 	input.event=event; input.finger=tf->fingerId; input.x=tf->x*viewW; input.y=tf->y*viewH;
 	input.button=TouchLayout_Hit(rects,input.x,input.y,IOS_TOUCH_ALL_BUTTONS);
-	if (TouchLayout_Hit(rects,input.x,input.y,1u<<TB_LOCK)==TB_LOCK) input.button=TB_LOCK;
+	if(TouchLayout_Hit(rects,input.x,input.y,1u<<TB_LOCK)==TB_LOCK) input.button=TB_LOCK;
 	input.slop=6*pixelsPerPoint;
-	if ( input.button>=0 ) {
+	if(input.button>=0) {
 		const touchRect_t *r=&rects[input.button]; input.cx=r->x+r->w/2; input.cy=r->y+r->h/2;
 	}
 	const touchEditOutput_t out=TouchEdit_State(&editState,input);
-	if ( out.move && TouchEdit_Drag(&layoutOverrides,out.button,out.x,out.y,(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint) )
+	if(out.move && TouchEdit_Drag(&layoutOverrides,out.button,out.x,out.y,(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint))
 		TouchLayout_Build((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,rects,&layoutOverrides);
-	if ( out.save ) {
+	if(out.save) {
 		char text[IOS_TOUCH_LAYOUT_TEXT];
-		if ( TouchEdit_Serialize(&layoutOverrides,text,sizeof(text)) ) Cvar_Set("in_touchLayout",text);
+		if(TouchEdit_Serialize(&layoutOverrides,text,sizeof(text))) Cvar_Set("in_touchLayout",text);
 		layoutModification=in_touchLayout->modificationCount;
+		memset(&settingsState,0,sizeof(settingsState));
 		IN_TouchReleaseAll(); IN_GamepadZeroTouchAxes();
 	}
 }
@@ -522,8 +517,6 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	input.gestures = &gestures;
 	input.visibleButtons = IN_TouchVisibleButtons();
 	input.sticks = visibility.sticks;
-	const touchRect_t slider=TouchEdit_SliderRect((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint);
-	input.slider=&slider; input.opacity=IN_TouchGetOpacity();
 	input.editing = editState.active;
 	input.dragButton = editState.dragging ? editState.button : -1;
 	input.styleColor = visibility.styleColor;
@@ -533,4 +526,14 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 			input.pressedButtons |= 1u << TB_CONSOLE;
 	}
 	return TouchDraw_Build( &input, items, maxItems );
+}
+
+int IN_TouchGetSettingsDrawList( touchSettingsItem_t *items, int capacity, float *pointScale ) {
+	if(!editState.active || !layoutReady || !items || capacity<=0) return 0;
+	touchSettingsLayout_t panel;
+	TouchSettings_Build(&settingsState,IN_TouchGetOpacity(),(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);
+	const int count=panel.count<capacity?panel.count:capacity;
+	memcpy(items,panel.items,count*sizeof(*items));
+	*pointScale=pixelsPerPoint;
+	return count;
 }
