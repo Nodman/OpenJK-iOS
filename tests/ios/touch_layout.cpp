@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE( combat_force_medium_sabers_and_default_row_clearance )
 	for(const auto &f:fixtures) {
 		touchRect_t rects[TB_COUNT];TouchLayout_Build(f[0],f[1],f[2],f[3],f[4],f[5],f[6],rects,NULL);
 		BOOST_CHECK_EQUAL(rects[TB_FORCE].w,rects[TB_ATTACK].w);BOOST_CHECK_EQUAL(rects[TB_FORCE].h,rects[TB_ALTATTACK].h);
-		for(int button:{TB_STYLE,TB_SABER_SELECT}) {
+		for(int button:{TB_STYLE,TB_SABER_SELECT,TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4}) {
 			const auto &d=touchButtonDefs[button];touchRect_t old;
 			TouchLayout_AnchorRect(f[0],f[1],f[2],f[3],f[4],f[5],f[6],d.anchor,d.cx,d.cy,d.size,&old.x,&old.y,&old.w,&old.h);
 			BOOST_CHECK_EQUAL(rects[button].w,old.w*.75f);
@@ -173,10 +173,10 @@ BOOST_AUTO_TEST_CASE( combat_force_medium_sabers_and_default_row_clearance )
 			}
 			if(i) BOOST_CHECK_GT(a.x,rects[row[i-1]].x);
 		}
-		touchLayoutOverrides_t saved={};saved.version=2;saved.mask=(1u<<TB_FORCE)|(1u<<TB_STYLE)|(1u<<TB_SABER_SELECT);
-		for(int button:{TB_FORCE,TB_STYLE,TB_SABER_SELECT}) {saved.cx[button]=.25f;saved.cy[button]=.6f;}
+		touchLayoutOverrides_t saved={};saved.version=2;saved.mask=(1u<<TB_FORCE)|(1u<<TB_STYLE)|(1u<<TB_SABER_SELECT)|(15u<<TB_FORCE_SLOT1);
+		for(int button:{TB_FORCE,TB_STYLE,TB_SABER_SELECT,TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4}) {saved.cx[button]=.25f;saved.cy[button]=.6f;}
 		TouchLayout_Build(f[0],f[1],f[2],f[3],f[4],f[5],f[6],rects,&saved);
-		for(int button:{TB_FORCE,TB_STYLE,TB_SABER_SELECT}) {BOOST_CHECK_SMALL(rects[button].x+rects[button].w/2-f[0]*.25f,.001f);BOOST_CHECK_SMALL(rects[button].y+rects[button].h/2-f[1]*.6f,.001f);}
+		for(int button:{TB_FORCE,TB_STYLE,TB_SABER_SELECT,TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4}) {BOOST_CHECK_SMALL(rects[button].x+rects[button].w/2-f[0]*.25f,.001f);BOOST_CHECK_SMALL(rects[button].y+rects[button].h/2-f[1]*.6f,.001f);}
 	}
 }
 
@@ -184,8 +184,7 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 {
 	const unsigned int small = ( 1u << TB_MENU ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) |
 		( 1u << TB_CONSOLE ) | ( 1u << TB_LOCK ) | ( 1u << TB_WEAPPREV ) | ( 1u << TB_WEAPNEXT ) |
-		( 1u << TB_FORCENEXT ) | ( 1u << TB_FORCEPREV ) |
-		( 1u << TB_FORCE_SLOT1 ) | ( 1u << TB_FORCE_SLOT2 ) | ( 1u << TB_FORCE_SLOT3 ) | ( 1u << TB_FORCE_SLOT4 );
+		( 1u << TB_FORCENEXT ) | ( 1u << TB_FORCEPREV );
 	const float fixtures[][7] = {
 		{ 2868, 1320, 132, 0, 132, 102, 3 },
 		{ 1434, 660, 66, 0, 66, 51, 1.5f },
@@ -213,7 +212,7 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 				else
 					TouchLayout_AnchorRect( f[0], f[1], f[2], f[3], f[4], f[5], f[6], d.anchor,
 						d.cx, d.cy, d.size, &old.x, &old.y, &old.w, &old.h );
-				const float scale = small & ( 1u << button ) ? .5f : button==TB_STYLE || button==TB_SABER_SELECT?.75f:1;
+				const float scale = small & ( 1u << button ) ? .5f : button==TB_STYLE || button==TB_SABER_SELECT || button>=TB_FORCE_SLOT1?.75f:1;
 				float expected=old.w*scale;
 				if(button==TB_FORCE) {
 					touchRect_t combat;TouchLayout_AnchorRect(f[0],f[1],f[2],f[3],f[4],f[5],f[6],d.anchor,d.cx,d.cy,.14f,&combat.x,&combat.y,&combat.w,&combat.h);

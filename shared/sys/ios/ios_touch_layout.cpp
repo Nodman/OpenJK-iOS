@@ -39,7 +39,7 @@ static void TouchLayout_ForceRow(float W,float H,float L,float T,float R,float B
 	float left=rects[TB_FORCEPREV].x;
 	for(int i=3;i>=0;--i) {
 		touchRect_t *slot=&rects[TB_FORCE_SLOT1+i];
-		slot->x=fminf(slot->x,left-gap-slot->w);left=slot->x;
+		slot->x=left-gap-slot->w;left=slot->x;
 	}
 	if(rects[TB_FORCENEXT].x+rects[TB_FORCENEXT].w-left>W-L-R) {
 		const float width=rects[TB_FORCEPREV].w+use->w+rects[TB_FORCENEXT].w+2*gap;
