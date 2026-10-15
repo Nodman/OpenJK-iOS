@@ -129,12 +129,11 @@ void CG_UpdateTouchState( qboolean valid ) {
 		facts.equipmentAllowed = TouchCaps_EquipmentAllowed( ps->pm_type == PM_DEAD ? 0 : ps->stats[STAT_HEALTH], spectator, follow, intermission );
 		if ( !spectator && !follow ) {
 			unsigned int weapons = 0;
-			unsigned int forbidden = ci->saber[0].model[0] && ps->saberHolstered == 0 ? ci->saber[0].stylesForbidden : 0;
-			const int special = cgs.gametype == GT_SIEGE || ci->saber[1].model[0] || ci->saber[0].numBlades > 1 || ci->saber[0].type == SABER_STAFF;
+			const int staff=ci->saber[0].type==SABER_STAFF || ci->saber[0].numBlades>1 ||
+				(ci->saber[1].model[0] && (ci->saber[1].type==SABER_STAFF || ci->saber[1].numBlades>1));
 			int weapon, power;
 			facts.weaponClass = TouchCaps_WeaponClass(ps->weapon,WP_NONE,WP_SABER,WP_MELEE,WP_STUN_BATON,WP_NUM_WEAPONS);
 			facts.saberOwned = ( ps->stats[STAT_WEAPONS] & ( 1u << WP_SABER ) ) != 0;
-			facts.legalStyleCount = TouchCaps_MPStyleCount( facts.saberOwned, special, ps->fd.forcePowerLevel[FP_SABER_OFFENSE], forbidden, SS_FAST, SS_STRONG );
 			for ( power = FP_HEAL; power < NUM_FORCE_POWERS; ++power ) {
 				if ( power != FP_LEVITATION && power != FP_SABER_OFFENSE && power != FP_SABER_DEFENSE && power != FP_SABERTHROW &&
 					( ps->fd.forcePowersKnown & ( 1u << power ) ) ) ++facts.selectableForceCount;
@@ -142,7 +141,7 @@ void CG_UpdateTouchState( qboolean valid ) {
 			for ( weapon = WP_STUN_BATON; weapon <= LAST_USEABLE_WEAPON; ++weapon )
 				if ( weapon != WP_MELEE || !facts.saberOwned ) weapons |= 1u << weapon;
 			facts.ownedWeaponCount = TouchCaps_CountBits( ps->stats[STAT_WEAPONS] & weapons );
-			facts.style = TouchCaps_StyleColor( ps->fd.saberDrawAnimLevel ? ps->fd.saberDrawAnimLevel : ps->fd.saberAnimLevel, styles );
+			facts.style = TouchCaps_SaberColor( ps->fd.saberDrawAnimLevel ? ps->fd.saberDrawAnimLevel : ps->fd.saberAnimLevel, styles, staff );
 		}
 	}
 	CG_PublishTouchState( TouchCaps_Pack( &facts, 1 ) );

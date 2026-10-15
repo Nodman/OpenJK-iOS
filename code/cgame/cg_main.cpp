@@ -3800,7 +3800,9 @@ void CG_UpdateTouchState( qboolean valid ) {
 		for ( int weapon = WP_SABER; weapon <= WP_CONCUSSION; ++weapon )
 			weapons |= 1u << weapon;
 		facts.ownedWeaponCount = TouchCaps_CountBits( ps->stats[STAT_WEAPONS] & weapons );
-		facts.style = TouchCaps_StyleColor( cg.saberAnimLevelPending ? cg.saberAnimLevelPending : ps->saberAnimLevel, styles );
+		const int staff=ps->saber[0].type==SABER_STAFF || ps->saber[0].numBlades>1 ||
+			(ps->dualSabers && (ps->saber[1].type==SABER_STAFF || ps->saber[1].numBlades>1));
+		facts.style = TouchCaps_SaberColor( cg.saberAnimLevelPending ? cg.saberAnimLevelPending : ps->saberAnimLevel, styles, staff );
 		facts.equipmentAllowed = TouchCaps_EquipmentAllowed( ps->pm_type == PM_DEAD ? 0 : ps->stats[STAT_HEALTH],
 			ps->pm_type == PM_SPECTATOR, cg.snap->ps.clientNum != 0, ps->pm_type == PM_INTERMISSION );
 	}

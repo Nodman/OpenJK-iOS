@@ -264,7 +264,8 @@ BOOST_AUTO_TEST_CASE( capability_bits_style_counts_and_sp_progress )
 	facts.manualBladeToggle = 1;
 	BOOST_CHECK( TouchCaps_Pack( &facts, 1 ) & TOUCH_CAP_STYLE );
 	facts.manualBladeToggle = 0;
-	BOOST_CHECK_EQUAL( TouchCaps_Pack( &facts, 1 ) & TOUCH_CAP_STYLE, 0 );
+	BOOST_CHECK( TouchCaps_Pack( &facts, 1 ) & TOUCH_CAP_STYLE );
+	BOOST_CHECK_EQUAL( TouchCaps_Pack( &facts, 0 ) & TOUCH_CAP_STYLE, 0 );
 	facts.chatAvailable = 1;
 	facts.selectableForceCount = 1;
 	mask = TouchCaps_Pack( &facts, 1 );
@@ -431,20 +432,20 @@ BOOST_AUTO_TEST_CASE( distinct_local_equipment_predicates )
 
 BOOST_AUTO_TEST_CASE( style_policy_colours_and_bridge_republication )
 {
-	BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 1, 0, 1, 0, 1, 3 ), 1 );
-	BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 1, 0, 2, 0, 1, 3 ), 2 );
-	BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 1, 0, 9, 0, 1, 3 ), 3 );
-	BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 1, 0, 3, ( 1u << 2 ) | ( 1u << 3 ), 1, 3 ), 1 );
-	for ( int special = 1; special <= 3; ++special ) {
-		BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 1, special, 0, ~0u, 1, 3 ), 2 );
-		BOOST_CHECK_EQUAL( TouchCaps_MPStyleCount( 0, special, 3, 0, 1, 3 ), 0 );
+	touchCapsFacts_t mp=Facts();mp.saberOwned=1;
+	for(int offense=0;offense<=3;++offense) {
+		mp.legalStyleCount=offense;mp.manualBladeToggle=0;
+		BOOST_CHECK(TouchCaps_Visible(TouchCaps_Pack(&mp,1),1).style);
 	}
-	BOOST_CHECK_EQUAL( TouchCaps_CountBits( ( 1u << 1 ) | ( 1u << 2 ) ), 2 );
+	mp.equipmentAllowed=0;BOOST_CHECK(!TouchCaps_Visible(TouchCaps_Pack(&mp,1),1).style);
+	mp.equipmentAllowed=1;mp.saberOwned=0;BOOST_CHECK(!TouchCaps_Visible(TouchCaps_Pack(&mp,1),1).style);
+
 	const int styles[] = { 1, 2, 3, 4, 5, 6, 7 };
 	const int colours[] = { TOUCH_STYLE_UNKNOWN, TOUCH_STYLE_BLUE, TOUCH_STYLE_YELLOW, TOUCH_STYLE_RED,
 		TOUCH_STYLE_RED, TOUCH_STYLE_BLUE, TOUCH_STYLE_YELLOW, TOUCH_STYLE_YELLOW, TOUCH_STYLE_UNKNOWN };
 	for ( int i = 0; i < 9; ++i ) {
-		const int colour = TouchCaps_StyleColor( i, styles );
+		const int colour = TouchCaps_SaberColor( i, styles, 0 );
+		BOOST_CHECK_EQUAL(TouchCaps_SaberColor(i,styles,1),TOUCH_STYLE_YELLOW);
 		BOOST_CHECK_EQUAL( colour, colours[i] );
 		auto facts = Facts();
 		facts.style = colour;
@@ -507,7 +508,7 @@ BOOST_AUTO_TEST_CASE( missing_bridge_grace_recovery_priority_and_epoch )
 		BOOST_CHECK_EQUAL( TouchBridge_Step( &bridge, 0, mp, 1, 0, 0, 0, 1051 ).logMissing, 0 );
 		auto facts = Facts();
 		v = TouchBridge_Step( &bridge, TouchCaps_Pack( &facts, mp ), mp, 1, 0, 0, 0, 1052 );
-		BOOST_CHECK( v.basic && !v.fallback && !v.force && !v.style && !v.weapons );
+		BOOST_CHECK( v.basic && !v.fallback && !v.force && v.style==mp && !v.weapons );
 		TouchBridge_Step( &bridge, 0, mp, 1, 0, 0, 0, 1100 );
 		v = TouchBridge_Step( &bridge, 0, mp, 1, 0, 0, 0, 2100 );
 		BOOST_CHECK( v.fallback && !v.logMissing );

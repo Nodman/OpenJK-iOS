@@ -57,7 +57,7 @@ IOS_TOUCH_INLINE unsigned int TouchCaps_Pack( const touchCapsFacts_t *facts, int
 	mask = TOUCH_CAP_VALID | ( (unsigned int)style << 6 );
 	if(facts->weaponClass>=TOUCH_WEAPON_SABER && facts->weaponClass<=TOUCH_WEAPON_MELEE) mask |= (unsigned int)facts->weaponClass << 11;
 	if ( facts->saberOwned ) mask |= TOUCH_CAP_SABER;
-	if ( facts->legalStyleCount > 1 || facts->manualBladeToggle ) mask |= TOUCH_CAP_STYLE;
+	if ( multiplayer ? facts->saberOwned : (facts->legalStyleCount > 1 || facts->manualBladeToggle) ) mask |= TOUCH_CAP_STYLE;
 	if ( facts->selectableForceCount > 0 ) mask |= TOUCH_CAP_FORCE;
 	if ( facts->selectableForceCount > 1 ) mask |= TOUCH_CAP_FORCE_CYCLE;
 	if ( facts->ownedWeaponCount > 1 ) mask |= TOUCH_CAP_WEAPONS;
@@ -138,22 +138,17 @@ IOS_TOUCH_INLINE int TouchCaps_CountBits( unsigned int mask )
 	return count;
 }
 
-IOS_TOUCH_INLINE int TouchCaps_MPStyleCount( int saber, int special, int offense, unsigned int forbidden, int first, int last )
-{
-	int style, count = 0;
-	if ( !saber ) return 0;
-	if ( special ) return 2;
-	for ( style = first; style <= last && style <= offense; ++style )
-		if ( style >= 0 && style < 32 && !( forbidden & ( 1u << style ) ) ) ++count;
-	return count;
-}
-
 IOS_TOUCH_INLINE int TouchCaps_StyleColor( int stance, const int styles[7] )
 {
 	if ( stance == styles[0] || stance == styles[4] ) return TOUCH_STYLE_BLUE;
 	if ( stance == styles[1] || stance == styles[5] || stance == styles[6] ) return TOUCH_STYLE_YELLOW;
 	if ( stance == styles[2] || stance == styles[3] ) return TOUCH_STYLE_RED;
 	return TOUCH_STYLE_UNKNOWN;
+}
+
+IOS_TOUCH_INLINE int TouchCaps_SaberColor( int stance, const int styles[7], int staff )
+{
+	return staff ? TOUCH_STYLE_YELLOW : TouchCaps_StyleColor(stance,styles);
 }
 
 IOS_TOUCH_INLINE int TouchCaps_ShouldPublish( unsigned int mask, int previous, unsigned int bridge )
