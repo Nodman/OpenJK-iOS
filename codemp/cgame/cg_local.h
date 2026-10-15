@@ -1718,6 +1718,7 @@ Ghoul2 Insert End
 //
 #ifdef OPENJK_IOS
 void CG_UpdateTouchState( qboolean valid );
+int CG_TouchForceSelection( void );
 void CG_ResetTouchState( void );
 #endif
 

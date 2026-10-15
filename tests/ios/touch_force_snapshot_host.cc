@@ -14,7 +14,11 @@
 
 extern "C" void SnapshotCG_Init(cgameImport_t *);
 extern "C" void SnapshotCG_Report(const playerState_t *,int,qboolean);
+extern "C" int SnapshotCG_StartFrame(const playerState_t *,const playerState_t *,int,int,int,int,int,int);
+extern "C" int SnapshotCG_Selected(void);
+extern void CL_FinishMove(usercmd_t *);
 clientStatic_t cls;
+clientActive_t cl;
 qboolean com_errorEntered=qfalse;
 cvar_t *cl_shownet;
 char *CopyString(const char *s) {return strdup(s);}
@@ -44,12 +48,23 @@ static touchForceReport_t Report(const playerState_t &ps,int selected,qboolean v
 	SnapshotCG_Report(&ps,selected,valid);IN_TouchEndForceFrame(frame);IN_TouchEndForceUpdate(update);
 	return IN_TouchGetForceReport();
 }
+static void SetCommand(int weapon,float sensitivity,float pitch,float yaw,float overrideSensitivity,int force,int inventory,qboolean) {
+	CL_SetUserCmdValue(weapon,sensitivity,pitch,yaw,overrideSensitivity,force,inventory);
+}
+static touchForceReport_t StartFrame(const playerState_t &ps,const playerState_t &prediction,int selected,int expected,int clientValid=1,int team=TEAM_FREE,int flags=0,int client=0,int intermission=0) {
+	const auto update=IN_TouchBeginForceUpdate(),frame=IN_TouchBeginForceFrame();
+	assert(SnapshotCG_StartFrame(&ps,&prediction,selected,clientValid,team,flags,client,intermission)==expected);
+	IN_TouchEndForceFrame(frame);IN_TouchEndForceUpdate(update);
+	usercmd_t cmd={};CL_FinishMove(&cmd);
+	assert(cmd.forcesel==(byte)expected);
+	return IN_TouchGetForceReport();
+}
 int main()
 {
 	MSG_initHuffman();cls.realtime=100;
 	Cvar_Get("ui_touchForceAPI","1",CVAR_ROM|CVAR_PLATFORM_DEFAULT);
 	cgameImport_t imports={};imports.Cvar_Register=Cvar_Register;imports.Cvar_Update=Cvar_Update;
-	imports.Cvar_Set=ModuleSet;imports.TouchForceReport=IN_TouchReportForce;SnapshotCG_Init(&imports);
+	imports.SetUserCmdValue=SetCommand;imports.Cvar_Set=ModuleSet;imports.TouchForceReport=IN_TouchReportForce;SnapshotCG_Init(&imports);
 	const int powers[12]={FP_PUSH,FP_PULL,FP_SPEED,FP_SEE,FP_ABSORB,FP_HEAL,FP_TELEPATHY,FP_PROTECT,FP_DRAIN,FP_GRIP,FP_LIGHTNING,FP_RAGE};
 	for(int pilot=0;pilot<2;++pilot) {
 		playerState_t server={};server.clientNum=0;server.stats[STAT_HEALTH]=100;
@@ -57,6 +72,54 @@ int main()
 		for(int power:powers) {server.fd.forcePowersKnown|=1u<<power;server.fd.forcePowerLevel[power]=3;}
 		server.fd.forcePowerSelected=FP_PUSH;
 		const auto decoded=Decode(server,0);
+		auto prediction=decoded;prediction.fd.forcePowerSelected=FP_LEVITATION;
+		assert(StartFrame(decoded,prediction,-1,-1).selected==1);
+		prediction.fd.forcePowerSelected=FP_PULL;
+		assert(StartFrame(decoded,prediction,-1,-1).selected==1);
+		assert(StartFrame(decoded,prediction,FP_PULL,FP_PULL).selected==2);
+		assert(SnapshotCG_Selected()==FP_PUSH);
+		auto valid=decoded;valid.fd.forcePowersKnown|=1u<<FP_LEVITATION;
+		for(int local:{(int)FP_LEVITATION,(int)NUM_FORCE_POWERS,255,-2}) {
+			assert(StartFrame(valid,prediction,local,-1).selected==1);
+			assert(SnapshotCG_Selected()==FP_PUSH);
+		}
+		auto startup=server;startup.fd.forcePowersKnown=(1u<<FP_PUSH)|(1u<<FP_PULL);startup.fd.forcePowerSelected=FP_SEE;
+		startup=Decode(startup,0);
+		assert(StartFrame(startup,startup,-1,FP_PUSH).selected==1);
+		assert(SnapshotCG_Selected()==FP_PUSH);
+		for(int seed:{-1,255,(int)FP_LEVITATION}) {
+			startup.fd.forcePowersKnown=1u<<FP_HEAL;startup.fd.forcePowerSelected=seed;
+			startup=Decode(startup,0);
+			assert(StartFrame(startup,startup,-1,FP_HEAL).selected==6);
+			assert(SnapshotCG_Selected()==FP_HEAL);
+		}
+		startup=decoded;startup.fd.forcePowersKnown=1u<<FP_TEAM_HEAL;startup.fd.forcePowerSelected=FP_TEAM_HEAL;
+		assert(StartFrame(startup,startup,-1,-1).selected==13);
+		startup.fd.forcePowerSelected=FP_SEE;
+		assert(StartFrame(startup,startup,-1,FP_TEAM_HEAL).selected==13);
+		startup=decoded;startup.fd.forcePowerSelected=FP_SEE;startup.fd.forcePowersKnown=(1u<<FP_PUSH)|(1u<<FP_PULL);
+		for(int gate=0;gate<7;++gate) {
+			auto denied=startup;
+			if(gate==0) denied.stats[STAT_HEALTH]=0;
+			if(gate==1) denied.pm_type=PM_DEAD;
+			if(gate==2) denied.pm_type=PM_SPECTATOR;
+			if(gate==3) denied.pm_flags=PMF_FOLLOW;
+			if(gate==4) denied.pm_type=PM_INTERMISSION;
+			if(gate==5) denied.clientNum=1;
+			assert(!StartFrame(denied,denied,-1,-1,gate!=6).selected);
+			assert(SnapshotCG_Selected()==FP_SEE);
+		}
+		assert(!StartFrame(startup,startup,-1,-1,1,TEAM_SPECTATOR).selected);
+		assert(!StartFrame(startup,startup,-1,-1,1,TEAM_FREE,SNAPFLAG_NOT_ACTIVE).selected);
+		assert(!StartFrame(startup,startup,-1,-1,1,TEAM_FREE,0,-1).selected);
+		assert(!StartFrame(startup,startup,-1,-1,1,TEAM_FREE,0,MAX_CLIENTS).selected);
+		assert(!StartFrame(startup,startup,-1,-1,1,TEAM_FREE,0,0,1).selected);
+		startup.fd.forcePowersKnown=1u<<FP_LEVITATION;
+		assert(!StartFrame(startup,startup,-1,-1).selected);
+		assert(SnapshotCG_Selected()==FP_SEE);
+		startup.fd.forcePowersKnown=0;
+		assert(!StartFrame(startup,startup,-1,-1).selected);
+		SnapshotCG_Init(&imports);
 		assert(decoded.fd.forcePowersKnown==server.fd.forcePowersKnown);
 		for(int power:powers) assert(decoded.fd.forcePowerLevel[power]==(power==FP_SEE?3:0));
 		for(int i=0;i<12;++i) {
@@ -91,5 +154,5 @@ int main()
 		Report(decoded,FP_PUSH);cls.realtime+=1001;assert(!IN_TouchGetForceReport().equipment);
 		const auto skipped=IN_TouchBeginForceUpdate();IN_TouchEndForceUpdate(skipped);assert(!IN_TouchGetForceReport().equipment);
 	}
-	puts("PASS: normal/pilot MP snapshot codec→actual CG_UpdateTouchState→native callback→committed Force report; all12, selection, equipment, capability/restart/old-host and expiry");
+	puts("PASS: normal/pilot MP snapshot codec→stock selection repair→actual command handoff/CL_FinishMove→CG_UpdateTouchState→native callback; all12, selection, equipment, capability/restart/old-host and expiry");
 }

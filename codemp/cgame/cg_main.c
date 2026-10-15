@@ -114,6 +114,34 @@ void CG_ResetTouchState( void ) {
 	CG_PublishTouchState( 0 );
 }
 
+int CG_TouchForceSelection( void ) {
+	playerState_t candidate;
+	playerState_t *ps;
+	int selected;
+	if(!cg.snap || (cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE) || cg.clientNum<0 || cg.clientNum>=MAX_CLIENTS ||
+		!cgs.clientinfo[cg.clientNum].infoValid) return cg.forceSelect;
+	ps=&cg.snap->ps;
+	if(!TouchCaps_EquipmentAllowed(ps->pm_type==PM_DEAD?0:ps->stats[STAT_HEALTH],
+		cgs.clientinfo[cg.clientNum].team==TEAM_SPECTATOR || ps->pm_type==PM_SPECTATOR,
+		(ps->pm_flags & PMF_FOLLOW) || ps->clientNum!=cg.clientNum,
+		cg.intermissionStarted || ps->pm_type==PM_INTERMISSION || ps->pm_type==PM_SPINTERMISSION)) return cg.forceSelect;
+	selected=cg.forceSelect;
+	if(TouchForce_Canonical(selected) && TouchForce_Known(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,selected)) return selected;
+	selected=ps->fd.forcePowerSelected;
+	if(TouchForce_Canonical(selected) && TouchForce_Known(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,selected))
+		return cg.forceSelect=-1;
+	// Servers can spawn with an unlearned selection; use the stock selector before sending a command.
+	candidate=*ps;
+	if(selected<0 || selected>=NUM_FORCE_POWERS) candidate.fd.forcePowerSelected=FP_LEVITATION;
+	BG_CycleForce(&candidate,1);
+	selected=candidate.fd.forcePowerSelected;
+	if(TouchForce_Canonical(selected) && TouchForce_Known(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,selected)) {
+		cg.forceSelect=ps->fd.forcePowerSelected=selected;
+		cg.forceSelectTime=cg.time;
+	}
+	return cg.forceSelect;
+}
+
 void CG_UpdateTouchState( qboolean valid ) {
 	touchCapsFacts_t facts = { 0 };
 	if ( valid && cg.snap && !( cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE ) &&
@@ -148,7 +176,7 @@ void CG_UpdateTouchState( qboolean valid ) {
 	touchForceReport_t report=TouchForce_Empty();
 	if(facts.equipmentAllowed) {
 		const playerState_t *ps=&cg.predictedPlayerState;
-		report=TouchForce_Produce(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,cg.forceSelect,ps->fd.forcePowerSelected,1);
+		report=TouchForce_Produce(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,cg.forceSelect,cg.snap->ps.fd.forcePowerSelected,1);
 	}
 	if(cg_touchForceAPI.integer==TOUCH_FORCE_API && trap->TouchForceReport)
 		trap->TouchForceReport(TOUCH_FORCE_API,(int)report.learned,report.selected,report.equipment);
