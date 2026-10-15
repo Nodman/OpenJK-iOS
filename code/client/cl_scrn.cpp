@@ -599,6 +599,10 @@ static void CL_DrawTouchSettings( void ) {
 		const touchRect_t r=TouchLayout_RectToVirtual(&layout,items[i].rect);
 		const vec4_t background={items[i].selected?.30f:.06f,items[i].selected?.25f:.06f,.08f,.95f};
 		SCR_FillRect(r.x,r.y,r.w,r.h,background);
+		if(items[i].fill>=0) {
+			const vec4_t yellow={.30f,.25f,.08f,.95f};
+			SCR_FillRect(r.x,r.y,r.w*items[i].fill,r.h,yellow);
+		}
 		const qhandle_t icon=TouchForceMedia_Resolve(&touchForceMedia,items[i].force,touchForceMediaLive && cls.rendererStarted && touchShader,
 			SCR_TouchForceReadable,SCR_TouchForceRegister,NULL);
 		float iconWidth=0;

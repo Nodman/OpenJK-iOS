@@ -49,25 +49,25 @@ BOOST_AUTO_TEST_CASE( group_centres_and_done_remains_safe_when_expanded )
 	}
 }
 
-BOOST_AUTO_TEST_CASE( retap_collapse_dropdown_choices_and_custom_opacity )
+BOOST_AUTO_TEST_CASE( row_slider_custom_values_endpoints_and_modal_capture )
 {
-	touchSettingsState_t state={}; Tap(state,TOUCH_SETTINGS_APPEARANCE);
-	BOOST_CHECK_EQUAL(state.tab,TOUCH_SETTINGS_APPEARANCE);
-	const auto layout=Build(state);
-	bool found=false;
+	touchSettingsState_t state={};Tap(state,TOUCH_SETTINGS_APPEARANCE);
+	const auto layout=Build(state);const auto r=Control(layout,TOUCH_SETTINGS_OPACITY);
 	for(int i=0;i<layout.count;++i) if(layout.items[i].control==TOUCH_SETTINGS_OPACITY) {
-		found=true; BOOST_CHECK_EQUAL(layout.items[i].label,"Opacity 55%");
+		BOOST_CHECK_EQUAL(layout.items[i].label,"Opacity 55%");BOOST_CHECK_CLOSE(layout.items[i].fill,.55f,.001f);
 	}
-	BOOST_CHECK(found);
-	Tap(state,TOUCH_SETTINGS_OPACITY); BOOST_CHECK(state.dropdown);
-	for(int percent=20;percent<=100;percent+=10) {
-		if(!state.dropdown) Tap(state,TOUCH_SETTINGS_OPACITY);
-		BOOST_CHECK_EQUAL(Tap(state,TOUCH_SETTINGS_PERCENT+(percent-20)/10).opacity,percent);
-		BOOST_CHECK(!state.dropdown);
-	}
-	Tap(state,TOUCH_SETTINGS_APPEARANCE); BOOST_CHECK_EQUAL(state.tab,0);
-	Tap(state,TOUCH_SETTINGS_AIM); BOOST_CHECK_EQUAL(state.tab,TOUCH_SETTINGS_AIM);
-	BOOST_CHECK(Tap(state,TOUCH_SETTINGS_DONE).done);
+	BOOST_CHECK_EQUAL(state.dropdown,0);
+	auto out=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,1,r.x+r.w*.37f,r.y+r.h/2);
+	BOOST_CHECK(out.consumed && out.cancelDrag && out.setOpacity);BOOST_CHECK_CLOSE(out.opacity,.37f,.001f);
+	BOOST_CHECK(TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,2,r.x,r.y).consumed);
+	out=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_MOVE,1,r.x-100,r.y-500);
+	BOOST_CHECK(out.setOpacity);BOOST_CHECK_EQUAL(out.opacity,0);BOOST_CHECK_EQUAL(state.scroll,0);
+	out=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,1,r.x+r.w+100,r.y+500);
+	BOOST_CHECK(out.setOpacity);BOOST_CHECK_EQUAL(out.opacity,1);
+	out=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_MOVE,2,r.x+r.w,r.y);BOOST_CHECK(out.consumed && !out.setOpacity);
+	TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,2,r.x,r.y);
+	Tap(state,TOUCH_SETTINGS_APPEARANCE);BOOST_CHECK_EQUAL(state.tab,0);
+	Tap(state,TOUCH_SETTINGS_AIM);BOOST_CHECK(Tap(state,TOUCH_SETTINGS_DONE).done);
 }
 
 BOOST_AUTO_TEST_CASE( panel_gaps_capture_secondary_fingers_and_no_drag_leak )
@@ -87,21 +87,21 @@ BOOST_AUTO_TEST_CASE( panel_gaps_capture_secondary_fingers_and_no_drag_leak )
 
 BOOST_AUTO_TEST_CASE( small_panel_scrolls_without_selecting_and_keeps_done )
 {
-	touchSettingsState_t state={}; state.tab=TOUCH_SETTINGS_APPEARANCE; state.dropdown=1;
+	touchSettingsState_t state={}; state.tab=TOUCH_SETTINGS_FORCE; state.picker=1;state.learned=0x1ffe;
 	const auto layout=Build(state,400,180,1);
 	BOOST_CHECK_GT(layout.maxScroll,0);
 	const float x=layout.panel.x+10,y=layout.panel.y+10;
 	TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,1,x,y);
-	TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_MOVE,1,x,y-100);
+	TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_MOVE,1,x,y-1000);
 	BOOST_CHECK_GT(state.scroll,0);
-	const auto action=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,1,x,y-100);
-	BOOST_CHECK(!action.opacity && !action.done);
+	const auto action=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,1,x,y-1000);
+	BOOST_CHECK(!action.setOpacity && !action.done);
 	const auto scrolled=Build(state,400,180,1);
 	bool lastVisible=false;
 	for(int i=0;i<scrolled.count;++i) {
 		BOOST_CHECK_GE(scrolled.items[i].rect.y,10);
 		BOOST_CHECK_LE(scrolled.items[i].rect.y+scrolled.items[i].rect.h,150);
-		if(scrolled.items[i].control==TOUCH_SETTINGS_PERCENT+8) lastVisible=true;
+		if(scrolled.items[i].control==TOUCH_SETTINGS_POWER+12) lastVisible=true;
 	}
 	BOOST_CHECK(lastVisible);
 	BOOST_CHECK_GT(Control(scrolled,TOUCH_SETTINGS_DONE).h,0);

@@ -24,9 +24,10 @@ static cvar_t testLayoutVar,testSlotsVar,testControlsVar,testOpacityVar,testCaps
 static cvar_t aimVars[4];static std::string aimTexts[4];
 static const char *aimNames[4]={"in_touchAimMode","in_touchAimCurve","in_touchLookScale","in_touchDragScale"};
 static int drawableScale=1;
-static std::string testLayoutText,testSlotsText;
+static std::string testLayoutText,testSlotsText,testOpacityText;
 static cvar_t *SetTouchVar(const char *name,const char *value) {
 	cvar_t *var=NULL;std::string *text=NULL;
+	if(!strcmp(name,"in_touchOpacity")) {var=&testOpacityVar;text=&testOpacityText;}
 	if(!strcmp(name,"in_touchLayout")) { var=&testLayoutVar;text=&testLayoutText; }
 	if(!strcmp(name,"in_touchForceSlots")) { var=&testSlotsVar;text=&testSlotsText; }
 	for(int i=0;i<4;++i) if(!strcmp(name,aimNames[i])) {var=&aimVars[i];text=&aimTexts[i];}
@@ -482,15 +483,39 @@ static void SDLAimSettingsRouting(void) {
 	AimFixture();editState.active=1;axesState.pad[0]=64;axesState.pad[2]=127;
 	Hardware("+attack",77,100);Cbuf_Execute();
 	SetTouchVar("in_touchLookScale","1.17");SetTouchVar("in_touchDragScale","2.33");IN_TouchSyncAim();Drain();
-	SDLPanelTap(TOUCH_SETTINGS_AIM);SDLPanelTap(TOUCH_SETTINGS_SENSITIVITY);
+	SDLPanelTap(TOUCH_SETTINGS_AIM);
 	assert(fabsf(touchDragScale->value-2.33f)<.001f && fabsf(touchLookScale->value-1.17f)<.001f);
-	SDLPanelTap(TOUCH_SETTINGS_SCALE_CHOICE+5);Drain();
-	assert(touchDragScale->value==1.5f && fabsf(touchLookScale->value-1.17f)<.001f && editState.active);
+	IN_TouchSettingsForce();touchSettingsLayout_t panel;
+	TouchSettings_Build(&settingsState,1,viewW,viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);
+	touchRect_t r={};for(int i=0;i<panel.count;++i) if(panel.items[i].control==TOUCH_SETTINGS_SENSITIVITY) r=panel.items[i].rect;
+	assert(r.w>0);const float y=r.y+r.h/2;
+	SDLEvent(SDL_FINGERDOWN,81,r.x+r.w/3,y);assert(fabsf(touchDragScale->value-1.5f)<.001f && settingsState.capture[0]);
+	SDLEvent(SDL_FINGERDOWN,82,r.x,y);SDLEvent(SDL_FINGERMOTION,81,r.x+r.w,y-200);assert(touchDragScale->value==4 && settingsState.capture[0]);
+	SDLEvent(SDL_FINGERMOTION,81,r.x-100,y+200);assert(touchDragScale->value==.25f);
+	SDLEvent(SDL_FINGERUP,81,r.x+r.w/3,y);SDLEvent(SDL_FINGERMOTION,82,r.x+r.w,y);SDLEvent(SDL_FINGERUP,82,r.x+r.w,y);Drain();
+	assert(fabsf(touchDragScale->value-1.5f)<.001f && fabsf(touchLookScale->value-1.17f)<.001f && editState.active && !settingsState.scroll);
 	SDLPanelTap(TOUCH_SETTINGS_MODE);SDLPanelTap(TOUCH_SETTINGS_MODE_CHOICE);Drain();assert(touchAimMode->integer==0);
 	SDLPanelTap(TOUCH_SETTINGS_CURVE);SDLPanelTap(TOUCH_SETTINGS_CURVE_CHOICE+4);Drain();assert(touchAimCurve->integer==4);
+	IN_TouchSettingsForce();TouchSettings_Build(&settingsState,1,viewW,viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);
+	for(int i=0;i<panel.count;++i) if(panel.items[i].control==TOUCH_SETTINGS_SENSITIVITY) r=panel.items[i].rect;
+	SDLEvent(SDL_FINGERDOWN,84,r.x+r.w*.2f,r.y+r.h/2);assert(fabsf(touchLookScale->value-1)<.001f);
+	Cbuf_AddText("in_touchAimMode 1\n");Cbuf_Execute();
+	SDLEvent(SDL_FINGERMOTION,84,r.x+r.w,r.y);SDLEvent(SDL_FINGERUP,84,r.x+r.w,r.y);
+	assert(fabsf(touchLookScale->value-1)<.001f && fabsf(touchDragScale->value-1.5f)<.001f);
+
 	assert(axesState.pad[0]==64 && axesState.pad[2]==127 && in_buttons[0].active && in_buttons[0].down[0]==77);
 	assert(!layoutOverrides.mask && !settingsState.picker && !CL_TouchForceBusy() && commandsSeen.empty());
-	SDLPanelTap(TOUCH_SETTINGS_DONE);Drain();assert(!editState.active);
+	SDLPanelTap(TOUCH_SETTINGS_APPEARANCE);IN_TouchSettingsForce();
+	TouchSettings_Build(&settingsState,.55f,viewW,viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);
+	for(int i=0;i<panel.count;++i) if(panel.items[i].control==TOUCH_SETTINGS_OPACITY) r=panel.items[i].rect;
+	SDLEvent(SDL_FINGERDOWN,83,r.x,r.y+r.h/2);assert(in_touchOpacity->value==0 && IN_TouchGetOpacity()==0);
+	SDLEvent(SDL_FINGERMOTION,83,r.x+r.w*.43f,r.y+r.h/2);assert(fabsf(in_touchOpacity->value-.43f)<.001f);
+	SDLEvent(SDL_FINGERUP,83,r.x+r.w+100,r.y+r.h);assert(in_touchOpacity->value==1);
+	SDLEvent(SDL_FINGERDOWN,85,r.x+r.w*.4f,r.y+r.h/2);const float savedOpacity=in_touchOpacity->value;
+	IN_TouchReleaseAll();Drain();assert(!editState.active);
+	SDLEvent(SDL_FINGERMOTION,85,r.x+r.w,r.y);SDLEvent(SDL_FINGERUP,85,r.x+r.w,r.y);
+	assert(in_touchOpacity->value==savedOpacity && !layoutOverrides.mask);
+	editState.active=1;SDLPanelTap(TOUCH_SETTINGS_DONE);Drain();assert(!editState.active);
 	Hardware("-attack",77,120);Cbuf_Execute();touchWindow=NULL;
 }
 static void LateCbufAimSettings(void) {

@@ -545,11 +545,11 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 		forceSlotsModification=in_touchForceSlots->modificationCount;
 	}
 	if(action.aimSetting) {
-		const char *name=action.aimSetting==1?"in_touchAimMode":action.aimSetting==2?(settingsState.aimMode?"in_touchDragScale":"in_touchLookScale"):"in_touchAimCurve";
+		const char *name=action.aimSetting==1?"in_touchAimMode":action.aimSetting==2?(action.aimMode?"in_touchDragScale":"in_touchLookScale"):"in_touchAimCurve";
 		Cvar_SetValue(name,action.aimValue);
 		IN_TouchSyncAim();
 	}
-	if(action.opacity) Cvar_SetValue("in_touchOpacity",action.opacity*.01f);
+	if(action.setOpacity) Cvar_SetValue("in_touchOpacity",action.opacity);
 	if(action.done) { IN_TouchEndEdit(); return; }
 	if(action.consumed) return;
 
