@@ -79,6 +79,19 @@ IOS_TOUCH_INLINE touchAxesBatch_t TouchAxes_Send( touchAxesState_t *state )
 	return batch;
 }
 
+IOS_TOUCH_INLINE int TouchAxes_PadLookActive( const touchAxesState_t *state )
+{
+	return state->pad[2]!=0 || state->pad[3]!=0;
+}
+
+IOS_TOUCH_INLINE void TouchAxes_ZeroTouch( touchAxesState_t *state )
+{
+	int i;
+	for(i=0;i<4;++i) state->touch[i]=0;
+	state->lookTouch=0;
+	state->forceSend=1;
+}
+
 IOS_TOUCH_INLINE void TouchAxes_Zero( touchAxesState_t *state )
 {
 	int i;

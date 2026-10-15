@@ -11,7 +11,7 @@ const touchButtonDef_t touchButtonDefs[TB_COUNT] = {
 	{ "DUCK",  TOUCH_ANCHOR_BR, .40f, .08f, .12f, TG_CROUCH, 19, "+movedown" },
 	{ "USE",   TOUCH_ANCHOR_BL, .12f, .08f, .12f, TG_USE, 20, "+use" },
 	{ "FORCE", TOUCH_ANCHOR_TR, .49f, .26f, .12f, TG_FORCE, 21, "+useforce" },
-	{ "F>>",   TOUCH_ANCHOR_TR, .65f, .26f, .12f, TG_FORCENEXT, 22, "forcenext" },
+	{ "F>>",   TOUCH_ANCHOR_TR, .41f, .26f, .12f, TG_FORCENEXT, 22, "forcenext" },
 	{ "STYLE", TOUCH_ANCHOR_BR, .12f, .08f, .12f, TG_STYLE, 23, "saberAttackCycle" },
 	{ "<W",    TOUCH_ANCHOR_TR, .65f, .10f, .12f, TG_WEAPPREV, 24, "weapprev" },
 	{ "W>",    TOUCH_ANCHOR_TR, .33f, .10f, .12f, TG_WEAPNEXT, 25, "weapnext" },
@@ -20,27 +20,26 @@ const touchButtonDef_t touchButtonDefs[TB_COUNT] = {
 	{ "SABER", TOUCH_ANCHOR_TR, .49f, .10f, .12f, TG_SABER_SELECT, 26, "weapon 1" },
 	{ "CHAT",  TOUCH_ANCHOR_TL, .28f, .10f, .12f, TG_CHAT, TOUCH_KEY_CHAT, 0 },
 	{ "PAD",   TOUCH_ANCHOR_TL, .12f, .26f, .12f, TG_PAD, TOUCH_KEY_TAB, 0 },
-	{ 0, TOUCH_ANCHOR_TR, .11f, .34f, .12f, TG_LOCK, TOUCH_KEY_NONE, 0 }
+	{ 0, TOUCH_ANCHOR_TR, .11f, .34f, .12f, TG_LOCK, TOUCH_KEY_NONE, 0 },
+	{ "F<<", TOUCH_ANCHOR_TR, .57f, .26f, .12f, TG_WEAPPREV, 27, "forceprev" },
+	{ "1", TOUCH_ANCHOR_TR, 1.04f, .26f, .12f, -1, TOUCH_KEY_NONE, 0 },
+	{ "2", TOUCH_ANCHOR_TR, .96f, .26f, .12f, -1, TOUCH_KEY_NONE, 0 },
+	{ "3", TOUCH_ANCHOR_TR, .88f, .26f, .12f, -1, TOUCH_KEY_NONE, 0 },
+	{ "4", TOUCH_ANCHOR_TR, .80f, .26f, .12f, -1, TOUCH_KEY_NONE, 0 }
 };
 
 void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT], const touchLayoutOverrides_t *overrides )
 {
-	touchButtonDef_t defs[TB_COUNT];
-	TouchEdit_Apply( overrides, defs, viewW, viewH, safeL, safeT, safeR, safeB, p );
-	const float unit = TouchLayout_Unit( viewW - safeL - safeR, viewH - safeT - safeB, p );
+	touchLayoutOverrides_t positions = {};
+	if ( overrides ) positions = *overrides;
+	TouchEdit_Migrate( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p );
+	TouchEdit_RepairLock( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p );
 	for ( int i = 0; i < TB_COUNT; ++i ) {
-		out[i] = { 0, 0, 0, 0 };
-		if ( unit <= 0 )
-			continue;
-		if ( i == TB_CONSOLE ) {
-			IOS_TouchConsoleRectPixels( viewW, viewH, safeL, safeT, safeR, safeB,
-				&out[i].x, &out[i].y, &out[i].w, &out[i].h );
-		} else {
-			TouchLayout_AnchorRect( viewW, viewH, safeL, safeT, safeR, safeB, p, defs[i].anchor,
-				defs[i].cx, defs[i].cy, defs[i].size,
-				&out[i].x, &out[i].y, &out[i].w, &out[i].h );
+		TouchEdit_DefaultRect( i, viewW, viewH, safeL, safeT, safeR, safeB, p, &out[i] );
+		if ( out[i].w > 0 && ( positions.mask & ( 1u << i ) ) ) {
+			out[i].x = fmaxf( 0, fminf( positions.cx[i] * viewW - out[i].w / 2, viewW - out[i].w ) );
+			out[i].y = fmaxf( 0, fminf( positions.cy[i] * viewH - out[i].h / 2, viewH - out[i].h ) );
 		}
-		TouchLayout_CompactRect( i, &out[i] );
 	}
 }
 

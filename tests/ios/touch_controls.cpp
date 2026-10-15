@@ -466,7 +466,7 @@ BOOST_AUTO_TEST_CASE( decoded_button_mask_and_selective_capability_loss )
 	facts.legalStyleCount = facts.selectableForceCount = facts.ownedWeaponCount = 2;
 	facts.chatAvailable = 1;
 	const auto full = TouchCaps_Visible( TouchCaps_Pack( &facts, 1 ), 1 );
-	BOOST_CHECK_EQUAL( TouchCaps_ButtonMask( &full ), IOS_TOUCH_ALL_BUTTONS & ~(1u<<TB_LOCK) );
+	BOOST_CHECK_EQUAL( TouchCaps_ButtonMask( &full ), IOS_TOUCH_ALL_BUTTONS & ~((1u<<TB_LOCK)|(15u<<TB_FORCE_SLOT1)) );
 	touchGestureState_t state;
 	TouchGesture_Reset( &state );
 	TouchGesture_Step( &state, Input( TOUCH_DOWN, 1, TOUCH_TARGET_BUTTON, TB_FORCE ) );
@@ -574,4 +574,17 @@ BOOST_AUTO_TEST_CASE( invalid_geometry_and_clock_wrap )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_CASE( touch_only_axis_reset_preserves_held_pad_and_pad_query )
+{
+	touchAxesState_t state={}; state.pad[0]=50; state.pad[2]=60; state.touch[1]=70; state.touch[3]=80;
+	BOOST_CHECK(TouchAxes_PadLookActive(&state));
+	TouchAxes_ZeroTouch(&state);
+	const auto batch=TouchAxes_Send(&state);
+	BOOST_CHECK_EQUAL(batch.values[0],50); BOOST_CHECK_EQUAL(batch.values[1],0);
+	BOOST_CHECK_EQUAL(batch.values[2],60); BOOST_CHECK_EQUAL(batch.values[3],0);
+	BOOST_CHECK(batch.send); BOOST_CHECK(!state.lookTouch);
+	state.pad[2]=0; BOOST_CHECK(!TouchAxes_PadLookActive(&state));
+	state.touch[2]=127; BOOST_CHECK(!TouchAxes_PadLookActive(&state));
+}
+
 BOOST_AUTO_TEST_SUITE_END()

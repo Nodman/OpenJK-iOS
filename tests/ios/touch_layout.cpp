@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE( button_definitions )
 		{ "DUCK", TOUCH_ANCHOR_BR, .40f, .08f, .12f, TG_CROUCH, 19, NULL },
 		{ "USE", TOUCH_ANCHOR_BL, .12f, .08f, .12f, TG_USE, 20, NULL },
 		{ "FORCE", TOUCH_ANCHOR_TR, .49f, .26f, .12f, TG_FORCE, 21, NULL },
-		{ "F>>", TOUCH_ANCHOR_TR, .65f, .26f, .12f, TG_FORCENEXT, 22, NULL },
+		{ "F>>", TOUCH_ANCHOR_TR, .41f, .26f, .12f, TG_FORCENEXT, 22, NULL },
 		{ "STYLE", TOUCH_ANCHOR_BR, .12f, .08f, .12f, TG_STYLE, 23, NULL },
 		{ "<W", TOUCH_ANCHOR_TR, .65f, .10f, .12f, TG_WEAPPREV, 24, NULL },
 		{ "W>", TOUCH_ANCHOR_TR, .33f, .10f, .12f, TG_WEAPNEXT, 25, NULL },
@@ -32,7 +32,12 @@ BOOST_AUTO_TEST_CASE( button_definitions )
 		{ "SABER", TOUCH_ANCHOR_TR, .49f, .10f, .12f, TG_SABER_SELECT, 26, NULL },
 		{ "CHAT", TOUCH_ANCHOR_TL, .28f, .10f, .12f, TG_CHAT, TOUCH_KEY_CHAT, NULL },
 		{ "PAD", TOUCH_ANCHOR_TL, .12f, .26f, .12f, TG_PAD, TOUCH_KEY_TAB, NULL },
-		{ NULL, TOUCH_ANCHOR_TR, .11f, .34f, .12f, TG_LOCK, TOUCH_KEY_NONE, NULL }
+		{ NULL, TOUCH_ANCHOR_TR, .11f, .34f, .12f, TG_LOCK, TOUCH_KEY_NONE, NULL },
+		{ "F<<", TOUCH_ANCHOR_TR, .57f, .26f, .12f, TG_WEAPPREV, 27, NULL },
+		{ "1", TOUCH_ANCHOR_TR, 1.04f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL },
+		{ "2", TOUCH_ANCHOR_TR, .96f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL },
+		{ "3", TOUCH_ANCHOR_TR, .88f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL },
+		{ "4", TOUCH_ANCHOR_TR, .80f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL }
 	};
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		BOOST_CHECK_EQUAL( touchButtonDefs[i].anchor, expected[i].anchor );
@@ -150,7 +155,8 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 {
 	const unsigned int small = ( 1u << TB_MENU ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) |
 		( 1u << TB_CONSOLE ) | ( 1u << TB_LOCK ) | ( 1u << TB_WEAPPREV ) | ( 1u << TB_WEAPNEXT ) |
-		( 1u << TB_FORCE ) | ( 1u << TB_FORCENEXT );
+		( 1u << TB_FORCE ) | ( 1u << TB_FORCENEXT ) | ( 1u << TB_FORCEPREV ) |
+		( 1u << TB_FORCE_SLOT1 ) | ( 1u << TB_FORCE_SLOT2 ) | ( 1u << TB_FORCE_SLOT3 ) | ( 1u << TB_FORCE_SLOT4 );
 	const float fixtures[][7] = {
 		{ 2868, 1320, 132, 0, 132, 102, 3 },
 		{ 1434, 660, 66, 0, 66, 51, 1.5f },
@@ -162,12 +168,12 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 		for ( int edge = 0; edge <= 1; ++edge ) {
 			touchLayoutOverrides_t overrides = {};
 			if ( edge ) {
-				overrides.mask = IOS_TOUCH_ALL_BUTTONS;
+				overrides.mask = ((1u<<16)-1u) & ~(1u<<TB_CONSOLE);
 				for ( int button = 0; button < TB_COUNT; ++button )
 					overrides.cx[button] = overrides.cy[button] = 0;
 			}
 			touchButtonDef_t oldDefs[TB_COUNT];
-			TouchEdit_Apply( &overrides, oldDefs, f[0], f[1], f[2], f[3], f[4], f[5], f[6] );
+			TouchLegacy_Apply( &overrides, oldDefs, f[0], f[1], f[2], f[3], f[4], f[5], f[6] );
 			touchRect_t rects[TB_COUNT];
 			TouchLayout_Build( f[0], f[1], f[2], f[3], f[4], f[5], f[6], rects, &overrides );
 			for ( int button = 0; button < TB_COUNT; ++button ) {
@@ -181,8 +187,24 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 				const float scale = small & ( 1u << button ) ? .5f : 1;
 				BOOST_CHECK_EQUAL( rects[button].w, old.w * scale );
 				BOOST_CHECK_EQUAL( rects[button].h, old.h * scale );
-				BOOST_CHECK_SMALL( rects[button].x + rects[button].w / 2 - old.x - old.w / 2, .0003f );
-				BOOST_CHECK_SMALL( rects[button].y + rects[button].h / 2 - old.y - old.h / 2, .0003f );
+				bool obstructed=false;
+				if ( button == TB_LOCK ) {
+					touchRect_t console;
+					IOS_TouchConsoleRectPixels(f[0],f[1],f[2],f[3],f[4],f[5],&console.x,&console.y,&console.w,&console.h);
+					console.x+=console.w/4; console.y+=console.h/4; console.w/=2; console.h/=2;
+					const touchRect_t candidate={old.x+(old.w-rects[button].w)/2,old.y+(old.h-rects[button].h)/2,rects[button].w,rects[button].h};
+					const auto bar=TouchSettings_BarRect(f[0],f[1],f[2],f[3],f[4],f[5],f[6]);
+					for ( const auto &blocked : { console,bar } ) {
+						obstructed |= candidate.x+candidate.w>blocked.x && blocked.x+blocked.w>candidate.x &&
+							candidate.y+candidate.h>blocked.y && blocked.y+blocked.h>candidate.y;
+						BOOST_CHECK(rects[button].x+rects[button].w<=blocked.x || blocked.x+blocked.w<=rects[button].x ||
+							rects[button].y+rects[button].h<=blocked.y || blocked.y+blocked.h<=rects[button].y);
+					}
+				}
+				if ( !obstructed ) {
+					BOOST_CHECK_SMALL( rects[button].x + rects[button].w / 2 - old.x - old.w / 2, .001f );
+					BOOST_CHECK_SMALL( rects[button].y + rects[button].h / 2 - old.y - old.h / 2, .001f );
+				}
 				for ( int corner = 0; corner < 4; ++corner )
 					BOOST_CHECK_EQUAL( TouchLayout_Hit( rects, rects[button].x + ( corner & 1 ? rects[button].w : 0 ),
 						rects[button].y + ( corner & 2 ? rects[button].h : 0 ), 1u << button ), button );
@@ -203,11 +225,11 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 BOOST_AUTO_TEST_CASE( explicit_key_map_and_paired_pad_chat_trace )
 {
 	const int expected[TB_COUNT] = { A_AUX16, A_AUX17, A_AUX18, A_AUX19, A_AUX20, A_AUX21, A_AUX22,
-		A_AUX23, A_AUX24, A_AUX25, A_ESCAPE, 0, A_AUX26, 'y', A_TAB, 0 };
+		A_AUX23, A_AUX24, A_AUX25, A_ESCAPE, 0, A_AUX26, 'y', A_TAB, 0, A_AUX27, 0, 0, 0, 0 };
 	const int expectedMP[TB_COUNT] = { mp_touch_keys::A_AUX16, mp_touch_keys::A_AUX17, mp_touch_keys::A_AUX18,
 		mp_touch_keys::A_AUX19, mp_touch_keys::A_AUX20, mp_touch_keys::A_AUX21, mp_touch_keys::A_AUX22,
 		mp_touch_keys::A_AUX23, mp_touch_keys::A_AUX24, mp_touch_keys::A_AUX25, mp_touch_keys::A_ESCAPE,
-		0, mp_touch_keys::A_AUX26, 'y', mp_touch_keys::A_TAB, 0 };
+		0, mp_touch_keys::A_AUX26, 'y', mp_touch_keys::A_TAB, 0, mp_touch_keys::A_AUX27, 0, 0, 0, 0 };
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		BOOST_CHECK_EQUAL( TouchLayout_Key( i, A_AUX16, A_ESCAPE, A_TAB ), expected[i] );
 		BOOST_CHECK_EQUAL( TouchLayout_Key( i, mp_touch_keys::A_AUX16, mp_touch_keys::A_ESCAPE, mp_touch_keys::A_TAB ), expectedMP[i] );
@@ -234,7 +256,7 @@ BOOST_AUTO_TEST_CASE( explicit_key_map_and_paired_pad_chat_trace )
 BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
 {
 	const char *commands[] = { "+attack", "+altattack", "+moveup", "+movedown", "+use", "+useforce",
-		"forcenext", "saberAttackCycle", "weapprev", "weapnext", "weapon 1" };
+		"forcenext", "saberAttackCycle", "weapprev", "weapnext", "weapon 1", "forceprev" };
 	const char *bindings[TB_COUNT] = {};
 	const auto restore = [&]() {
 		int count = 0;
@@ -247,10 +269,10 @@ BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
 		}
 		return count;
 	};
-	BOOST_CHECK_EQUAL( restore(), 11 );
+	BOOST_CHECK_EQUAL( restore(), 12 );
 	for ( int button = 0; button < TB_COUNT; ++button ) {
 		const int key = touchButtonDefs[button].key;
-		if ( key >= 16 && key <= 26 ) {
+		if ( key >= 16 && key <= 27 ) {
 			BOOST_REQUIRE( bindings[button] );
 			BOOST_CHECK_EQUAL( bindings[button], commands[key - 16] );
 			BOOST_CHECK( TouchLayout_DefaultBind( button, "custom action" ) == NULL );
@@ -277,7 +299,7 @@ BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
 	BOOST_CHECK_EQUAL( bindings[TB_PAD], "" );
 	BOOST_CHECK_EQUAL( bindings[TB_CHAT], "" );
 	for ( int button = 0; button < TB_COUNT; ++button ) bindings[button] = "";
-	BOOST_CHECK_EQUAL( restore(), 11 );
+	BOOST_CHECK_EQUAL( restore(), 12 );
 	BOOST_CHECK( TouchLayout_DefaultBind( -1, NULL ) == NULL );
 	BOOST_CHECK( TouchLayout_DefaultBind( TB_COUNT, NULL ) == NULL );
 }

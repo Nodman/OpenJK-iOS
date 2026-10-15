@@ -170,7 +170,7 @@ IOS_TOUCH_INLINE unsigned int TouchCaps_ButtonMask( const touchVisibility_t *v )
 	if ( v->saber ) mask |= 1u << TB_SABER_SELECT;
 	if ( v->style ) mask |= 1u << TB_STYLE;
 	if ( v->force ) mask |= 1u << TB_FORCE;
-	if ( v->forceCycle ) mask |= 1u << TB_FORCENEXT;
+	if ( v->forceCycle ) mask |= ( 1u << TB_FORCEPREV ) | ( 1u << TB_FORCENEXT );
 	if ( v->weapons ) mask |= ( 1u << TB_WEAPPREV ) | ( 1u << TB_WEAPNEXT );
 	if ( v->pad ) mask |= 1u << TB_PAD;
 	if ( v->chat ) mask |= 1u << TB_CHAT;

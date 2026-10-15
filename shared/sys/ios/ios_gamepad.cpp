@@ -47,6 +47,15 @@ void IN_GamepadSendAxes( void ) {
 		Sys_QueEvent( 0, SE_JOYSTICK_AXIS, axes[i], batch.values[i], 0, NULL );
 }
 
+qboolean IN_GamepadPadLookActive( void ) {
+	return TouchAxes_PadLookActive( &axesState ) ? qtrue : qfalse;
+}
+
+void IN_GamepadZeroTouchAxes( void ) {
+	TouchAxes_ZeroTouch( &axesState );
+	IN_GamepadSendAxes();
+}
+
 void IN_GamepadZeroAxes( void ) {
 	TouchAxes_Zero( &axesState );
 	IN_GamepadSendAxes();

@@ -68,8 +68,10 @@ static void IN_TouchUpdateLayout( void ) {
 		return;
 	IN_TouchReleaseAll();
 	TouchEdit_Parse( in_touchLayout->string, &layoutOverrides );
-	if ( TouchEdit_RepairLock(&layoutOverrides,(float)w,(float)h,l,t,r,b,p) ) {
-		char corrected[1024];
+	int repaired=TouchEdit_Migrate(&layoutOverrides,(float)w,(float)h,l,t,r,b,p);
+	repaired |= TouchEdit_RepairLock(&layoutOverrides,(float)w,(float)h,l,t,r,b,p);
+	if ( repaired ) {
+		char corrected[IOS_TOUCH_LAYOUT_TEXT];
 		if ( TouchEdit_Serialize(&layoutOverrides,corrected,sizeof(corrected)) ) Cvar_Set("in_touchLayout",corrected);
 	}
 	layoutModification = in_touchLayout->modificationCount;
@@ -134,7 +136,7 @@ static void IN_TouchSaveEdit( void ) {
 	touchEditInput_t input = {}; input.event=TOUCH_EDIT_EXIT;
 	TouchEdit_State(&editState,input);
 	sliderDragging=0;
-	char text[1024];
+	char text[IOS_TOUCH_LAYOUT_TEXT];
 	if ( in_touchLayout && TouchEdit_Serialize(&layoutOverrides,text,sizeof(text)) ) {
 		Cvar_Set("in_touchLayout",text);
 		layoutModification=in_touchLayout->modificationCount;
@@ -154,7 +156,7 @@ qboolean IN_TouchIsEditing( void ) { return editState.active ? qtrue : qfalse; }
 void IN_TouchEndEdit( void ) {
 	if ( !editState.active ) return;
 	IN_TouchReleaseAll();
-	IN_GamepadZeroAxes();
+	IN_GamepadZeroTouchAxes();
 }
 
 static void IN_TouchSyncMode( void ) {
@@ -163,7 +165,7 @@ static void IN_TouchSyncMode( void ) {
 	if ( uiMode != lastUIMode || hidden != lastHidden || cinematic != lastCinematic ) {
 		IN_TouchReleaseAll();
 		if ( cinematic && !lastCinematic ) {
-			IN_GamepadZeroAxes();
+			IN_GamepadZeroTouchAxes();
 			SDL_StopTextInput();
 		}
 		lastUIMode = uiMode;
@@ -193,7 +195,7 @@ void IN_TouchResetState( void ) {
 	TouchBridge_Reset( &bridgeState );
 	visibility = {};
 	IN_TouchReleaseAll();
-	IN_GamepadZeroAxes();
+	IN_GamepadZeroTouchAxes();
 }
 
 static void IN_TouchTextInput( void ) {
@@ -261,7 +263,7 @@ void IN_TouchInit( SDL_Window *window ) {
 	lastHidden = IN_TouchHidden();
 	lastCinematic = CL_TouchCinematic();
 	if ( lastCinematic )
-		IN_GamepadZeroAxes();
+		IN_GamepadZeroTouchAxes();
 	IN_TouchSyncVisibility();
 	IN_TouchTextInput();
 }
@@ -327,6 +329,8 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		f->role = ROLE_CINEMATIC_TAP;
 		f->downTime = tf->timestamp;
 		f->cancelled = qfalse;
+	} else if ( TouchLayout_Hit(rects,x,y,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK ) {
+		f->role=ROLE_EDIT_LOCK; f->cancelled=qfalse;
 	} else if ( IN_TouchOnConsole( x, y ) ) {
 		if ( IN_TouchHasRole( ROLE_CONSOLE ) )
 			return;
@@ -420,10 +424,10 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 	if ( out.move && TouchEdit_Drag(&layoutOverrides,out.button,out.x,out.y,(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint) )
 		TouchLayout_Build((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,rects,&layoutOverrides);
 	if ( out.save ) {
-		char text[1024];
+		char text[IOS_TOUCH_LAYOUT_TEXT];
 		if ( TouchEdit_Serialize(&layoutOverrides,text,sizeof(text)) ) Cvar_Set("in_touchLayout",text);
 		layoutModification=in_touchLayout->modificationCount;
-		IN_TouchReleaseAll(); IN_GamepadZeroAxes();
+		IN_TouchReleaseAll(); IN_GamepadZeroTouchAxes();
 	}
 }
 
@@ -451,7 +455,7 @@ void IN_TouchHandleEvent( const SDL_Event *e ) {
 		if ( f ) {
 			if ( f->role==ROLE_EDIT_LOCK && !f->cancelled &&
 				TouchLayout_Hit(rects,e->tfinger.x*viewW,e->tfinger.y*viewH,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK ) {
-				IN_TouchReleaseAll(); IN_GamepadZeroAxes();
+				IN_TouchReleaseAll(); IN_GamepadZeroTouchAxes();
 				touchEditInput_t input = {}; input.event=TOUCH_EDIT_ENTER;
 				TouchEdit_State(&editState,input);
 			}
