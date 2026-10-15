@@ -28,14 +28,63 @@ const touchButtonDef_t touchButtonDefs[TB_COUNT] = {
 	{ "4", TOUCH_ANCHOR_TR, .80f, .26f, .12f, -1, TOUCH_KEY_NONE, 0 }
 };
 
+static void TouchLayout_ForceRow(float W,float H,float L,float T,float R,float B,float p,touchRect_t rects[TB_COUNT])
+{
+	const int row[7]={TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4,TB_FORCEPREV,TB_FORCE,TB_FORCENEXT};
+	const float gap=4*p;
+	touchRect_t *use=&rects[TB_FORCE];
+	if(use->w<=0) return;
+	rects[TB_FORCEPREV].x=fminf(rects[TB_FORCEPREV].x,use->x-gap-rects[TB_FORCEPREV].w);
+	rects[TB_FORCENEXT].x=fmaxf(rects[TB_FORCENEXT].x,use->x+use->w+gap);
+	float left=rects[TB_FORCEPREV].x;
+	for(int i=3;i>=0;--i) {
+		touchRect_t *slot=&rects[TB_FORCE_SLOT1+i];
+		slot->x=fminf(slot->x,left-gap-slot->w);left=slot->x;
+	}
+	if(rects[TB_FORCENEXT].x+rects[TB_FORCENEXT].w-left>W-L-R) {
+		const float width=rects[TB_FORCEPREV].w+use->w+rects[TB_FORCENEXT].w+2*gap;
+		const float x=fmaxf(L,fminf(rects[TB_FORCEPREV].x,W-R-width));
+		rects[TB_FORCEPREV].x=x;use->x=x+rects[TB_FORCEPREV].w+gap;
+		rects[TB_FORCENEXT].x=use->x+use->w+gap;
+		const float side=rects[TB_FORCE_SLOT1].w;
+		const int columns=(int)fmaxf(1,fminf(4,floorf((W-L-R+gap)/(side+gap))));
+		const float start=fmaxf(L,fminf(x,W-R-columns*side-(columns-1)*gap));
+		for(int i=0;i<4;++i) {
+			touchRect_t *slot=&rects[TB_FORCE_SLOT1+i];
+			slot->x=start+(i%columns)*(side+gap);
+			slot->y=fmaxf(T,fminf(use->y+use->h+gap+(i/columns)*(side+gap),H-B-slot->h));
+		}
+	}
+	float minX=W,minY=H,maxX=0,maxY=0;
+	for(int i=0;i<7;++i) {
+		const touchRect_t *r=&rects[row[i]];
+		minX=fminf(minX,r->x);minY=fminf(minY,r->y);maxX=fmaxf(maxX,r->x+r->w);maxY=fmaxf(maxY,r->y+r->h);
+	}
+	float dx=fmaxf(L-minX,fminf(0,W-R-maxX)),dy=fmaxf(T-minY,fminf(0,H-B-maxY));
+	const int combat[5]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE};
+	for(int i=0;i<5;++i) {
+		const touchRect_t *r=&rects[combat[i]];
+		if(minX+dx>=r->x+r->w || maxX+dx<=r->x || minY+dy>=r->y+r->h || maxY+dy<=r->y) continue;
+		const float left=r->x-gap-maxX,above=r->y-gap-maxY,below=r->y+r->h+gap-minY;
+		if(minX+left>=L) dx=fminf(dx,left);
+		else if(minY+above>=T) dy=above;
+		else if(maxY+below<=H-B) dy=below;
+	}
+	for(int i=0;i<7;++i) {
+		touchRect_t *r=&rects[row[i]];
+		r->x=fmaxf(L,fminf(r->x+dx,W-R-r->w));r->y=fmaxf(T,fminf(r->y+dy,H-B-r->h));
+	}
+}
+
 void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT], const touchLayoutOverrides_t *overrides )
 {
 	touchLayoutOverrides_t positions = {};
 	if ( overrides ) positions = *overrides;
 	TouchEdit_Migrate( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p );
 	TouchEdit_RepairLock( &positions, viewW, viewH, safeL, safeT, safeR, safeB, p );
+	for(int i=0;i<TB_COUNT;++i) TouchEdit_DefaultRect(i,viewW,viewH,safeL,safeT,safeR,safeB,p,&out[i]);
+	TouchLayout_ForceRow(viewW,viewH,safeL,safeT,safeR,safeB,p,out);
 	for ( int i = 0; i < TB_COUNT; ++i ) {
-		TouchEdit_DefaultRect( i, viewW, viewH, safeL, safeT, safeR, safeB, p, &out[i] );
 		if ( out[i].w > 0 && ( positions.mask & ( 1u << i ) ) ) {
 			out[i].x = fmaxf( 0, fminf( positions.cx[i] * viewW - out[i].w / 2, viewW - out[i].w ) );
 			out[i].y = fmaxf( 0, fminf( positions.cy[i] * viewH - out[i].h / 2, viewH - out[i].h ) );

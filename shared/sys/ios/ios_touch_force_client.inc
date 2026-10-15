@@ -3,6 +3,15 @@
 
 static touchForceDispatch_t touchForceDispatch;
 static touchForcePulse_t touchForcePulses[sizeof(in_buttons)/sizeof(in_buttons[0])];
+static touchForcePulse_t touchMovePulses[2];
+static int CL_TouchMoveIndex(kbutton_t *button) {return button==&in_up?0:button==&in_down?1:-1;}
+static void CL_TouchConsumeMove(kbutton_t *button) {
+	const int index=CL_TouchMoveIndex(button);
+	if(index<0) return;
+	memset(&touchMovePulses[index],0,sizeof(touchMovePulses[index]));
+	for(int i=0;i<2;++i) if(button->down[i])
+		TouchForce_PulseDown(&touchMovePulses[index],TouchForce_SourceIndex(button->down[i],A_AUX16));
+}
 static int CL_TouchButtonIndex(kbutton_t *button) {
 	for(unsigned int i=0;i<sizeof(in_buttons)/sizeof(in_buttons[0]);++i) if(button==&in_buttons[i]) return (int)i;
 	return -1;
@@ -18,6 +27,12 @@ static void IN_ReleaseSource(kbutton_t *button,int source,unsigned int time) {
 static void CL_TouchReleaseSource(int source,unsigned int time) {
 	const int index=TouchForce_SourceIndex(source,A_AUX16);
 	if(index<0) return;
+	kbutton_t *movement[2]={&in_up,&in_down};
+	for(int i=0;i<2;++i) {
+		IN_ReleaseSource(movement[i],source,time);
+		const int pending=TouchForce_PulseCancel(&touchMovePulses[i],index);
+		if(!movement[i]->active && !pending) {movement[i]->msec=0;movement[i]->wasPressed=qfalse;}
+	}
 	for(unsigned int i=0;i<sizeof(in_buttons)/sizeof(in_buttons[0]);++i) {
 		IN_ReleaseSource(&in_buttons[i],source,time);
 		in_buttons[i].wasPressed=TouchForce_PulseCancel(&touchForcePulses[i],index)?qtrue:qfalse;
@@ -25,6 +40,8 @@ static void CL_TouchReleaseSource(int source,unsigned int time) {
 }
 static int CL_TouchKeyDown(kbutton_t *button,int source) {
 	if(source==A_AUX21 && !TouchForce_CentralAllowed(&touchForceDispatch)) return 0;
+	const int move=CL_TouchMoveIndex(button);
+	if(move>=0) TouchForce_PulseDown(&touchMovePulses[move],TouchForce_SourceIndex(source,A_AUX16));
 	const int index=CL_TouchButtonIndex(button);
 	if(index>=0) {
 		TouchForce_PulseDown(&touchForcePulses[index],TouchForce_SourceIndex(source,A_AUX16));
@@ -120,7 +137,7 @@ void CL_TouchCancelSource(int source) {
 	Sys_QueEvent(0,SE_CONSOLE,0,0,(int)strlen(text)+1,CopyString(text));
 }
 void CL_TouchClearPulses(void) {
-	CL_TouchForceReset();memset(touchForcePulses,0,sizeof(touchForcePulses));
+	CL_TouchForceReset();memset(touchForcePulses,0,sizeof(touchForcePulses));memset(touchMovePulses,0,sizeof(touchMovePulses));
 	for(unsigned int i=0;i<sizeof(in_buttons)/sizeof(in_buttons[0]);++i) in_buttons[i].wasPressed=qfalse;
 }
 

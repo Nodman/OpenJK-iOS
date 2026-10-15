@@ -173,7 +173,7 @@ IOS_TOUCH_INLINE void TouchEdit_DefaultRect( int button, float W, float H, float
 	memset(out,0,sizeof(*out));
 	if(TouchLayout_Unit(W-L-R,H-T-B,p)<=0) return;
 	if(button==TB_CONSOLE) IOS_TouchConsoleRectPixels(W,H,L,T,R,B,&out->x,&out->y,&out->w,&out->h);
-	else TouchLayout_AnchorRect(W,H,L,T,R,B,p,d->anchor,d->cx,d->cy,d->size,&out->x,&out->y,&out->w,&out->h);
+	else TouchLayout_AnchorRect(W,H,L,T,R,B,p,d->anchor,d->cx,d->cy,button==TB_FORCE?touchButtonDefs[TB_ATTACK].size:d->size,&out->x,&out->y,&out->w,&out->h);
 	TouchLayout_CompactRect(button,out);
 }
 

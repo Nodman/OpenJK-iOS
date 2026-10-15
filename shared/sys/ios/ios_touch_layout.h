@@ -24,7 +24,9 @@ typedef struct { float x, y, w, h; } touchRect_t;
 IOS_TOUCH_INLINE float TouchLayout_ButtonScale( int button )
 {
 	switch ( button ) {
-	case TB_FORCE: case TB_FORCENEXT: case TB_WEAPPREV: case TB_WEAPNEXT:
+	case TB_SABER_SELECT: case TB_STYLE:
+		return .75f;
+	case TB_FORCENEXT: case TB_WEAPPREV: case TB_WEAPNEXT:
 	case TB_MENU: case TB_CONSOLE: case TB_CHAT: case TB_PAD: case TB_LOCK:
 	case TB_FORCEPREV: case TB_FORCE_SLOT1: case TB_FORCE_SLOT2: case TB_FORCE_SLOT3: case TB_FORCE_SLOT4:
 		return .5f;

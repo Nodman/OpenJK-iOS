@@ -151,11 +151,40 @@ BOOST_AUTO_TEST_CASE( console_geometry_matches_layout )
 	BOOST_CHECK_EQUAL( w, h );
 }
 
+BOOST_AUTO_TEST_CASE( combat_force_medium_sabers_and_default_row_clearance )
+{
+	const float fixtures[][7]={{2868,1320,132,0,132,102,3},{1434,660,66,0,66,51,1.5f},{844,390,0,0,0,0,1},{667,320,0,0,0,0,1},{2048,1536,0,0,0,0,2},{2388,1668,0,0,0,0,2},{1024,768,0,0,0,0,2}};
+	const int row[7]={TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4,TB_FORCEPREV,TB_FORCE,TB_FORCENEXT};
+	for(const auto &f:fixtures) {
+		touchRect_t rects[TB_COUNT];TouchLayout_Build(f[0],f[1],f[2],f[3],f[4],f[5],f[6],rects,NULL);
+		BOOST_CHECK_EQUAL(rects[TB_FORCE].w,rects[TB_ATTACK].w);BOOST_CHECK_EQUAL(rects[TB_FORCE].h,rects[TB_ALTATTACK].h);
+		for(int button:{TB_STYLE,TB_SABER_SELECT}) {
+			const auto &d=touchButtonDefs[button];touchRect_t old;
+			TouchLayout_AnchorRect(f[0],f[1],f[2],f[3],f[4],f[5],f[6],d.anchor,d.cx,d.cy,d.size,&old.x,&old.y,&old.w,&old.h);
+			BOOST_CHECK_EQUAL(rects[button].w,old.w*.75f);
+		}
+		for(int i=0;i<7;++i) {
+			const auto &a=rects[row[i]];
+			BOOST_CHECK_GE(a.x,f[2]-.001f);BOOST_CHECK_GE(a.y,f[3]-.001f);BOOST_CHECK_LE(a.x+a.w,f[0]-f[4]+.001f);BOOST_CHECK_LE(a.y+a.h,f[1]-f[5]+.001f);
+			for(int j=0;j<TB_COUNT;++j) {
+				if(j==row[i]) continue;
+				const auto &b=rects[j];
+				BOOST_CHECK_MESSAGE(a.x+a.w<=b.x+.001f || b.x+b.w<=a.x+.001f || a.y+a.h<=b.y+.001f || b.y+b.h<=a.y+.001f,"overlap "<<row[i]<<" / "<<j<<" in "<<f[0]<<"x"<<f[1]);
+			}
+			if(i) BOOST_CHECK_GT(a.x,rects[row[i-1]].x);
+		}
+		touchLayoutOverrides_t saved={};saved.version=2;saved.mask=(1u<<TB_FORCE)|(1u<<TB_STYLE)|(1u<<TB_SABER_SELECT);
+		for(int button:{TB_FORCE,TB_STYLE,TB_SABER_SELECT}) {saved.cx[button]=.25f;saved.cy[button]=.6f;}
+		TouchLayout_Build(f[0],f[1],f[2],f[3],f[4],f[5],f[6],rects,&saved);
+		for(int button:{TB_FORCE,TB_STYLE,TB_SABER_SELECT}) {BOOST_CHECK_SMALL(rects[button].x+rects[button].w/2-f[0]*.25f,.001f);BOOST_CHECK_SMALL(rects[button].y+rects[button].h/2-f[1]*.6f,.001f);}
+	}
+}
+
 BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 {
 	const unsigned int small = ( 1u << TB_MENU ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) |
 		( 1u << TB_CONSOLE ) | ( 1u << TB_LOCK ) | ( 1u << TB_WEAPPREV ) | ( 1u << TB_WEAPNEXT ) |
-		( 1u << TB_FORCE ) | ( 1u << TB_FORCENEXT ) | ( 1u << TB_FORCEPREV ) |
+		( 1u << TB_FORCENEXT ) | ( 1u << TB_FORCEPREV ) |
 		( 1u << TB_FORCE_SLOT1 ) | ( 1u << TB_FORCE_SLOT2 ) | ( 1u << TB_FORCE_SLOT3 ) | ( 1u << TB_FORCE_SLOT4 );
 	const float fixtures[][7] = {
 		{ 2868, 1320, 132, 0, 132, 102, 3 },
@@ -184,9 +213,14 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 				else
 					TouchLayout_AnchorRect( f[0], f[1], f[2], f[3], f[4], f[5], f[6], d.anchor,
 						d.cx, d.cy, d.size, &old.x, &old.y, &old.w, &old.h );
-				const float scale = small & ( 1u << button ) ? .5f : 1;
-				BOOST_CHECK_EQUAL( rects[button].w, old.w * scale );
-				BOOST_CHECK_EQUAL( rects[button].h, old.h * scale );
+				const float scale = small & ( 1u << button ) ? .5f : button==TB_STYLE || button==TB_SABER_SELECT?.75f:1;
+				float expected=old.w*scale;
+				if(button==TB_FORCE) {
+					touchRect_t combat;TouchLayout_AnchorRect(f[0],f[1],f[2],f[3],f[4],f[5],f[6],d.anchor,d.cx,d.cy,.14f,&combat.x,&combat.y,&combat.w,&combat.h);
+					expected=combat.w;
+				}
+				BOOST_CHECK_EQUAL( rects[button].w, expected );
+				BOOST_CHECK_EQUAL( rects[button].h, expected );
 				bool obstructed=false;
 				if ( button == TB_LOCK ) {
 					touchRect_t console;
@@ -201,9 +235,10 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 							rects[button].y+rects[button].h<=blocked.y || blocked.y+blocked.h<=rects[button].y);
 					}
 				}
-				if ( !obstructed ) {
-					BOOST_CHECK_SMALL( rects[button].x + rects[button].w / 2 - old.x - old.w / 2, .001f );
-					BOOST_CHECK_SMALL( rects[button].y + rects[button].h / 2 - old.y - old.h / 2, .001f );
+				const bool forceRow=button==TB_FORCE || button==TB_FORCENEXT || button==TB_FORCEPREV || button>=TB_FORCE_SLOT1;
+				if ( !obstructed && (!forceRow || (edge && (overrides.mask&(1u<<button)))) ) {
+					BOOST_CHECK_SMALL( rects[button].x + rects[button].w / 2 - fmaxf(rects[button].w/2,fminf(old.x+old.w/2,f[0]-rects[button].w/2)), .001f );
+					BOOST_CHECK_SMALL( rects[button].y + rects[button].h / 2 - fmaxf(rects[button].h/2,fminf(old.y+old.h/2,f[1]-rects[button].h/2)), .001f );
 				}
 				for ( int corner = 0; corner < 4; ++corner )
 					BOOST_CHECK_EQUAL( TouchLayout_Hit( rects, rects[button].x + ( corner & 1 ? rects[button].w : 0 ),

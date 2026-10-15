@@ -185,7 +185,7 @@ static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, fl
 	input.moveEnabled = input.lookEnabled = layoutReady && visibility.sticks;
 	const int force=button==TB_FORCE || (button>=TB_FORCE_SLOT1 && button<=TB_FORCE_SLOT4);
 	int reserved=0;
-	if(event==TOUCH_DOWN && input.target==TOUCH_TARGET_BUTTON) {
+	if(event==TOUCH_DOWN && (input.target==TOUCH_TARGET_BUTTON || input.target==TOUCH_TARGET_FIRE)) {
 		if((button==TB_FORCEPREV || button==TB_FORCENEXT) && CL_TouchForceBusy()) input.target=TOUCH_TARGET_IGNORE;
 		if(force) {
 			const int slot=button==TB_FORCE?-1:button-TB_FORCE_SLOT1;
@@ -487,7 +487,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
 		int target = TOUCH_TARGET_IGNORE;
 		if ( hit >= 0 )
-			target = hit == TB_ATTACK || hit == TB_ALTATTACK ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
+			target = hit == TB_ATTACK || hit == TB_ALTATTACK || hit == TB_FORCE || hit == TB_CROUCH || hit == TB_JUMP ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
 		else if ( zone == TOUCH_ZONE_MOVE )
 			target = TOUCH_TARGET_MOVE;
 		else if ( zone == TOUCH_ZONE_AIM )

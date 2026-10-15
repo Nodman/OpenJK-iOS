@@ -171,6 +171,7 @@ float AngleSubtract(float a,float b) { return a-b; }
 static void Reset(void) {
 	assert(events.empty());Cbuf_Init();cmd_wait=0;commandsSeen.clear();
 	memset(in_buttons,0,sizeof(in_buttons));memset(touchForcePulses,0,sizeof(touchForcePulses));
+	memset(&in_up,0,sizeof(in_up));memset(&in_down,0,sizeof(in_down));memset(touchMovePulses,0,sizeof(touchMovePulses));
 	memset(&touchForceDispatch,0,sizeof(touchForceDispatch));memset(&cl,0,sizeof(cl));
 	cls.state=CA_ACTIVE;
 }
@@ -181,6 +182,9 @@ static void Hardware(const char *command,int key,int time) {
 }
 static void Register(void) {
 	CL_TouchForceInit();Cmd_AddCommand("wait",Cmd_Wait_f);
+	Cmd_AddCommand("+moveup",IN_UpDown);Cmd_AddCommand("-moveup",IN_UpUp);
+	Cmd_AddCommand("+movedown",IN_DownDown);Cmd_AddCommand("-movedown",IN_DownUp);
+	Key_SetBinding(A_AUX18,"+moveup");Key_SetBinding(A_AUX19,"+movedown");
 	#ifdef TEST_MP
 	Cmd_AddCommand("+useforce",IN_Button9Down);Cmd_AddCommand("-useforce",IN_Button9Up);
 #else
@@ -398,7 +402,7 @@ cvar_t *cl_debugMove=&inputZero,*cl_freelook=&inputOne;
 #endif
 void SCR_DebugGraph(float,int) {}
 static void AimFixture(int mode=1) {
-	SDLFixture();SetTouchVar("in_touchAimMode",mode?"1":"0");IN_TouchSyncAim();Drain();
+	SDLFixture();testTime=100;SetTouchVar("in_touchAimMode",mode?"1":"0");IN_TouchSyncAim();Drain();
 	inputOne.value=1;inputOne.integer=1;inputSpeed.value=140;inputJoystick.integer=1;
 	cl_anglespeedkey=cl_run=j_twinStick=j_lookSpeed=&inputOne;
 	cl_yawspeed=cl_pitchspeed=&inputSpeed;
@@ -407,7 +411,7 @@ static void AimFixture(int mode=1) {
 	cl.cgameSensitivity=1;cls.frametime=16;frame_msec=16;com_frameTime=116;
 }
 static void CommandFrame(int ms=16) {
-	cls.frametime=ms;frame_msec=ms;com_frameTime+=ms;
+	cls.frametime=ms;frame_msec=ms;com_frameTime+=ms;testTime=com_frameTime;
 	IN_TouchFrame();IN_GamepadSendAxes();Drain();CL_CreateCmd();
 }
 static void SDLAimCommandRouting(void) {
@@ -525,12 +529,56 @@ static void LateCbufAimSettings(void) {
 		IN_TouchReleaseAll();Drain();touchWindow=NULL;
 	}
 }
+static kbutton_t *ActionButton(int button) {return button==TB_FORCE?&in_buttons[centralButton]:button==TB_JUMP?&in_up:&in_down;}
+static void SDLHeldActionAim(void) {
+	for(int mode:{0,1}) for(int button:{TB_FORCE,TB_CROUCH,TB_JUMP}) {
+		AimFixture(mode);const auto r=rects[button];const float x=r.x+r.w/2,y=r.y+r.h/2;
+		SDLButton(SDL_FINGERDOWN,110,button);Drain();assert(ActionButton(button)->active);
+		SDLEvent(SDL_FINGERMOTION,110,x+30,y);CommandFrame();
+		assert(gestures.lookOwner>=0 && ActionButton(button)->active);
+		if(mode) assert(!cl.viewangles[YAW]);else assert(cl.viewangles[YAW]<0);
+		const float angle=cl.viewangles[YAW];SDLEvent(SDL_FINGERMOTION,110,x+40,y);SDLButton(SDL_FINGERUP,110,button);CommandFrame();
+		assert(!ActionButton(button)->active && gestures.lookOwner<0);
+		if(mode) assert(fabsf(cl.viewangles[YAW]-angle+2)<.001f);
+		AimFixture(mode);SDLEvent(SDL_FINGERDOWN,111,500,300);SDLButton(SDL_FINGERDOWN,112,button);
+		SDLEvent(SDL_FINGERMOTION,112,x+30,y);SDLEvent(SDL_FINGERUP,111,500,300);SDLEvent(SDL_FINGERMOTION,112,x+40,y);CommandFrame();
+		assert(gestures.lookOwner<0 && !cl.viewangles[YAW] && ActionButton(button)->active);
+		IN_TouchReleaseAll();Drain();assert(!ActionButton(button)->active);
+	}
+	for(int button:{TB_CROUCH,TB_JUMP}) for(int hardware:{0,1,2}) {
+		AimFixture();const char *down=button==TB_JUMP?"+moveup":"+movedown",*up=button==TB_JUMP?"-moveup":"-movedown";
+		SDLButton(SDL_FINGERDOWN,113,button);
+		if(hardware) {Hardware(down,77,101);if(hardware==2) Hardware(up,77,105);}
+		IN_TouchFrame();IN_GamepadSendAxes();ExpandEvents();Cbuf_AddText("in_touchDragScale 2\n");Cbuf_Execute();
+		const usercmd_t command=CL_CreateCmd();assert(!!ActionButton(button)->active==(hardware==1));
+		assert(hardware?button==TB_JUMP?command.upmove>0:command.upmove<0:command.upmove==0);
+		assert(!events.empty());Drain();assert(!!ActionButton(button)->active==(hardware==1));
+		if(hardware==1) {Hardware(up,77,120);Cbuf_Execute();}
+		IN_TouchReleaseAll();Drain();
+		AimFixture();Hardware(down,77,100);CommandFrame();
+		SDLButton(SDL_FINGERDOWN,119,button);Drain();testTime+=5;Hardware(up,77,testTime);Cbuf_Execute();
+		IN_TouchReleaseAll();assert(!ActionButton(button)->active);
+		const auto interval=CL_CreateCmd();assert(button==TB_JUMP?interval.upmove>0:interval.upmove<0);
+		Drain();assert(CL_CreateCmd().upmove==0);
+		SDLButton(SDL_FINGERDOWN,120,button);Drain();IN_TouchReleaseAll();assert(CL_CreateCmd().upmove==0);Drain();
+		AimFixture();SDLButton(SDL_FINGERDOWN,114,button);testTime+=8;SDLButton(SDL_FINGERUP,114,button);Drain();
+		assert(!ActionButton(button)->active);const auto tap=CL_CreateCmd();assert(button==TB_JUMP?tap.upmove>0:tap.upmove<0);assert(CL_CreateCmd().upmove==0);
+		AimFixture();Cbuf_AddText("wait\n");SDLButton(SDL_FINGERDOWN,115,button);ExpandEvents();Cbuf_Execute();IN_TouchReleaseAll();Drain();assert(CL_CreateCmd().upmove==0);
+	}
+	AimFixture();SDLButton(SDL_FINGERDOWN,116,TB_FORCE_SLOT1);SDLButton(SDL_FINGERDOWN,117,TB_FORCE);
+	const auto r=rects[TB_FORCE];SDLEvent(SDL_FINGERMOTION,117,r.x+r.w/2+30,r.y+r.h/2);assert(gestures.lookOwner<0 && !TouchGesture_HoldsButton(&gestures,117,TB_FORCE));
+	IN_TouchReleaseAll();Drain();
+	AimFixture();SDLButton(SDL_FINGERDOWN,118,TB_FORCE);SDLEvent(SDL_FINGERMOTION,118,r.x+r.w/2+30,r.y+r.h/2);Drain();assert(gestures.lookOwner>=0);
+	const auto update=IN_TouchBeginForceUpdate(),frame=IN_TouchBeginForceFrame();IN_TouchReportForce(TOUCH_FORCE_API,0,0,0);IN_TouchEndForceFrame(frame);IN_TouchEndForceUpdate(update);
+	CommandFrame();assert(!in_buttons[centralButton].active && gestures.lookOwner<0 && !dragX);
+	IN_TouchReleaseAll();Drain();touchWindow=NULL;
+}
 int main() {
 	cls.state=CA_ACTIVE;Cbuf_Init();Register();
 	CommandNamesAndTap();CancellationAndSourcePulses();SelectionAndAssignment();CentralAndReset();
 #ifdef TEST_MP
 	PacketTiming();
 #endif
-	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();
+	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();SDLHeldActionAim();
 	puts("PASS: late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
 }

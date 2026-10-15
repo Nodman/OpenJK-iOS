@@ -261,6 +261,9 @@ float CL_KeyState( kbutton_t *key ) {
 
 	msec = key->msec;
 	key->msec = 0;
+#ifdef OPENJK_IOS
+	CL_TouchConsumeMove(key);
+#endif
 
 	if ( key->active ) {
 		// still down
