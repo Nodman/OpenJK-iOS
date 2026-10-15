@@ -40,6 +40,7 @@ void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, floa
 				defs[i].cx, defs[i].cy, defs[i].size,
 				&out[i].x, &out[i].y, &out[i].w, &out[i].h );
 		}
+		TouchLayout_CompactRect( i, &out[i] );
 	}
 }
 

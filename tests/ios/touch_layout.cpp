@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE( anchored_target_fixtures_and_arc_gaps )
 			BOOST_CHECK_GE( r.y, f[3] );
 			BOOST_CHECK_LE( r.x + r.w, f[0] - f[4] );
 			BOOST_CHECK_LE( r.y + r.h, f[1] - f[5] );
-			if ( i != TB_CONSOLE ) BOOST_CHECK_GE( r.w / f[6], 44 );
+			if ( i != TB_CONSOLE ) BOOST_CHECK_GE( r.w / f[6], 44 * TouchLayout_ButtonScale( i ) );
 			BOOST_CHECK_EQUAL( TouchLayout_Hit( rects, r.x + r.w / 2, r.y + r.h / 2, ~0u ), i );
 			BOOST_CHECK_EQUAL( TouchLayout_Hit( rects, r.x + r.w / 2, r.y + r.h / 2, ~( 1u << i ) ), -1 );
 			for ( int j = 0; j < i; ++j ) {
@@ -129,6 +129,10 @@ BOOST_AUTO_TEST_CASE( console_geometry_matches_layout )
 		touchRect_t rects[TB_COUNT], con;
 		TouchLayout_Build( f[0], f[1], f[2], f[3], f[4], f[5], f[6], rects );
 		IOS_TouchConsoleRectPixels( f[0], f[1], f[2], f[3], f[4], f[5], &con.x, &con.y, &con.w, &con.h );
+		con.x += con.w / 4;
+		con.y += con.h / 4;
+		con.w /= 2;
+		con.h /= 2;
 		BOOST_CHECK_EQUAL( con.x, rects[TB_CONSOLE].x );
 		BOOST_CHECK_EQUAL( con.y, rects[TB_CONSOLE].y );
 		BOOST_CHECK_EQUAL( con.w, rects[TB_CONSOLE].w );
@@ -140,6 +144,60 @@ BOOST_AUTO_TEST_CASE( console_geometry_matches_layout )
 	BOOST_CHECK_SMALL( y - 15.225f, 1e-3f );
 	BOOST_CHECK_SMALL( w - 66.99f, 1e-3f );
 	BOOST_CHECK_EQUAL( w, h );
+}
+
+BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
+{
+	const unsigned int small = ( 1u << TB_MENU ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) |
+		( 1u << TB_CONSOLE ) | ( 1u << TB_LOCK ) | ( 1u << TB_WEAPPREV ) | ( 1u << TB_WEAPNEXT ) |
+		( 1u << TB_FORCE ) | ( 1u << TB_FORCENEXT );
+	const float fixtures[][7] = {
+		{ 2868, 1320, 132, 0, 132, 102, 3 },
+		{ 1434, 660, 66, 0, 66, 51, 1.5f },
+		{ 2048, 1536, 0, 0, 0, 0, 2 },
+		{ 3000, 2000, 0, 0, 0, 0, 1 },
+		{ 600, 400, 20, 10, 40, 30, 3 }
+	};
+	for ( const auto &f : fixtures ) {
+		for ( int edge = 0; edge <= 1; ++edge ) {
+			touchLayoutOverrides_t overrides = {};
+			if ( edge ) {
+				overrides.mask = IOS_TOUCH_ALL_BUTTONS;
+				for ( int button = 0; button < TB_COUNT; ++button )
+					overrides.cx[button] = overrides.cy[button] = 0;
+			}
+			touchButtonDef_t oldDefs[TB_COUNT];
+			TouchEdit_Apply( &overrides, oldDefs, f[0], f[1], f[2], f[3], f[4], f[5], f[6] );
+			touchRect_t rects[TB_COUNT];
+			TouchLayout_Build( f[0], f[1], f[2], f[3], f[4], f[5], f[6], rects, &overrides );
+			for ( int button = 0; button < TB_COUNT; ++button ) {
+				touchRect_t old;
+				const auto &d = oldDefs[button];
+				if ( button == TB_CONSOLE )
+					IOS_TouchConsoleRectPixels( f[0], f[1], f[2], f[3], f[4], f[5], &old.x, &old.y, &old.w, &old.h );
+				else
+					TouchLayout_AnchorRect( f[0], f[1], f[2], f[3], f[4], f[5], f[6], d.anchor,
+						d.cx, d.cy, d.size, &old.x, &old.y, &old.w, &old.h );
+				const float scale = small & ( 1u << button ) ? .5f : 1;
+				BOOST_CHECK_EQUAL( rects[button].w, old.w * scale );
+				BOOST_CHECK_EQUAL( rects[button].h, old.h * scale );
+				BOOST_CHECK_SMALL( rects[button].x + rects[button].w / 2 - old.x - old.w / 2, .0003f );
+				BOOST_CHECK_SMALL( rects[button].y + rects[button].h / 2 - old.y - old.h / 2, .0003f );
+				for ( int corner = 0; corner < 4; ++corner )
+					BOOST_CHECK_EQUAL( TouchLayout_Hit( rects, rects[button].x + ( corner & 1 ? rects[button].w : 0 ),
+						rects[button].y + ( corner & 2 ? rects[button].h : 0 ), 1u << button ), button );
+			}
+		}
+	}
+	// A floor-sized saved edge control keeps its old centre, not its raw anchor.
+	touchLayoutOverrides_t edge = {};
+	edge.mask = 1u << TB_MENU;
+	touchRect_t rects[TB_COUNT];
+	TouchLayout_Build( 600, 400, 20, 10, 40, 30, 3, rects, &edge );
+	BOOST_CHECK_EQUAL( rects[TB_MENU].x, 53 );
+	BOOST_CHECK_EQUAL( rects[TB_MENU].y, 43 );
+	BOOST_CHECK_EQUAL( rects[TB_MENU].w, 66 );
+	BOOST_CHECK_SMALL( rects[TB_CONSOLE].w - 29.7f, .0001f );
 }
 
 BOOST_AUTO_TEST_CASE( explicit_key_map_and_paired_pad_chat_trace )

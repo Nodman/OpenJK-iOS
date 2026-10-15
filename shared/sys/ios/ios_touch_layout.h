@@ -21,6 +21,28 @@ typedef enum {
 
 typedef struct { float x, y, w, h; } touchRect_t;
 
+IOS_TOUCH_INLINE float TouchLayout_ButtonScale( int button )
+{
+	switch ( button ) {
+	case TB_FORCE: case TB_FORCENEXT: case TB_WEAPPREV: case TB_WEAPNEXT:
+	case TB_MENU: case TB_CONSOLE: case TB_CHAT: case TB_PAD: case TB_LOCK:
+		return .5f;
+	default:
+		return 1;
+	}
+}
+
+IOS_TOUCH_INLINE void TouchLayout_CompactRect( int button, touchRect_t *rect )
+{
+	const float scale = TouchLayout_ButtonScale( button );
+	const float w = rect->w * scale, h = rect->h * scale;
+	// Shrink after the legacy clamp to keep saved edge positions centred.
+	rect->x += ( rect->w - w ) / 2;
+	rect->y += ( rect->h - h ) / 2;
+	rect->w = w;
+	rect->h = h;
+}
+
 typedef struct {
 	const char *label;
 	int anchor;

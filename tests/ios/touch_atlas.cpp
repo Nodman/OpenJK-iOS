@@ -87,6 +87,9 @@ BOOST_AUTO_TEST_CASE( full_twenty_records_and_raw_knobs_round_trip )
 		for ( int i = 0; i < TB_COUNT; ++i ) {
 			BOOST_CHECK_EQUAL( items[i].kind, TOUCH_DRAW_BUTTON );
 			BOOST_CHECK_EQUAL( items[i].glyph, touchButtonDefs[i].glyph );
+			const unsigned int rectangular = ( 1u << TB_MENU ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) |
+				( 1u << TB_CONSOLE ) | ( 1u << TB_LOCK );
+			BOOST_CHECK_EQUAL( items[i].plate, rectangular & ( 1u << i ) ? TG_RECT_PLATE : TG_PLATE );
 			const auto virtualRect = TouchLayout_RectToVirtual( &layout, rects[i] );
 			BOOST_CHECK_EQUAL( items[i].x, virtualRect.x );
 			BOOST_CHECK_EQUAL( items[i].y, virtualRect.y );
@@ -100,6 +103,7 @@ BOOST_AUTO_TEST_CASE( full_twenty_records_and_raw_knobs_round_trip )
 		BOOST_CHECK_EQUAL( items[TB_ATTACK].rgb[0], 1 );
 		for ( int i = TB_COUNT; i < TB_COUNT+4; ++i ) {
 			BOOST_CHECK_EQUAL( items[i].glyph, TG_PLATE );
+			BOOST_CHECK_EQUAL( items[i].plate, TG_PLATE );
 			BOOST_CHECK_EQUAL( items[i].kind, (i-TB_COUNT) % 2 ? TOUCH_DRAW_STICK_KNOB : TOUCH_DRAW_STICK_BASE );
 			const auto centre = AspectLayout_ToPixels( &layout, items[i].x + items[i].w / 2, items[i].y + items[i].h / 2 );
 			const auto size = AspectLayout_SizeToPixels( &layout, items[i].w, items[i].h );

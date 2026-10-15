@@ -35,9 +35,19 @@ typedef enum {
 
 typedef struct {
 	float x, y, w, h;
-	int kind, glyph, pressed;
+	int kind, glyph, plate, pressed;
 	float rgb[3];
 } touchDrawItem_t;
+
+IOS_TOUCH_INLINE int TouchDraw_ButtonPlate( int button )
+{
+	switch ( button ) {
+	case TB_MENU: case TB_CHAT: case TB_PAD: case TB_CONSOLE: case TB_LOCK:
+		return TG_RECT_PLATE;
+	default:
+		return TG_PLATE;
+	}
+}
 
 typedef struct {
 	const aspectLayout_t *layout;
@@ -101,7 +111,7 @@ IOS_TOUCH_INLINE void TouchDraw_Color( const touchDrawItem_t *item, int glyphLay
 }
 
 IOS_TOUCH_INLINE void TouchDraw_Add( const touchDrawInput_t *input, touchDrawItem_t *items, int *count, int capacity,
-	float x, float y, float w, float h, int kind, int glyph, int pressed, int style )
+	float x, float y, float w, float h, int kind, int glyph, int plate, int pressed, int style )
 {
 	aspectPoint_t origin, size;
 	touchDrawItem_t *item;
@@ -116,6 +126,7 @@ IOS_TOUCH_INLINE void TouchDraw_Add( const touchDrawInput_t *input, touchDrawIte
 	item->h = (float)size.y;
 	item->kind = kind;
 	item->glyph = glyph;
+	item->plate = plate;
 	item->pressed = pressed;
 	TouchDraw_StyleRGB( style, item->rgb );
 	++*count;
@@ -128,25 +139,25 @@ IOS_TOUCH_INLINE int TouchDraw_Build( const touchDrawInput_t *input, touchDrawIt
 		return 0;
 	if ( capacity > IOS_TOUCH_MAX_DRAW_ITEMS ) capacity = IOS_TOUCH_MAX_DRAW_ITEMS;
 	if ( input->editing )
-		TouchDraw_Add(input,items,&count,capacity,0,0,(float)input->layout->W,(float)input->layout->H,TOUCH_DRAW_DIM,TG_PLATE,0,TOUCH_STYLE_UNKNOWN);
+		TouchDraw_Add(input,items,&count,capacity,0,0,(float)input->layout->W,(float)input->layout->H,TOUCH_DRAW_DIM,TG_PLATE,TG_PLATE,0,TOUCH_STYLE_UNKNOWN);
 	for ( button = 0; button < TB_COUNT; ++button ) {
 		const touchRect_t *r = &input->rects[button];
 		int pressed = ( input->pressedButtons & ( 1u << button ) ) != 0;
 		if ( !input->editing && !( input->visibleButtons & ( 1u << button ) ) ) continue;
 		if ( input->editing && button==TB_LOCK ) pressed=1;
 		if ( input->editing && button==input->dragButton )
-			TouchDraw_Add(input,items,&count,capacity,r->x-.04f*r->w,r->y-.04f*r->h,1.08f*r->w,1.08f*r->h,TOUCH_DRAW_HIGHLIGHT,TG_PLATE,0,TOUCH_STYLE_UNKNOWN);
+			TouchDraw_Add(input,items,&count,capacity,r->x-.04f*r->w,r->y-.04f*r->h,1.08f*r->w,1.08f*r->h,TOUCH_DRAW_HIGHLIGHT,TG_PLATE,TouchDraw_ButtonPlate(button),0,TOUCH_STYLE_UNKNOWN);
 		for ( i = 0; i < IOS_TOUCH_GESTURE_FINGERS; ++i ) {
 			const touchGestureFinger_t *f = &input->gestures->fingers[i];
 			if ( TouchGesture_IsButton( f->role ) && f->button == button ) pressed = 1;
 		}
 		TouchDraw_Add( input, items, &count, capacity, r->x, r->y, r->w, r->h, TOUCH_DRAW_BUTTON,
-			TouchDraw_WeaponGlyph(button,input->weaponClass), pressed, button == TB_STYLE ? input->styleColor : TOUCH_STYLE_UNKNOWN );
+			TouchDraw_WeaponGlyph(button,input->weaponClass), TouchDraw_ButtonPlate(button), pressed, button == TB_STYLE ? input->styleColor : TOUCH_STYLE_UNKNOWN );
 	}
 	if (input->editing && input->slider) {
 		const touchRect_t *r=input->slider;
-		TouchDraw_Add(input,items,&count,capacity,r->x+r->h/2,r->y+.45f*r->h,r->w-r->h,.1f*r->h,TOUCH_DRAW_SLIDER_TRACK,TG_PLATE,0,TOUCH_STYLE_UNKNOWN);
-		TouchDraw_Add(input,items,&count,capacity,TouchEdit_SliderX(input->opacity,r)-r->h/2,r->y,r->h,r->h,TOUCH_DRAW_SLIDER_KNOB,TG_PLATE,1,TOUCH_STYLE_UNKNOWN);
+		TouchDraw_Add(input,items,&count,capacity,r->x+r->h/2,r->y+.45f*r->h,r->w-r->h,.1f*r->h,TOUCH_DRAW_SLIDER_TRACK,TG_PLATE,TG_PLATE,0,TOUCH_STYLE_UNKNOWN);
+		TouchDraw_Add(input,items,&count,capacity,TouchEdit_SliderX(input->opacity,r)-r->h/2,r->y,r->h,r->h,TOUCH_DRAW_SLIDER_KNOB,TG_PLATE,TG_PLATE,1,TOUCH_STYLE_UNKNOWN);
 	}
 	if ( input->sticks && !input->editing ) {
 		const int owners[2] = { input->gestures->moveOwner, input->gestures->lookOwner };
@@ -159,9 +170,9 @@ IOS_TOUCH_INLINE int TouchDraw_Build( const touchDrawInput_t *input, touchDrawIt
 			if ( !IOS_TouchFinite( r ) || r <= 0 ) continue;
 			TouchStick_Clamp( f->x - f->ox, f->y - f->oy, r, &sx, &sy );
 			TouchDraw_Add( input, items, &count, capacity, f->ox - r, f->oy - r, 2 * r, 2 * r,
-				TOUCH_DRAW_STICK_BASE, TG_PLATE, 0, TOUCH_STYLE_UNKNOWN );
+				TOUCH_DRAW_STICK_BASE, TG_PLATE, TG_PLATE, 0, TOUCH_STYLE_UNKNOWN );
 			TouchDraw_Add( input, items, &count, capacity, f->ox + sx * r - .3f * r, f->oy + sy * r - .3f * r, .6f * r, .6f * r,
-				TOUCH_DRAW_STICK_KNOB, TG_PLATE, 1, TOUCH_STYLE_UNKNOWN );
+				TOUCH_DRAW_STICK_KNOB, TG_PLATE, TG_PLATE, 1, TOUCH_STYLE_UNKNOWN );
 		}
 	}
 	return count;

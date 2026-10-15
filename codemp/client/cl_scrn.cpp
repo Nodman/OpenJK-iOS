@@ -579,7 +579,7 @@ static void CL_DrawTouchControls( void ) {
 			continue;
 		}
 		re->SetColor( colour );
-		CL_DrawTouchQuad( &items[i], TG_PLATE );
+		CL_DrawTouchQuad( &items[i], items[i].plate );
 		if ( items[i].kind == TOUCH_DRAW_BUTTON ) {
 			TouchDraw_Color( &items[i], 1, opacity, colour );
 			re->SetColor( colour );
