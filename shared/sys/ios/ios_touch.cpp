@@ -60,19 +60,24 @@ void IN_TouchConsumeLookDelta(float *yaw,float *pitch) {
 
 static void IN_TouchRelease(touchFinger_t *f,int event);
 
-static void IN_TouchSyncAim(void) {
+static int IN_TouchSyncAim(void) {
 	cvar_t *vars[4]={touchAimMode,touchAimCurve,touchLookScale,touchDragScale};
 	int changed=0;
 	for(int i=0;i<4;++i) if(vars[i] && aimRevisions[i]!=vars[i]->modificationCount) {
 		aimRevisions[i]=vars[i]->modificationCount;changed=1;
 	}
-	if(!changed) return;
+	if(!changed) return 0;
 	editState.dragging=0;editState.button=-1;
 	CL_TouchCancelAllSources();
 	for(int i=0;i<MAX_TOUCH_FINGERS;++i) IN_TouchRelease(&fingers[i],TOUCH_CANCEL);
 	TouchGesture_Reset(&gestures);
 	dragX=dragY=0;
 	IN_GamepadZeroTouchAxes();
+	return 1;
+}
+
+void IN_TouchPrepareCommand(void) {
+	if(IN_TouchSyncAim()) IN_GamepadSyncAxesForCommand();
 }
 
 void IN_TouchReportForce(int version,int mask,int selected,int equipment) {

@@ -11,6 +11,7 @@ static SDL_JoystickID padId = -1;
 static int heldKey[SDL_CONTROLLER_BUTTON_MAX];	// key sent on press, 0 = not held
 static qboolean triggerHeld[2];
 static touchAxesState_t axesState;
+static const int gamepadAxes[4]={AXIS_SIDE,AXIS_FORWARD,AXIS_YAW,AXIS_PITCH};
 static float cursorX = 320.0f, cursorY = 240.0f;
 static qboolean lastUIMode;
 static cvar_t *j_deadzone, *j_lookExponent;
@@ -39,12 +40,17 @@ qboolean IN_GamepadTouchLookActive( void ) {
 
 // Resent every frame while non-zero: CL_ClearState zeroes the engine axes on a level change.
 void IN_GamepadSendAxes( void ) {
-	static const int axes[4] = { AXIS_SIDE, AXIS_FORWARD, AXIS_YAW, AXIS_PITCH };
 	const touchAxesBatch_t batch = TouchAxes_Send( &axesState );
 	if ( !batch.send )
 		return;
 	for ( int i = 0; i < 4; ++i )
-		Sys_QueEvent( 0, SE_JOYSTICK_AXIS, axes[i], batch.values[i], 0, NULL );
+		Sys_QueEvent( 0, SE_JOYSTICK_AXIS, gamepadAxes[i], batch.values[i], 0, NULL );
+}
+
+void IN_GamepadSyncAxesForCommand(void) {
+	// Cbuf settings changes can leave queued resets behind this command.
+	const touchAxesBatch_t batch=TouchAxes_Send(&axesState);
+	for(int i=0;i<4;++i) CL_JoystickEvent(gamepadAxes[i],batch.values[i],0);
 }
 
 qboolean IN_GamepadPadLookActive( void ) {

@@ -749,6 +749,10 @@ usercmd_t CL_CreateCmd( void ) {
 	usercmd_t	cmd;
 	vec3_t		oldAngles;
 
+#ifdef OPENJK_IOS
+	IN_TouchPrepareCommand();
+#endif
+
 	VectorCopy( cl.viewangles, oldAngles );
 
 	// keyboard angle adjustment

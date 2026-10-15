@@ -78,7 +78,7 @@ clientStatic_t cls;
 clientActive_t cl;
 clientConnection_t clc;
 cvar_t *com_cl_running,*com_sv_running;
-qboolean Cvar_Command(void) { return qfalse; }
+qboolean Cvar_Command(void) { return Cmd_Argc()==2 && SetTouchVar(Cmd_Argv(0),Cmd_Argv(1))?qtrue:qfalse; }
 qboolean CL_GameCommand(void) { return qfalse; }
 qboolean SV_GameCommand(void) { return qfalse; }
 qboolean UI_GameCommand(void) { return qfalse; }
@@ -489,12 +489,48 @@ static void SDLAimSettingsRouting(void) {
 	SDLPanelTap(TOUCH_SETTINGS_DONE);Drain();assert(!editState.active);
 	Hardware("-attack",77,120);Cbuf_Execute();touchWindow=NULL;
 }
+static void LateCbufAimSettings(void) {
+	AimFixture();SDLEvent(SDL_FINGERDOWN,90,500,300);SDLEvent(SDL_FINGERMOTION,90,520,310);SDLEvent(SDL_FINGERUP,90,520,310);
+	IN_TouchFrame();IN_GamepadSendAxes();ExpandEvents();Cbuf_AddText("in_touchDragScale 3\n");Cbuf_Execute();
+	assert(dragX>0);CL_CreateCmd();assert(!cl.viewangles[YAW] && !cl.viewangles[PITCH] && !dragX);Drain();
+	IN_TouchReleaseAll();Drain();touchWindow=NULL;
+	for(int mode : {0,1}) for(int setting=0;setting<4;++setting) for(int hardware : {0,1}) for(int padLook : {0,1}) {
+		AimFixture(mode);
+		if(hardware) Hardware("+attack",77,100);
+		SDLEvent(SDL_FINGERDOWN,90,500,300);SDLButton(SDL_FINGERDOWN,91,TB_ATTACK);
+		SDLEvent(SDL_FINGERDOWN,92,80,300);SDLEvent(SDL_FINGERMOTION,92,100,290);
+		SDLEvent(SDL_FINGERMOTION,90,500+(mode?20:IOS_TOUCH_STICK_RADIUS*touchUnit),310);
+		axesState.pad[0]=padLook?64:0;axesState.pad[1]=padLook?-32:0;
+		axesState.pad[2]=padLook?64:0;axesState.pad[3]=padLook?-127:0;
+		IN_TouchFrame();IN_GamepadSendAxes();ExpandEvents();
+		assert(gestures.lookOwner>=0 && gestures.moveOwner>=0);
+		if(mode) assert(dragX>0);else assert(cl.joystickAxis[AXIS_YAW]!=0);
+		char command[96];snprintf(command,sizeof(command),"%s %d\n",aimNames[setting],setting==0?!mode:setting==1?1:3);
+		Cbuf_AddText(command);Cbuf_Execute();
+		assert(in_buttons[0].active && gestures.lookOwner>=0);
+		if(mode) assert(dragX>0);
+		const usercmd_t cmd=CL_CreateCmd();
+		assert(!!(cmd.buttons&1u)==hardware && !!in_buttons[0].active==hardware);
+		assert(cmd.rightmove==axesState.pad[0] && cmd.forwardmove==axesState.pad[1]);
+		if(hardware) assert(in_buttons[0].down[0]==77 || in_buttons[0].down[1]==77);
+		assert(gestures.lookOwner<0 && gestures.moveOwner<0 && !dragX && !dragY && !IN_GamepadTouchLookActive());
+		for(int i=0;i<4;++i) {assert(!axesState.touch[i]);assert(cl.joystickAxis[gamepadAxes[i]]==axesState.pad[i]);}
+		const float yaw=padLook?-.016f*140*64/127:0,pitch=padLook?-.016f*140:0;
+		assert(fabsf(cl.viewangles[YAW]-yaw)<.001f && fabsf(cl.viewangles[PITCH]-pitch)<.001f);
+		assert(!events.empty());
+		CL_CreateCmd();assert(fabsf(cl.viewangles[YAW]-2*yaw)<.001f && fabsf(cl.viewangles[PITCH]-2*pitch)<.001f);
+		Drain();assert(!!in_buttons[0].active==hardware);
+		SDLEvent(SDL_FINGERMOTION,90,550,320);assert(gestures.lookOwner<0 && !dragX);
+		if(hardware) {Hardware("-attack",77,120);Cbuf_Execute();}
+		IN_TouchReleaseAll();Drain();touchWindow=NULL;
+	}
+}
 int main() {
 	cls.state=CA_ACTIVE;Cbuf_Init();Register();
 	CommandNamesAndTap();CancellationAndSourcePulses();SelectionAndAssignment();CentralAndReset();
 #ifdef TEST_MP
 	PacketTiming();
 #endif
-	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();
-	puts("PASS: actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
+	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();
+	puts("PASS: late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
 }
