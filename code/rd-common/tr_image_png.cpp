@@ -376,7 +376,7 @@ int LoadPNGFromMemory( const byte *bytes, size_t length, byte **data, int *width
 	png_uint_32 w, h;
 	int depth, colour, interlace;
 	png_get_IHDR( png, info, &w, &h, &depth, &colour, &interlace, NULL, NULL );
-	if ( !w || !h || w > 4096 || h > 4096 || ( w & ( w - 1 ) ) || ( h & ( h - 1 ) ) ||
+	if ( !w || !h || w > 4096 || h > 4096 ||
 		depth != 8 || ( colour != PNG_COLOR_TYPE_RGB && colour != PNG_COLOR_TYPE_RGBA ) || interlace != PNG_INTERLACE_NONE )
 		png_error( png, "Unsupported memory PNG format" );
 	if ( (size_t)w > (size_t)INT_MAX / 4 / h || (size_t)h > (size_t)INT_MAX / sizeof( png_bytep ) )

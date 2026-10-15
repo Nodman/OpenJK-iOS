@@ -1017,6 +1017,9 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 
 	if ( (width&(width-1)) || (height&(height-1)) )
 	{
+#ifdef OPENJK_IOS
+		if ( strcmp(name,IOS_TOUCH_ATLAS_NAME)!=0 || format!=GL_RGBA8 || width!=IOS_TOUCH_ATLAS_WIDTH || height!=IOS_TOUCH_ATLAS_HEIGHT )
+#endif
 		Com_Error( ERR_FATAL, "R_CreateImage: %s dimensions (%i x %i) not power of 2!\n",name,width,height);
 	}
 
@@ -1131,7 +1134,7 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 	if ( touchAtlas ) {
 		if ( !LoadPNGFromMemory( iosTouchPNG, iosTouchPNGSize, &pic, &width, &height ) )
 			return NULL;
-		if ( width != IOS_TOUCH_ATLAS_SIZE || height != IOS_TOUCH_ATLAS_SIZE ) {
+		if ( width != IOS_TOUCH_ATLAS_WIDTH || height != IOS_TOUCH_ATLAS_HEIGHT ) {
 			ri.Z_Free( pic );
 			return NULL;
 		}

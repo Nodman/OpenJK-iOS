@@ -519,6 +519,7 @@ int IN_TouchGetDrawList( touchDrawItem_t *items, int maxItems ) {
 	input.editing = editState.active;
 	input.dragButton = editState.dragging ? editState.button : -1;
 	input.styleColor = visibility.styleColor;
+	input.weaponClass = visibility.weaponClass;
 	for ( int i = 0; i < MAX_TOUCH_FINGERS; ++i ) {
 		if ( fingers[i].role == ROLE_CONSOLE )
 			input.pressedButtons |= 1u << TB_CONSOLE;

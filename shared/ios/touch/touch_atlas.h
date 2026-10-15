@@ -5,7 +5,8 @@
 #include "sys/ios/ios_touch_edit_slider.h"
 
 #define IOS_TOUCH_ATLAS_NAME "*ios_touch_v2"
-#define IOS_TOUCH_ATLAS_SIZE 1024
+#define IOS_TOUCH_ATLAS_WIDTH 1024
+#define IOS_TOUCH_ATLAS_HEIGHT 1280
 #define IOS_TOUCH_ATLAS_CELL 256
 #define IOS_TOUCH_ATLAS_INSET 8
 
@@ -14,12 +15,12 @@ typedef struct { float s1, t1, s2, t2; } touchAtlasUV_t;
 IOS_TOUCH_INLINE touchAtlasUV_t TouchAtlas_UV( int glyph )
 {
 	touchAtlasUV_t uv = { 0, 0, 0, 0 };
-	if ( glyph < 0 || glyph >= 16 )
+	if ( glyph < 0 || glyph >= 20 )
 		return uv;
 	uv.s1 = ( ( glyph % 4 ) * 256 + 8.5f ) / 1024;
-	uv.t1 = ( ( glyph / 4 ) * 256 + 8.5f ) / 1024;
+	uv.t1 = ( ( glyph / 4 ) * 256 + 8.5f ) / IOS_TOUCH_ATLAS_HEIGHT;
 	uv.s2 = ( ( glyph % 4 + 1 ) * 256 - 8.5f ) / 1024;
-	uv.t2 = ( ( glyph / 4 + 1 ) * 256 - 8.5f ) / 1024;
+	uv.t2 = ( ( glyph / 4 + 1 ) * 256 - 8.5f ) / IOS_TOUCH_ATLAS_HEIGHT;
 	return uv;
 }
 
@@ -43,11 +44,21 @@ typedef struct {
 	const touchRect_t *rects;
 	const touchGestureState_t *gestures;
 	unsigned int visibleButtons, pressedButtons;
-	int sticks, styleColor;
+	int sticks, styleColor, weaponClass;
 	int editing, dragButton;
 	const touchRect_t *slider;
 	float opacity;
 } touchDrawInput_t;
+
+IOS_TOUCH_INLINE int TouchDraw_WeaponGlyph( int button,int weaponClass )
+{
+	if(button<0 || button>=TB_COUNT) return TG_PLATE;
+	if(button==TB_ATTACK || button==TB_ALTATTACK) {
+		if(weaponClass==TOUCH_WEAPON_GUN) return button==TB_ATTACK?TG_GUN_ATTACK:TG_GUN_ALT;
+		if(weaponClass==TOUCH_WEAPON_MELEE) return TG_MELEE;
+	}
+	return touchButtonDefs[button].glyph;
+}
 
 IOS_TOUCH_INLINE float TouchDraw_Opacity( float value )
 {
@@ -130,7 +141,7 @@ IOS_TOUCH_INLINE int TouchDraw_Build( const touchDrawInput_t *input, touchDrawIt
 			if ( TouchGesture_IsButton( f->role ) && f->button == button ) pressed = 1;
 		}
 		TouchDraw_Add( input, items, &count, capacity, r->x, r->y, r->w, r->h, TOUCH_DRAW_BUTTON,
-			touchButtonDefs[button].glyph, pressed, button == TB_STYLE ? input->styleColor : TOUCH_STYLE_UNKNOWN );
+			TouchDraw_WeaponGlyph(button,input->weaponClass), pressed, button == TB_STYLE ? input->styleColor : TOUCH_STYLE_UNKNOWN );
 	}
 	if (input->editing && input->slider) {
 		const touchRect_t *r=input->slider;

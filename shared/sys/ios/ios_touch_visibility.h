@@ -19,15 +19,27 @@ typedef enum {
 	TOUCH_STYLE_BLUE, TOUCH_STYLE_YELLOW, TOUCH_STYLE_RED, TOUCH_STYLE_UNKNOWN
 } touchStyle_t;
 
+typedef enum { TOUCH_WEAPON_UNKNOWN, TOUCH_WEAPON_SABER, TOUCH_WEAPON_GUN, TOUCH_WEAPON_MELEE } touchWeaponClass_t;
+
+IOS_TOUCH_INLINE int TouchCaps_WeaponClass( int weapon,int none,int saber,int melee,int baton,int count )
+{
+	if(weapon==none || weapon<0 || weapon>=count) return TOUCH_WEAPON_UNKNOWN;
+	if(weapon==saber) return TOUCH_WEAPON_SABER;
+	if(weapon==melee || weapon==baton) return TOUCH_WEAPON_MELEE;
+	return TOUCH_WEAPON_GUN;
+}
+
 typedef struct {
 	int saberOwned, legalStyleCount, manualBladeToggle;
 	int selectableForceCount, ownedWeaponCount, chatAvailable;
 	int style, valid, equipmentAllowed;
+	int weaponClass;
 } touchCapsFacts_t;
 
 typedef struct {
 	int menu, console, basic, sticks, saber, style, force, forceCycle, weapons, pad, chat;
 	int styleColor, fallback, logMissing;
+	int weaponClass;
 } touchVisibility_t;
 
 typedef struct {
@@ -43,6 +55,7 @@ IOS_TOUCH_INLINE unsigned int TouchCaps_Pack( const touchCapsFacts_t *facts, int
 		return 0;
 	style = facts->style >= TOUCH_STYLE_BLUE && facts->style <= TOUCH_STYLE_UNKNOWN ? facts->style : TOUCH_STYLE_UNKNOWN;
 	mask = TOUCH_CAP_VALID | ( (unsigned int)style << 6 );
+	if(facts->weaponClass>=TOUCH_WEAPON_SABER && facts->weaponClass<=TOUCH_WEAPON_MELEE) mask |= (unsigned int)facts->weaponClass << 11;
 	if ( facts->saberOwned ) mask |= TOUCH_CAP_SABER;
 	if ( facts->legalStyleCount > 1 || facts->manualBladeToggle ) mask |= TOUCH_CAP_STYLE;
 	if ( facts->selectableForceCount > 0 ) mask |= TOUCH_CAP_FORCE;
@@ -59,6 +72,7 @@ IOS_TOUCH_INLINE touchVisibility_t TouchCaps_Visible( unsigned int mask, int mul
 	touchVisibility_t v = { 0 };
 	const int valid = ( mask & TOUCH_CAP_VALID ) != 0;
 	const int equipment = valid && ( mask & TOUCH_CAP_EQUIPMENT ) != 0;
+	v.weaponClass = valid ? (int)((mask>>11)&3u) : TOUCH_WEAPON_UNKNOWN;
 	v.menu = v.console = 1;
 	v.styleColor = valid ? (int)( ( mask >> 6 ) & 3 ) : TOUCH_STYLE_UNKNOWN;
 	v.basic = v.sticks = valid;

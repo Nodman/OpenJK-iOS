@@ -11,14 +11,14 @@ BOOST_AUTO_TEST_SUITE( touch_atlas )
 BOOST_AUTO_TEST_CASE( immutable_cells_and_inner_texel_centres )
 {
 	const int glyphs[] = { TG_MENU, TG_CHAT, TG_PAD, TG_WEAPPREV, TG_SABER_SELECT, TG_WEAPNEXT,
-		TG_FORCENEXT, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE, TG_USE, TG_PLATE };
-	for ( int i = 0; i < 16; ++i ) {
+		TG_FORCENEXT, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_GUN_ALT, TG_MELEE };
+	for ( int i = 0; i < 20; ++i ) {
 		BOOST_CHECK_EQUAL( glyphs[i], i );
 		const touchAtlasUV_t uv = TouchAtlas_UV( i );
 		BOOST_CHECK_EQUAL( uv.s1 * 1024, ( i % 4 ) * 256 + 8.5f );
-		BOOST_CHECK_EQUAL( uv.t1 * 1024, ( i / 4 ) * 256 + 8.5f );
+		BOOST_CHECK_EQUAL( uv.t1 * 1280, ( i / 4 ) * 256 + 8.5f );
 		BOOST_CHECK_EQUAL( uv.s2 * 1024, ( i % 4 + 1 ) * 256 - 8.5f );
-		BOOST_CHECK_EQUAL( uv.t2 * 1024, ( i / 4 + 1 ) * 256 - 8.5f );
+		BOOST_CHECK_EQUAL( uv.t2 * 1280, ( i / 4 + 1 ) * 256 - 8.5f );
 		BOOST_CHECK_LT( uv.s1, uv.s2 );
 		BOOST_CHECK_LT( uv.t1, uv.t2 );
 		BOOST_CHECK_GE( uv.s1, 0 );
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE( immutable_cells_and_inner_texel_centres )
 		BOOST_CHECK_LE( uv.t2, 1 );
 	}
 	BOOST_CHECK_EQUAL( TouchAtlas_UV( -1 ).s2, 0 );
-	BOOST_CHECK_EQUAL( TouchAtlas_UV( 16 ).t2, 0 );
+	BOOST_CHECK_EQUAL( TouchAtlas_UV( 20 ).t2, 0 );
 	BOOST_CHECK_EQUAL( IOS_TOUCH_ATLAS_NAME, "*ios_touch_v2" );
 }
 
@@ -210,6 +210,43 @@ BOOST_AUTO_TEST_CASE( opacity_and_style_only_affect_draw_colour )
 	item.kind = TOUCH_DRAW_STICK_KNOB;
 	TouchDraw_Color( &item, 0, 1, colour );
 	BOOST_CHECK_EQUAL( colour[3], .40f );
+}
+
+BOOST_AUTO_TEST_CASE( weapon_classes_pack_decode_and_choose_glyphs )
+{
+	for(int c=0;c<4;++c) {
+		touchCapsFacts_t facts={};facts.valid=1;facts.weaponClass=c;
+		const unsigned int mask=TouchCaps_Pack(&facts,0);
+		BOOST_CHECK_EQUAL((mask>>11)&3u,(unsigned int)c);
+		BOOST_CHECK_EQUAL(TouchCaps_Visible(mask,0).weaponClass,c);
+		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ATTACK,c),c==2?TG_GUN_ATTACK:c==3?TG_MELEE:TG_ATTACK);
+		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ALTATTACK,c),c==2?TG_GUN_ALT:c==3?TG_MELEE:TG_ALTATTACK);
+		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_JUMP,c),TG_JUMP);
+		facts.valid=0;BOOST_CHECK_EQUAL(TouchCaps_Pack(&facts,0),0);
+	}
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(0,0,1,2,-1,20),TOUCH_WEAPON_UNKNOWN);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(1,0,1,2,-1,20),TOUCH_WEAPON_SABER);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(2,0,1,2,-1,20),TOUCH_WEAPON_MELEE);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(3,0,1,2,-1,20),TOUCH_WEAPON_GUN);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(4,0,1,2,4,20),TOUCH_WEAPON_MELEE);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(-1,0,1,2,-1,20),TOUCH_WEAPON_UNKNOWN);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(20,0,1,2,-1,20),TOUCH_WEAPON_UNKNOWN);
+}
+
+BOOST_AUTO_TEST_CASE( selected_weapon_reaches_pressed_draw_records )
+{
+	const auto layout=AspectLayout_Build(2048,1536,1,1.5f,0,0,0,0);
+	touchRect_t rects[TB_COUNT];TouchLayout_Build(2048,1536,0,0,0,0,2,rects);
+	touchGestureState_t gestures;HeldSticks(&gestures);
+	auto input=DrawInput(&layout,rects,&gestures);input.weaponClass=TOUCH_WEAPON_GUN;
+	touchDrawItem_t items[32];TouchDraw_Build(&input,items,32);
+	BOOST_CHECK_EQUAL(items[TB_ATTACK].glyph,TG_GUN_ATTACK);
+	BOOST_CHECK_EQUAL(items[TB_ALTATTACK].glyph,TG_GUN_ALT);
+	BOOST_CHECK(items[TB_ATTACK].pressed);
+	touchCapsFacts_t facts={};facts.valid=1;
+	const unsigned int before=TouchCaps_Pack(&facts,1);facts.weaponClass=TOUCH_WEAPON_GUN;
+	BOOST_CHECK(TouchCaps_ShouldPublish(TouchCaps_Pack(&facts,1),(int)before,before));
+	facts.weaponClass=99;BOOST_CHECK_EQUAL(TouchCaps_Visible(TouchCaps_Pack(&facts,1),1).weaponClass,TOUCH_WEAPON_UNKNOWN);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

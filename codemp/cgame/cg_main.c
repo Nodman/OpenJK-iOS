@@ -130,6 +130,7 @@ void CG_UpdateTouchState( qboolean valid ) {
 			unsigned int forbidden = ci->saber[0].model[0] && ps->saberHolstered == 0 ? ci->saber[0].stylesForbidden : 0;
 			const int special = cgs.gametype == GT_SIEGE || ci->saber[1].model[0] || ci->saber[0].numBlades > 1 || ci->saber[0].type == SABER_STAFF;
 			int weapon, power;
+			facts.weaponClass = TouchCaps_WeaponClass(ps->weapon,WP_NONE,WP_SABER,WP_MELEE,WP_STUN_BATON,WP_NUM_WEAPONS);
 			facts.saberOwned = ( ps->stats[STAT_WEAPONS] & ( 1u << WP_SABER ) ) != 0;
 			facts.legalStyleCount = TouchCaps_MPStyleCount( facts.saberOwned, special, ps->fd.forcePowerLevel[FP_SABER_OFFENSE], forbidden, SS_FAST, SS_STRONG );
 			for ( power = FP_HEAL; power < NUM_FORCE_POWERS; ++power ) {

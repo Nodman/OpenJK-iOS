@@ -18,10 +18,11 @@ parser.add_argument('--check', action='store_true', help='Regenerate and compare
 args = parser.parse_args(sys.argv[2:])
 source = root / 'shared/ios/touch'
 names = ('menu', 'chat', 'pad', 'prev', 'saber', 'next', 'force-cycle', 'force-use',
-         'console', 'alt-attack', 'attack', 'jump', 'crouch', 'style', 'use', 'plate')
+         'console', 'alt-attack', 'attack', 'jump', 'crouch', 'style', 'use', 'plate',
+         'lock', 'gun-attack', 'gun-alt-attack', 'melee')
 namespace = 'http://www.w3.org/2000/svg'
 ET.register_namespace('', namespace)
-atlas = ET.Element(f'{{{namespace}}}svg', width='1024', height='1024', viewBox='0 0 1024 1024')
+atlas = ET.Element(f'{{{namespace}}}svg', width='1024', height='1280', viewBox='0 0 1024 1280')
 for cell, name in enumerate(names):
     glyph = ET.parse(source / f'{cell:02d}-{name}.svg').getroot()
     if glyph.get('viewBox') != '0 0 256 256':
@@ -32,6 +33,8 @@ for cell, name in enumerate(names):
         for key, value in element.attrib.items():
             if 'href' in key or 'url(' in value:
                 raise SystemExit(f'External or referenced content in cell {cell}')
+    glyph.set('width', '256')
+    glyph.set('height', '256')
     glyph.set('x', str((cell % 4) * 256))
     glyph.set('y', str((cell // 4) * 256))
     atlas.append(glyph)
@@ -63,14 +66,14 @@ def validate(blob):
                 raise ValueError('Bad PNG end')
             ended = True
         offset = end
-    if ihdr != (1024, 1024, 8, 6, 0, 0, 0) or not ended:
-        raise ValueError(f'Expected 1024x1024 RGBA8, non-interlaced; got {ihdr}')
+    if ihdr != (1024, 1280, 8, 6, 0, 0, 0) or not ended:
+        raise ValueError(f'Expected 1024x1280 RGBA8, non-interlaced; got {ihdr}')
     raw = zlib.decompress(compressed)
     stride = 1024 * 4
-    if len(raw) != (stride + 1) * 1024:
+    if len(raw) != (stride + 1) * 1280:
         raise ValueError('Bad decoded PNG length')
-    pixels = bytearray(stride * 1024)
-    for y in range(1024):
+    pixels = bytearray(stride * 1280)
+    for y in range(1280):
         row = bytearray(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)])
         mode = raw[y * (stride + 1)]
         if mode > 4:
@@ -93,7 +96,7 @@ def validate(blob):
                 predictor = 0
             row[x] = (row[x] + predictor) & 255
         pixels[y * stride:(y + 1) * stride] = row
-    print('PNG: 1024x1024, colour type 6, depth 8, straight RGBA, CRCs valid')
+    print('PNG: 1024x1280, colour type 6, depth 8, straight RGBA, CRCs valid')
     for cell, name in enumerate(names):
         occupied, partial, bounds = 0, 0, [256, 256, -1, -1]
         for y in range(256):
@@ -125,7 +128,7 @@ with tempfile.TemporaryDirectory(prefix='openjk-touch-', dir='/private/tmp') as 
     png = work / 'touch-v2.png'
     command = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
                '--headless=new', '--disable-gpu', '--hide-scrollbars',
-               '--default-background-color=00000000', '--window-size=1024,1024',
+               '--default-background-color=00000000', '--window-size=1024,1280',
                '--force-device-scale-factor=1', '--no-first-run', '--no-default-browser-check',
                '--disable-background-networking', '--disable-extensions',
                f'--screenshot={png}', f'--user-data-dir={work / "profile"}', svg.as_uri()]

@@ -3779,6 +3779,7 @@ void CG_UpdateTouchState( qboolean valid ) {
 		unsigned int knownStyles = ps->saberStylesKnown;
 		unsigned int legalStyles = 0, weapons = 0;
 		facts.valid = 1;
+		facts.weaponClass = TouchCaps_WeaponClass(cg.predicted_player_state.weapon,WP_NONE,WP_SABER,WP_MELEE,-1,WP_NUM_WEAPONS);
 		facts.saberOwned = ( ps->stats[STAT_WEAPONS] & ( 1u << WP_SABER ) ) != 0;
 		if ( ps->dualSabers && ps->saber[0].Active() && ps->saber[1].Active() )
 			knownStyles |= 1u << SS_DUAL;
