@@ -52,28 +52,47 @@
 
 ## Controls
 
-- Touch: put a finger on the lower left to move, or on free space on the right to aim. Each stick appears while touched and starts where your finger lands. Its center stays fixed until you lift.
-- Aim is a turn-rate stick. Deflect a little for a slow turn, or farther for a fast turn. Holding the deflection keeps turning; returning to the center stops turning. Lifting stops that stick.
-- Attack, alternate attack and jump form an arc on the right, from left to right. Tap attack or alternate attack for an immediate press and release. Hold to keep the action pressed. Drag that held finger to aim while attacking; lifting ends both actions. Weapon cooldown and charge rules still apply.
-- Attack glyphs follow the selected weapon: saber, gun or melee. Unknown weapons use the saber pair. The new lock, gun and melee glyphs are placeholders until the final art is ready.
-- The first aiming finger keeps aim until it lifts. Another finger can attack but cannot take aim. If you start dragging an attack while aim is busy, lift and press again to aim with that attack; it will not take over later.
-- Use sits at the bottom left. Crouch sits near the bottom right, with Style to its right. Style switches saber stance; its glyph is blue for fast, yellow for medium, dual or staff, and red for strong. Unknown stance is white.
-- At the top right, previous weapon, saber and next weapon run left to right. Saber selects the saber, or toggles its blade when already selected. Force cycle and Force use sit below that row. MP melee selection has no dedicated touch button.
-- Menu sits at the top left and sends Escape. Chat sits beside it in MP and opens global chat and the soft keyboard. Pad sits below Menu: tap for the SP datapad, or hold for the MP scoreboard and lift to close it.
-- Buttons keep their positions when others hide. Saber hides without a saber. Style hides with only one legal stance unless a blade toggle is useful; Siege, dual and staff keep it available in MP. Force use hides without a selectable power; Force cycle hides with fewer than two. Weapon arrows hide with only one selectable weapon.
-- The SP datapad button is always available in a map, even before you learn Force powers. Chat is MP-only. Death, spectator and intermission states keep basic actions and sticks, while equipment buttons hide.
-- If a custom mod never reports which controls are available, the full set returns after about one second in a map. SP still has no chat button. Menu, cinematic and hardware-hide rules still apply.
-- The console glyph replaces the old CON text in the same top-right corner. Tap or drag elsewhere in menus to use the cursor.
-- Tap the console button in a map or menu to open the console and keyboard. Tap it again to close both. Closing the console another way also closes its soft keyboard.
-- Hold the console button for at least 500 ms, keeping your finger on the button, to toggle the soft keyboard for menu text fields or the open console; a console hold does nothing with a hardware keyboard. Leaving the button cancels the gesture. All touch controls hide during full-screen cinematics and SP in-game videos. Tap anywhere to skip a video through the normal Escape path.
-- Pad sends the real TAB key; Chat sends the real Y key. Both follow your key rebinds.
-- If you unbind TAB or Y, its touch button does nothing. Restore Pad with `bind TAB datapad` in SP or `bind TAB +scores` in MP; restore MP Chat with `bind y messagemode`.
-- Empty AUX16–26 bindings regain their defaults at startup, after your saved settings and autoexec. Your nonempty rebinds are kept.
-- Tap Lock on the right, below the console, to edit the layout. Held touch actions release and both sticks stop. The game view dims; all buttons appear, including hidden ones. Touches now edit controls. Gamepad input keeps its normal behavior.
-- Drag a button to move it. Its size stays fixed and its plate stays inside the safe area. The button being dragged has a thin highlight. The console and stick zones stay fixed. You can also drag Lock; tap it without dragging to save and leave edit mode.
-- Drag the opacity slider at the top centre to change opacity live, from `0.2` to `1.0`. Buttons stay fully visible for editing. Tap Lock again to save and return to play.
-- Layouts are saved separately for SP and MP. Opening a menu or console, changing maps, restarting video, or backgrounding saves and closes the editor. Enter `touchLayoutReset` in the console to restore the default positions.
-- Touch button binds:
+- Put a finger on the lower left to move, or on free space on the right to aim. The move stick appears at touchdown and stays there until you lift.
+- Aim defaults to a floating joystick. A small deflection turns slowly; a larger one turns faster. Holding it keeps turning. Returning to its center or lifting stops the turn. The Aim tab also offers Free drag: move a finger to turn, and stop moving it to stop turning. Free drag has no visible aim stick.
+- Attack, alternate attack and jump form an arc on the right. Attack and alternate attack press immediately; hold to keep them pressed. Drag past the small movement threshold to aim while attacking. Free drag starts measuring distance at that threshold, without a jump. Lifting ends fire and aim. Stock cooldown and charge rules still apply.
+- The first aiming finger keeps aim until it lifts. Another finger may attack but cannot take aim later. Lift and press again to start a new aiming gesture. A deflected physical right stick takes priority over touch aim; suppressed drag is discarded and will not replay.
+- Attack uses the supplied swing glyph for sabers and trigger glyph for guns or melee. Alternate attack uses the same supplied alternate glyph for every weapon. Unknown weapons use the saber pair.
+- Use sits at the bottom left. Crouch and Style sit near the bottom right. Style uses a blue saber at 10° for fast stance, yellow at 45° for medium, and red at 90° for strong. Dual follows its blue/yellow stance; staff stays yellow even with one blade off. Unknown stance is white. Saber selection keeps its supplied diagonal angle.
+- Previous weapon, Saber and Next weapon run left to right at the top right. Saber selects the saber, or toggles its blade when already selected. Force Previous / Use / Next sit below them, with four quick slots to their left. MP melee selection has no dedicated touch button.
+- Menu, MP Chat and Pad sit at the top left. Menu sends Escape. Chat opens global chat and the soft keyboard. Pad opens the SP datapad, or holds the MP scoreboard until you lift.
+- Menu, Chat, Pad, Console, Lock, weapon arrows and Force controls have half their former width and height, including hitboxes. Console retains half of its own former corner size. Combat buttons, Saber, Style and sticks keep their sizes. Hitboxes remain rectangular, including for round glyphs.
+- Supplied thin glyph strokes are preserved. Round buttons have no filled background. Menu, Chat, Pad, Console and Lock keep rectangular backgrounds; joystick graphics keep their filled base and knob. Empty slots and round drag highlights use outlines in the editor.
+- Buttons keep their positions when others hide. Saber hides when unowned. SP Style follows learned legal stances and useful blade toggles. MP Style stays visible for an owned saber while equipment actions are allowed, even at Saber Offense 1. The stock command still enforces weapon, class, stance and blade restrictions; visibility does not grant another stance.
+- Weapon arrows hide with only one selectable weapon. Force arrows hide when cycling is not useful. The SP datapad remains available in a map before you learn Force powers. Chat is MP-only. Death, spectator and intermission keep basic actions and sticks while equipment controls hide.
+- For older custom modules that never report control availability, basic controls return after about a second in a map. Central Force Use keeps its stock binding and fallback glyph, but quick slots need a fresh learned-power report. SP still has no Chat. Menu, cinematic and hardware-hide rules still apply.
+- Tap or drag elsewhere in menus to use the cursor. Tap Console in a map or menu to open the console and keyboard; tap again to close them. Closing the console another way also closes its soft keyboard.
+- Hold Console for at least 500 ms, keeping your finger on it, to toggle the soft keyboard for menu fields or the open console. A hold does nothing with a hardware keyboard. Leaving the button cancels the gesture. Full-screen cinematics and SP in-game videos hide all controls; tap anywhere to skip through the normal Escape path.
+
+### Force selection and quick slots
+
+- Previous / Next use the stock Force selection order. Use activates the selected power. Selected Use, quick slots and the picker share original icons loaded from your game files; missing or invalid images use the supplied fallback glyph. Retail icons are not included in the app.
+- The four stored defaults are Push, Pull, Speed and Sense. A slot appears and works only when its power is currently learned. Unavailable saved assignments remain stored but appear Empty in the editor and hide during gameplay, without revealing their names or icons. They return when available again. Explicitly choosing Empty keeps a slot empty.
+- Open Lock → Force, or tap a quick slot while editing, to assign it. The picker offers Empty and currently learned powers only: Push, Pull, Speed, Sense, Absorb, Heal, Mind Trick, Protect, Drain, Grip, Lightning and Dark Rage. It does not reveal later powers. Picking a power already assigned elsewhere moves it to this slot and clears the former slot; it does not swap assignments.
+- Empty slots do nothing and stay invisible during gameplay. The editor shows four outlined placeholders so you can position slots before learning powers. Until then, their pickers offer only Empty. Learned powers can be assigned later. Assignments are saved separately for SP and MP.
+- Quick slots use their assigned power directly without changing your selected power. Grip, Lightning and Drain use stock press/hold/release commands. Other quick powers activate once per press. Stock energy, cooldown and game rules still apply.
+- Central Use and all quick slots share one touch owner. Competing touches are ignored; they do not activate later. Force arrows are also ignored while that owner is busy. Lift and press again to try another action. Editing, loss of availability, map/loadout changes and backgrounding cancel touch ownership and held powers; hardware co-holds keep their own input.
+- MP has one pending one-shot command. A quick one-shot keeps touch Force busy until its finger lifts and that command is sent. Rapid taps during this interval are ignored. Hardware keeps stock behavior and can replace a pending generic command; touch adds no delayed activation queue.
+
+### Edit the layout and aim
+
+- Tap Lock below Console to edit. Held touch actions release, touch sticks and drag stop, and the game view dims. All controls appear for editing; physical gamepad and keyboard input keep their state.
+- Drag a button, including Console or Lock, to move it. Its size stays fixed. Buttons may reach the physical screen edges, beyond the safe area or HUD gutters; the whole hitbox stays inside the drawable screen. An edge position can overlap a cutout or home indicator.
+- Tap a quick slot without dragging to open its picker. Hidden or overlapping slots are also reachable through the Force tab.
+- The Appearance / Aim / Force / Done group starts collapsed at screen center. Tap a tab to expand it; tap the same tab to collapse it. The expanded group centers and clamps inside safe bounds. Short screens scroll the panel while Done stays visible. Panel touches and extra fingers cannot drag or activate controls underneath.
+- Appearance offers opacity choices from 20% to 100%. Aim offers Joystick / Free drag, that mode's sensitivity, and a joystick-only curve. Custom saved opacity and sensitivity stay unchanged until you pick a value. Buttons stay fully visible while editing.
+- Sensitivity choices are .25, .5, .75, 1, 1.25, 1.5, 2, 3 and 4. Joystick and Free drag save separate values. Mode, curve or sensitivity changes cancel existing touch gestures before the next game command; press again to resume. Physical controller response is unchanged.
+- Tap Done, or tap Lock without dragging, to save and return to play. Opening a menu or console, changing maps, restarting input/video, hiding controls or backgrounding also saves and closes the editor. SP and MP save separate layouts.
+- Existing saved layouts migrate while preserving their prior on-screen centers where possible, then clamp after resize or rotation. `touchLayoutReset` restores positions, including Console; it keeps Force assignments, aim and opacity settings.
+
+### Touch bindings
+
+- Pad sends TAB; Chat sends Y. Both follow your normal key rebinds. An unbound TAB or Y does nothing. Restore Pad with `bind TAB datapad` in SP or `bind TAB +scores` in MP; restore MP Chat with `bind y messagemode`.
+- Empty AUX16–27 bindings regain their defaults at startup after saved settings and autoexec. Nonempty rebinds are kept. Quick slots use their direct assigned-power actions rather than AUX binds.
 
 | Button | Key | Default bind | Action |
 | --- | --- | --- | --- |
@@ -83,13 +102,18 @@
 | Crouch | `AUX19` | `+movedown` | Crouch |
 | Use | `AUX20` | `+use` | Use |
 | Force use | `AUX21` | `+useforce` | Use selected Force power |
-| Force cycle | `AUX22` | `forcenext` | Next Force power |
+| Force next | `AUX22` | `forcenext` | Next Force power |
 | Style | `AUX23` | `saberAttackCycle` | Change saber style |
 | Previous weapon | `AUX24` | `weapprev` | Previous weapon |
 | Next weapon | `AUX25` | `weapnext` | Next weapon |
 | Saber | `AUX26` | `weapon 1` | Select saber or toggle its blade |
+| Force previous | `AUX27` | `forceprev` | Previous Force power |
 | Pad | TAB | `datapad` (SP), `+scores` (MP) | Datapad / held scoreboard |
 | Chat | Y | `messagemode` (MP) | Chat |
+
+- Advanced Force Use rebinds keep stock command behavior. Cancellation before AUX21 binding expansion suppresses that press. Arbitrary custom text already expanded into the command buffer, including plain commands, mixed binds, `vstr` or `exec`, can still execute after touch cancellation. The default `+useforce` and stock held-button commands retain touch-source release handling.
+
+### Gamepad, keyboard and mouse
 
 - Gamepad: left stick moves; right stick looks. In menus, left stick moves the cursor, A / Cross selects, and B / Circle goes back.
 - SDL button `n` maps to `A_JOY0+n`. Console bind names are `JOY0`, `JOY1`, and so on. Start sends `A_ESCAPE`. LT sends `A_JOY21`; RT sends `A_JOY22`.
@@ -112,10 +136,10 @@
 | RT / R2 | `JOY22` | `+attack` | Attack |
 | Start / Options | Escape | — | Menu / back |
 
-- Keep `in_joystick 1` and `j_twinStick 1` for touch and pad sticks. In touch mode 2, a deflected pad stick takes priority over the matching touch stick; move and aim are separate.
+- Keep `in_joystick 1` and `j_twinStick 1` for the normal move/pad stick path. Touch aim is independent of these controller switches. With `in_touchControls 2`, a deflected filtered pad stick takes priority over the matching touch pair; move and aim are separate.
 - iPad keyboard and mouse use the normal key and mouse binds. Text input stays active for the console unless the console button hid its soft keyboard, MP chat, menus with a hardware keyboard, and menus where the console button requested the soft keyboard. It is off in gameplay and cinematics. Keyboard disconnect hands active text entry to the soft keyboard. Input and video restarts restore this state.
 - Rebind in the console. For example, `bind AUX16 +altattack` changes Attack, `bind TAB +scores` changes Pad, and `bind y messagemode` changes Chat. Use a `JOY` key to change a pad bind.
-- Desktop builds and tests checked touch geometry, gestures, visibility, aim rates, colours and embedded icon decoding. These used synthetic input. Real touch feel, reach, icon appearance, restart/server behaviour, Xbox / DualSense, Smart Keyboard and mouse checks remain device checks.
+- Desktop and sanitizer checks exercise geometry, gestures, reporting helpers, visibility, input/command timing, aim rates and embedded icon decoding using synthetic input. Real touch feel, reach, icon appearance, restart/server behavior, Xbox / DualSense, Smart Keyboard and mouse remain device checks.
 
 ## Settings
 
@@ -129,10 +153,24 @@
 - Existing saved configs keep their resolution and FPS values. To adopt the new defaults on a 120 Hz panel, enter `seta r_renderScale 1` and `seta com_maxfps 120`, then `vid_restart`.
 - Video → `FPS counter` offers Off / On. Apply shows a small gold frame-rate readout at the top right inside the safe area in a map. Off is the default.
 - `in_touchControls 0`: hide touch controls except the console button. `1`: default; hide them when a pad is connected, or a hardware keyboard and mouse/trackpad are both connected. A keyboard alone keeps touch look and buttons. `2`: keep them visible with these devices. Menus and the console show only the console button. Full-screen cinematics and SP in-game videos hide all controls in every mode; camera cutscenes still show them.
-- `in_touchLookScale 1.0`: default touch turn-rate scale. Higher values turn faster. It now scales joystick turn rate instead of swipe distance. Old saved values survive; reset to `1.0` if aim feels wrong. It does not change pad look.
-- `in_touchOpacity 1.0`: default touch opacity. Effective values clamp to `0`–`1`. `0` hides the drawing but leaves touch input active. It does not change which buttons are available.
-- `in_touchLayout`: saved button positions for this app; empty means the default layout. Use Lock to edit them or `touchLayoutReset` to clear them.
-- Touch mode, look scale and opacity are saved. Console examples: `seta in_touchControls 2`, `seta in_touchLookScale 1.0`, `seta in_touchOpacity 0.5`. The same lines work in your app's autoexec.
+- `in_touchAimMode 0`: default Joystick; `1` selects Free drag. Joystick turns at up to 210 degrees/second on each axis times its sensitivity. Free drag turns .20 degrees per view point times its sensitivity, without a frame-time multiplier.
+- `in_touchAimCurve 2`: default Precise. After the radial deadzone, these are generic deterministic curve approximations, not Sony firmware equivalents:
+
+| Value | Curve | Response after deadzone (`q` from 0 to 1) |
+| --- | --- | --- |
+| `0` | Default | `q` |
+| `1` | Quick | `sqrt(q)` |
+| `2` | Precise | `q^1.6` |
+| `3` | Steady | `.6*q`, including a lower maximum speed |
+| `4` | Digital | Full response whenever `q > 0` |
+| `5` | Dynamic | `q*q*(3-2*q)` |
+
+- The joystick uses an 8% radial deadzone, then remaps the remaining distance to `q`. Curves affect touch joystick aim only.
+- `in_touchLookScale 1.0`: saved Joystick sensitivity. `in_touchDragScale 1.0`: separate saved Free drag sensitivity. Effective finite values clamp to `.1`–`10`; nonfinite values use `1`. Neither setting changes physical pad look. Old look-scale values survive, but custom `j_lookSpeed` or keyboard turn-speed values no longer change touch aim speed.
+- `in_touchOpacity 1.0`: default touch opacity, clamped to `0`–`1`. `0` hides drawing but leaves touch input active. It does not change availability.
+- `in_touchLayout`: saved versioned positions for this app; empty means defaults. Use Lock to edit or `touchLayoutReset` to restore positions.
+- `in_touchForceSlots`: saved assignments, default `v1:1,2,3,4`. IDs: `0` Empty; `1` Push; `2` Pull; `3` Speed; `4` Sense; `5` Absorb; `6` Heal; `7` Mind Trick; `8` Protect; `9` Drain; `10` Grip; `11` Lightning; `12` Dark Rage. Prefer the learned-only editor picker to assign them.
+- Touch mode, aim mode/curve, both sensitivities, opacity, layout and assignments are saved separately per app. Example console/autoexec lines: `seta in_touchControls 2`, `seta in_touchAimMode 1`, `seta in_touchDragScale 1.25`, `seta in_touchOpacity 0.5`.
 - `j_lookSpeed 1.5`: default pad look scale. Higher values turn faster.
 - `j_deadzone 0.15`: default stick dead zone. Raise it if a stick drifts.
 - `j_lookExponent 2.0`: default right-stick response curve.
@@ -152,10 +190,10 @@
 - `r_aspectStretchBackdrops 0`: iOS default. Loading art and menu-owned backgrounds fit 4:3 with black gutters. `1` stretches that art over the full screen. Retail main menus build their art from items, so they always stay 4:3.
 - `cg_fovAspectAdjust 1`: iOS default. Keeps the 4:3 vertical field of view on wide screens. `0` restores the old crop. `cg_fov` stays at its default of `80`.
 - Use `seta r_aspectCorrect 0` to restore the old 2D path for mods or menus that already compensate for stretch. FOV has its own switch, `cg_fovAspectAdjust`.
-- Console text, chat and the touch overlay keep clear of the camera cutout and home indicator in both landscape orientations. `r_aspectSafeLeft`, `r_aspectSafeTop`, `r_aspectSafeRight` and `r_aspectSafeBottom` are read-only values in drawable pixels for reference.
+- Console text, chat and default touch positions keep clear of the camera cutout and home indicator in both landscape orientations. Edited touch buttons may reach physical screen edges. `r_aspectSafeLeft`, `r_aspectSafeTop`, `r_aspectSafeRight` and `r_aspectSafeBottom` are read-only values in drawable pixels for reference.
 - iPads below the 1.5 band get no new safe margins for 2D. The Face ID iPad's roughly 20 pt bottom inset is unchanged behavior, not a bug.
-- The HUD stays centered. Side gutters stay free for touch controls. An “edges” option is planned for a later version.
-- Taps and the touch overlay follow the same mapping. Nothing needs configuring.
+- The HUD stays centered. Touch buttons can use the side gutters or be moved elsewhere in the drawable screen.
+- Menu cursor taps follow the menu mapping. Touch-button placement uses the full drawable screen independently of HUD gutters.
 - JK2 mode is not built for iOS. A JK2 build on a wide desktop with `r_aspectCorrect 1` is unsupported. Third-party menus or HUDs that already compensate for stretch may look wrong; use `seta r_aspectCorrect 0`.
 
 ### Lifecycle
