@@ -76,6 +76,7 @@
 - Empty slots do nothing and stay invisible during gameplay. The editor shows four outlined placeholders so you can position slots before learning powers. Until then, their pickers offer only Empty. Learned powers can be assigned later. Assignments are saved separately for SP and MP.
 - Quick slots use their assigned power directly without changing your selected power. Grip, Lightning and Drain use stock press/hold/release commands. Other quick powers activate once per press. Stock energy, cooldown and game rules still apply.
 - Central Use and all quick slots share one touch owner. Competing touches are ignored; they do not activate later. Force arrows are also ignored while that owner is busy. Lift and press again to try another action. Editing, loss of availability, map/loadout changes and backgrounding cancel touch ownership and held powers; hardware co-holds keep their own input.
+- MP demo playback refuses new central Force and quick-slot presses. A press queued before playback is also checked before dispatch.
 - MP has one pending one-shot command. A quick one-shot keeps touch Force busy until its finger lifts and that command is sent. Rapid taps during this interval are ignored. Hardware keeps stock behavior and can replace a pending generic command; touch adds no delayed activation queue.
 
 ### Edit the layout and aim
@@ -111,7 +112,7 @@
 | Pad | TAB | `datapad` (SP), `+scores` (MP) | Datapad / held scoreboard |
 | Chat | Y | `messagemode` (MP) | Chat |
 
-- Advanced Force Use rebinds keep stock command behavior. Cancellation before AUX21 binding expansion suppresses that press. Arbitrary custom text already expanded into the command buffer, including plain commands, mixed binds, `vstr` or `exec`, can still execute after touch cancellation. The default `+useforce` and stock held-button commands retain touch-source release handling.
+- Advanced Force Use rebinds keep stock command behavior. Cancellation before AUX21 binding expansion suppresses that press. Arbitrary custom text already expanded into the command buffer, including plain commands, mixed binds, `vstr` or `exec`, can still execute after touch cancellation or a transition into demo playback. A stock MP generic command from that text can remain pending until playback ends and a live packet sends it, or the client resets. The default `+useforce` and stock held-button commands retain touch-source release handling.
 
 ### Gamepad, keyboard and mouse
 

@@ -39,7 +39,7 @@ static void CL_TouchReleaseSource(int source,unsigned int time) {
 	}
 }
 static int CL_TouchKeyDown(kbutton_t *button,int source) {
-	if(source==A_AUX21 && !TouchForce_CentralAllowed(&touchForceDispatch)) return 0;
+	if(source==A_AUX21 && !CL_TouchForceCentralAllowed()) return 0;
 	const int move=CL_TouchMoveIndex(button);
 	if(move>=0) TouchForce_PulseDown(&touchMovePulses[move],TouchForce_SourceIndex(source,A_AUX16));
 	const int index=CL_TouchButtonIndex(button);
@@ -74,6 +74,9 @@ static void CL_TouchForceToken(void) {
 	const int multiplayer=1;
 #endif
 	if(operation==1) {
+#ifndef _JK2EXE
+		if(clc.demoplaying) { CL_TouchForceCancel();return; }
+#endif
 		if(s->dispatched) return;
 		if(multiplayer && cl.gcmdSendValue) {
 			const int lifted=s->lifted;CL_TouchForceCancel();s->lifted=lifted;return;
@@ -98,13 +101,19 @@ void CL_TouchForceInit(void) {
 }
 int CL_TouchForcePower(void) { return touchForceDispatch.generation && !touchForceDispatch.central ? touchForceDispatch.power : 0; }
 int CL_TouchForceBusy(void) { return touchForceDispatch.generation!=0; }
-int CL_TouchForceCentralAllowed(void) { return TouchForce_CentralAllowed(&touchForceDispatch); }
+int CL_TouchForceCentralAllowed(void) {
+#ifndef _JK2EXE
+	if(clc.demoplaying) return 0;
+#endif
+	return TouchForce_CentralAllowed(&touchForceDispatch);
+}
 int CL_TouchForceReserve(int power,int slot) {
 	if(cls.state!=CA_ACTIVE || slot< -1 || slot>3) return 0;
 	const int central=slot<0;
 #ifdef _JK2EXE
 	const int pending=0;
 #else
+	if(clc.demoplaying) return 0;
 	const int pending=cl.gcmdSendValue;
 #endif
 	return TouchForce_Reserve(&touchForceDispatch,power,central?A_AUX21:IOS_TOUCH_FORCE_SOURCE_BASE+slot,central,Sys_Milliseconds(),pending)!=0;

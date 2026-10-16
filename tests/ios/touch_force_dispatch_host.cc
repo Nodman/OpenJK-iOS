@@ -337,6 +337,35 @@ static void CentralAndReset(void) {
 	CL_TouchForceInit();assert(CL_TouchForceReserve(0,-1));CL_TouchForceCancel();Drain();
 }
 #ifdef TEST_MP
+static void DemoForceRecovery(void) {
+	for(int power:{0,1,10}) {
+		Reset();clc.demoplaying=qtrue;assert(!CL_TouchForceReserve(power,power?0:-1));
+		assert(!CL_TouchForceBusy());clc.demoplaying=qfalse;
+		assert(CL_TouchForceReserve(power,power?0:-1));CL_TouchForceQueue(1);
+		clc.demoplaying=qtrue;CL_TouchForceQueue(0);Drain();Drain();
+		assert(!CL_TouchForceBusy() && !cl.gcmdSendValue && commandsSeen.empty() && !Buttons());
+		clc.demoplaying=qfalse;assert(CL_TouchForceReserve(power,power?0:-1));
+		CL_TouchForceCancel();Drain();assert(!CL_TouchForceBusy());
+	}
+	for(const char *binding:{"force_heal","+useforce; force_heal"}) {
+		Reset();Key_SetBinding(A_AUX21,binding);assert(CL_TouchForceReserve(0,-1));CL_TouchForceQueue(1);
+		clc.demoplaying=qtrue;CL_TouchForceQueue(0);Drain();
+		assert(commandsSeen.empty() && !cl.gcmdSendValue && !CL_TouchForceBusy());
+		clc.demoplaying=qfalse;
+		Reset();Key_SetBinding(A_AUX21,binding);assert(CL_TouchForceReserve(0,-1));CL_TouchForceQueue(1);
+		Cbuf_AddText("wait\n");ExpandEvents();Cbuf_Execute();
+		clc.demoplaying=qtrue;CL_TouchForceQueue(0);Drain();
+		assert(commandsSeen.size()==1 && commandsSeen[0]=="force_heal");
+		assert(!CL_TouchForceBusy() && !in_buttons[centralButton].active && cl.gcmdSendValue);
+		clc.demoplaying=qfalse;
+		usercmd_t command={};CL_FinishMove(&command);cl.cmdNumber=1;cl.cmds[1]=command;CL_WritePacket();
+		assert(!cl.gcmdSendValue && CL_TouchForceReserve(1,0));CL_TouchForceCancel();Drain();
+	}
+	Key_SetBinding(A_AUX21,"+useforce");
+	Reset();assert(CL_TouchForceReserve(10,0));CL_TouchForceQueue(1);Drain();assert(in_buttons[6].active);
+	clc.demoplaying=qtrue;CL_TouchForceQueue(0);Drain();assert(!in_buttons[6].active && !CL_TouchForceBusy());
+	clc.demoplaying=qfalse;
+}
 static void PacketTiming(void) {
 	Reset();cl_nodelta=&noDelta;assert(CL_TouchForceReserve(1,0));CL_TouchForceQueue(1);Drain();
 	usercmd_t held={};CL_FinishMove(&held);cl.cmdNumber=1;cl.cmds[1]=held;CL_WritePacket();
@@ -905,14 +934,17 @@ int main(int argc,char **argv) {
 	if(argc==2) {
 		if(!strcmp(argv[1],"zoom")) SDLZoomAim();
 		else if(!strcmp(argv[1],"overflow")) FenceOverflowRecovery();
+#ifdef TEST_MP
+		else if(!strcmp(argv[1],"demo")) DemoForceRecovery();
+#endif
 		else assert(false);
 		return 0;
 	}
 	FenceOverflowRecovery();SDLZoomAim();
 	CommandNamesAndTap();CancellationAndSourcePulses();SelectionAndAssignment();CentralAndReset();
 #ifdef TEST_MP
-	PacketTiming();
+	DemoForceRecovery();PacketTiming();
 #endif
 	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();SDLHeldActionAim();SDLPhoneProfileDefaults();SDLResetLayoutRouting();SDLTabletProfileDefaults();SDLPerAxisAim();SDLPerAxisSettings();
-	puts("PASS: zoom 1/.25, bounded 256-event fence recovery; actual phone/tablet SP/MP per-axis drag/joystick/timing/scales/fire and captured mode/axis settings; tablet current Console draw/hit/drag/native migration/saved center/reset; actual Appearance Reset layout and held-finger cancellation; native profile cache/Console/editor/saved v2; late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
+	puts("PASS: zoom 1/.25, bounded 256-event fence recovery, demo reserve/dispatch and custom-bind limits; actual phone/tablet SP/MP per-axis drag/joystick/timing/scales/fire and captured mode/axis settings; tablet current Console draw/hit/drag/native migration/saved center/reset; actual Appearance Reset layout and held-finger cancellation; native profile cache/Console/editor/saved v2; late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
 }
