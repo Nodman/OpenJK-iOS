@@ -129,6 +129,7 @@ int CG_TouchForceSelection( void ) {
 	if(TouchForce_Canonical(selected) && TouchForce_Known(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,selected)) return selected;
 	selected=ps->fd.forcePowerSelected;
 	if(TouchForce_Canonical(selected) && TouchForce_Known(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,selected))
+		// Keep the server selection sentinel across frames; the HUD uses a local fallback.
 		return cg.forceSelect=-1;
 	// Servers can spawn with an unlearned selection; use the stock selector before sending a command.
 	candidate=*ps;

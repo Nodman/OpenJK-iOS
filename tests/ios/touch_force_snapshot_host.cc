@@ -16,6 +16,8 @@ extern "C" void SnapshotCG_Init(cgameImport_t *);
 extern "C" void SnapshotCG_Report(const playerState_t *,int,qboolean);
 extern "C" int SnapshotCG_StartFrame(const playerState_t *,const playerState_t *,int,int,int,int,int,int);
 extern "C" int SnapshotCG_Selected(void);
+extern "C" int SnapshotCG_DrawOnly(const playerState_t *,int);
+extern "C" int SnapshotCG_DrawFrame(const playerState_t *,int,int,int);
 extern void CL_FinishMove(usercmd_t *);
 clientStatic_t cls;
 clientActive_t cl;
@@ -154,5 +156,16 @@ int main()
 		Report(decoded,FP_PUSH);cls.realtime+=1001;assert(!IN_TouchGetForceReport().equipment);
 		const auto skipped=IN_TouchBeginForceUpdate();IN_TouchEndForceUpdate(skipped);assert(!IN_TouchGetForceReport().equipment);
 	}
-	puts("PASS: normal/pilot MP snapshot codec→stock selection repair→actual command handoff/CL_FinishMove→CG_UpdateTouchState→native callback; all12, selection, equipment, capability/restart/old-host and expiry");
+	playerState_t hud={};hud.stats[STAT_HEALTH]=100;hud.fd.forcePowersKnown=(1u<<FP_PUSH)|(1u<<FP_PULL);hud.fd.forcePowerSelected=FP_PUSH;
+	assert(SnapshotCG_DrawFrame(&hud,FP_HEAL,-1,3));
+	usercmd_t hudCmd={};CL_FinishMove(&hudCmd);assert(hudCmd.forcesel==255);
+	assert(SnapshotCG_DrawFrame(&hud,FP_PULL,FP_PULL,3));
+	hud.fd.forcePowersKnown=1u<<FP_PULL;hud.fd.forcePowerSelected=FP_PULL;
+	assert(SnapshotCG_DrawFrame(&hud,FP_PUSH,-1,3));
+	for(int invalid:{-1,-2,255,(int)NUM_FORCE_POWERS}) assert(SnapshotCG_DrawFrame(&hud,invalid,-1,3));
+	hud.fd.forcePowerSelected=-1;assert(SnapshotCG_DrawOnly(&hud,-1)==FP_PULL+1);
+	hud.fd.forcePowerSelected=255;assert(SnapshotCG_DrawOnly(&hud,255)==FP_PULL+1);
+	hud.fd.forcePowersKnown=0;assert(SnapshotCG_DrawFrame(&hud,-1,-1,3));
+	hud.fd.forcePowersKnown=1u<<FP_LEVITATION;assert(SnapshotCG_DrawFrame(&hud,-1,-1,3));
+	puts("PASS: actual active Force HUD across frames, power loss, valid/server/first fallback and no powers; normal/pilot MP snapshot codec→stock selection repair→actual command handoff/CL_FinishMove→CG_UpdateTouchState→native callback; all12, selection, equipment, capability/restart/old-host and expiry");
 }

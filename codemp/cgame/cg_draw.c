@@ -1523,6 +1523,7 @@ void CG_DrawHUD(centity_t	*cent)
 
 qboolean ForcePower_Valid(int i)
 {
+	if (i < 0 || i >= NUM_FORCE_POWERS) return qfalse;
 	if (i == FP_LEVITATION ||
 		i == FP_SABER_OFFENSE ||
 		i == FP_SABER_DEFENSE ||
@@ -1553,6 +1554,7 @@ void CG_DrawForceSelect( void )
 	int		sideLeftIconCnt,sideRightIconCnt;
 	int		sideMax,holdCount,iconCnt;
 	int		yOffset = 0;
+	int		selected;
 
 	// don't display if dead
 	if ( cg.snap->ps.stats[STAT_HEALTH] <= 0 )
@@ -1587,6 +1589,19 @@ void CG_DrawForceSelect( void )
 		return;
 	}
 
+	selected = cg.forceSelect;
+	if (!ForcePower_Valid(selected)) {
+		selected = cg.snap->ps.fd.forcePowerSelected;
+		if (!ForcePower_Valid(selected)) {
+			for (i=0;i<NUM_FORCE_POWERS;++i) {
+				if (ForcePower_Valid(forcePowerSorted[i])) {
+					selected = forcePowerSorted[i];
+					break;
+				}
+			}
+		}
+	}
+
 	sideMax = 3;	// Max number of icons on the side
 
 	// Calculate how many icons will appear to either side of the center one
@@ -1614,7 +1629,7 @@ void CG_DrawForceSelect( void )
 	x = 320;
 	y = 425;
 
-	i = BG_ProperForceIndex(cg.forceSelect) - 1;
+	i = BG_ProperForceIndex(selected) - 1;
 	if (i < 0)
 	{
 		i = MAX_SHOWPOWERS - 1;
@@ -1644,16 +1659,16 @@ void CG_DrawForceSelect( void )
 		}
 	}
 
-	if (ForcePower_Valid(cg.forceSelect))
+	if (ForcePower_Valid(selected))
 	{
 		// Current Center Icon
-		if (cgs.media.forcePowerIcons[cg.forceSelect])
+		if (cgs.media.forcePowerIcons[selected])
 		{
-			CG_DrawPic( x-(bigIconSize/2), (y-((bigIconSize-smallIconSize)/2)) + yOffset, bigIconSize, bigIconSize, cgs.media.forcePowerIcons[cg.forceSelect] ); //only cache the icon for display
+			CG_DrawPic( x-(bigIconSize/2), (y-((bigIconSize-smallIconSize)/2)) + yOffset, bigIconSize, bigIconSize, cgs.media.forcePowerIcons[selected] ); //only cache the icon for display
 		}
 	}
 
-	i = BG_ProperForceIndex(cg.forceSelect) + 1;
+	i = BG_ProperForceIndex(selected) + 1;
 	if (i>=MAX_SHOWPOWERS)
 	{
 		i = 0;
@@ -1682,9 +1697,9 @@ void CG_DrawForceSelect( void )
 		}
 	}
 
-	if ( showPowersName[cg.forceSelect] )
+	if ( showPowersName[selected] )
 	{
-		CG_DrawProportionalString(320, y + 30 + yOffset, CG_GetStringEdString("SP_INGAME", showPowersName[cg.forceSelect]), UI_CENTER | UI_SMALLFONT, colorTable[CT_ICON_BLUE]);
+		CG_DrawProportionalString(320, y + 30 + yOffset, CG_GetStringEdString("SP_INGAME", showPowersName[selected]), UI_CENTER | UI_SMALLFONT, colorTable[CT_ICON_BLUE]);
 	}
 }
 

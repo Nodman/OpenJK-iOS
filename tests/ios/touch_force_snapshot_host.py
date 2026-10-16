@@ -24,11 +24,11 @@ def run(args):
 cgame = out / 'cgame.o'
 run(['clang', '-std=c99'] + common + module['C_DEFINES'] + module['C_INCLUDES'] + ['-c', 'tests/ios/touch_force_snapshot_cgame.c', '-o', str(cgame)])
 objects = [cgame]
-for source, target_flags, cc in [('codemp/game/bg_misc.c', module, 'clang'), ('codemp/client/cl_cgame.cpp', host, 'clang++'), ('codemp/client/cl_input.cpp', host, 'clang++')]:
+for source, target_flags, cc in [('codemp/cgame/cg_draw.c', module, 'clang'), ('codemp/game/bg_misc.c', module, 'clang'), ('codemp/client/cl_cgame.cpp', host, 'clang++'), ('codemp/client/cl_input.cpp', host, 'clang++')]:
     obj = out / (Path(source).stem + '.o')
     run([cc, '-std=c99' if cc == 'clang' else '-std=c++11'] + common + target_flags['C_DEFINES' if cc == 'clang' else 'CXX_DEFINES'] + target_flags['C_INCLUDES' if cc == 'clang' else 'CXX_INCLUDES'] + ['-c', source, '-o', str(obj)])
     objects.append(obj)
-for source, cc in [('shared/qcommon/q_string.c', 'clang'), ('shared/qcommon/q_math.c', 'clang'), ('codemp/qcommon/q_shared.c', 'clang'), ('codemp/qcommon/huffman.cpp', 'clang++'), ('shared/sys/ios/ios_touch.cpp', 'clang++')]:
+for source, cc in [('shared/qcommon/q_color.c', 'clang'), ('shared/qcommon/q_string.c', 'clang'), ('shared/qcommon/q_math.c', 'clang'), ('codemp/qcommon/q_shared.c', 'clang'), ('codemp/qcommon/huffman.cpp', 'clang++'), ('shared/sys/ios/ios_touch.cpp', 'clang++')]:
     obj = out / (Path(source).stem + '.o')
     run([cc, '-std=c99' if cc == 'clang' else '-std=c++11'] + common + host['CXX_DEFINES'] + host['CXX_INCLUDES'] + ['-c', source, '-o', str(obj)])
     objects.append(obj)
