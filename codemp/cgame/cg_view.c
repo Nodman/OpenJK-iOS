@@ -2413,6 +2413,7 @@ static int cg_siegeClassIndex = -2;
 
 void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback ) {
 	int		inwater;
+	int forceSelection;
 	const char *cstr;
 	float mSensitivity = cg.zoomSensitivity;
 	float mPitchOverride = 0.0f;
@@ -2458,6 +2459,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// if we are only updating the screen as a loading
 	// pacifier, don't even try to read snapshots
 	if ( cg.infoScreenText[0] != 0 ) {
+#ifdef OPENJK_IOS
+		CG_UpdateTouchState( qfalse );
+#endif
 		CG_DrawInformation();
 		return;
 	}
@@ -2482,6 +2486,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// we can draw is the information screen
 	if ( !cg.snap || ( cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE ) )
 	{
+#ifdef OPENJK_IOS
+		CG_UpdateTouchState( qfalse );
+#endif
 #if 0
 		// Transition from zero to negative one on the snapshot timeout.
 		// The reason we do this is because the first client frame is responsible for
@@ -2509,6 +2516,11 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 		return;
 	}
 
+	forceSelection=cg.forceSelect;
+#ifdef OPENJK_IOS
+	forceSelection=CG_TouchForceSelection();
+#endif
+
 	// let the client system know what our weapon and zoom settings are
 	if (cg.snap && cg.snap->ps.saberLockTime > cg.time)
 	{
@@ -2531,7 +2543,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 			//mSensitivityOverride = 5.0f;//old default value
 			mSensitivityOverride = 0.0f;
 			bUseFighterPitch = qtrue;
-			trap->SetUserCmdValue( cg.weaponSelect, mSensitivity, mPitchOverride, mYawOverride, mSensitivityOverride, cg.forceSelect, cg.itemSelect, bUseFighterPitch );
+			trap->SetUserCmdValue( cg.weaponSelect, mSensitivity, mPitchOverride, mYawOverride, mSensitivityOverride, forceSelection, cg.itemSelect, bUseFighterPitch );
 			isFighter = qtrue;
 		}
 	}
@@ -2550,12 +2562,12 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 			veh->m_pVehicle->m_pVehicleInfo->type == VH_FIGHTER &&
 			bg_fighterAltControl.integer)
 		{
-			trap->SetUserCmdValue( cg.weaponSelect, mSensitivity, mPitchOverride, mYawOverride, 0.0f, cg.forceSelect, cg.itemSelect, qtrue );
+			trap->SetUserCmdValue( cg.weaponSelect, mSensitivity, mPitchOverride, mYawOverride, 0.0f, forceSelection, cg.itemSelect, qtrue );
 			veh = NULL; //this is done because I don't want an extra assign each frame because I am so perfect and super efficient.
 		}
 		else
 		{
-			trap->SetUserCmdValue( cg.weaponSelect, mSensitivity, mPitchOverride, mYawOverride, 0.0f, cg.forceSelect, cg.itemSelect, qfalse );
+			trap->SetUserCmdValue( cg.weaponSelect, mSensitivity, mPitchOverride, mYawOverride, 0.0f, forceSelection, cg.itemSelect, qfalse );
 		}
 	}
 
@@ -2564,6 +2576,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// update cg.predictedPlayerState
 	CG_PredictPlayerState();
+#ifdef OPENJK_IOS
+	CG_UpdateTouchState( qtrue );
+#endif
 
 	// decide on third person view
 	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0);
@@ -2724,6 +2739,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 
 	// actually issue the rendering calls
 	CG_DrawActive( stereoView );
+#ifdef OPENJK_IOS
+	CG_UpdateTouchState(qtrue);
+#endif
 
 	CG_DrawAutoMap();
 

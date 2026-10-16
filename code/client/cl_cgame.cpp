@@ -29,6 +29,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../ui/ui_shared.h"
 
 #include "client.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 #include "vmachine.h"
 #include "qcommon/stringed_ingame.h"
 #include "sys/sys_loadlib.h"
@@ -423,6 +426,9 @@ CL_ShutdonwCGame
 ====================
 */
 void CL_ShutdownCGame( void ) {
+#ifdef OPENJK_IOS
+	IN_TouchResetState();
+#endif
 	cls.cgameStarted = qfalse;
 
 	if ( !cgvm.entryPoint) {
@@ -1066,6 +1072,11 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return CL_GetCurrentCmdNumber();
 	case CG_GETUSERCMD:
 		return CL_GetUserCmd( args[1], (usercmd_s *) VMA(2) );
+	#ifdef OPENJK_IOS
+	case CG_IOS_TOUCH_FORCE_REPORT:
+		IN_TouchReportForce(args[1],args[2],args[3],args[4]);
+		return 0;
+	#endif
 	case CG_SETUSERCMDVALUE:
 		CL_SetUserCmdValue( args[1], VMF(2), VMF(3), VMF(4) );
 		return 0;
@@ -1578,6 +1589,9 @@ CL_FirstSnapshot
 */
 void CL_FirstSnapshot( void ) {
 
+#ifdef OPENJK_IOS
+	SCR_RegisterTouchMedia();
+#endif
 	re.RegisterMedia_LevelLoadEnd();
 
 	cls.state = CA_ACTIVE;

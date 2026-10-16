@@ -29,6 +29,13 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "../qcommon/sstring.h"
 #include "qcommon/ojk_saved_game_helper.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/ios_touch_visibility.h"
+#include "sys/ios/ios_touch_force_producer.h"
+static vmCvar_t cg_touchState;
+static vmCvar_t cg_touchForceAPI;
+static int cg_lastTouchMask = -1;
+#endif
 
 //NOTENOTE: Be sure to change the mirrored code in g_shared.h
 typedef	std::map< sstring_t, unsigned char  >	namePrecache_m;
@@ -2110,6 +2117,11 @@ Called after every level change or subsystem restart
 =================
 */
 void CG_Init( int serverCommandSequence ) {
+#ifdef OPENJK_IOS
+	cgi_Cvar_Register( &cg_touchState, "ui_touchState", "0", CVAR_ROM );
+	cgi_Cvar_Register( &cg_touchForceAPI, "ui_touchForceAPI", "0", CVAR_ROM );
+	CG_ResetTouchState();
+#endif
 	cgs.serverCommandSequence = serverCommandSequence;
 
 	cgi_Cvar_Set( "cg_drawHUD", "1" );
@@ -2187,6 +2199,9 @@ Called before every level change or subsystem restart
 */
 void CG_Shutdown( void )
 {
+#ifdef OPENJK_IOS
+	CG_ResetTouchState();
+#endif
 	in_camera = false;
 	FX_Free();
 }
@@ -3741,6 +3756,67 @@ qboolean ForcePower_Valid(int index)
 
 	return qfalse;
 }
+
+#ifdef OPENJK_IOS
+extern qboolean WP_SaberStyleValidForSaber( gentity_t *ent, int saberAnimLevel );
+extern qboolean WP_SaberCanTurnOffSomeBlades( saberInfo_t *saber );
+
+static void CG_PublishTouchState( unsigned int mask ) {
+	cgi_Cvar_Update( &cg_touchState );
+	if ( TouchCaps_ShouldPublish( mask, cg_lastTouchMask, (unsigned int)cg_touchState.integer ) ) {
+		cgi_Cvar_Set( "ui_touchState", va( "%u", mask ) );
+		cg_lastTouchMask = (int)mask;
+	}
+}
+
+void CG_ResetTouchState( void ) {
+	cg_lastTouchMask = -1;
+	CG_PublishTouchState( 0 );
+}
+
+void CG_UpdateTouchState( qboolean valid ) {
+	touchCapsFacts_t facts = {};
+	if ( valid && cg.snap && !( cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE ) && g_entities[0].client ) {
+		playerState_t *ps = &g_entities[0].client->ps;
+		static const int styles[7] = { SS_FAST, SS_MEDIUM, SS_STRONG, SS_DESANN, SS_TAVION, SS_DUAL, SS_STAFF };
+		unsigned int knownStyles = ps->saberStylesKnown;
+		unsigned int legalStyles = 0, weapons = 0;
+		facts.valid = 1;
+		facts.weaponClass = TouchCaps_WeaponClass(cg.predicted_player_state.weapon,WP_NONE,WP_SABER,WP_MELEE,-1,WP_NUM_WEAPONS);
+		facts.saberOwned = ( ps->stats[STAT_WEAPONS] & ( 1u << WP_SABER ) ) != 0;
+		if ( ps->dualSabers && ps->saber[0].Active() && ps->saber[1].Active() )
+			knownStyles |= 1u << SS_DUAL;
+		for ( int style = SS_FAST; style < SS_NUM_SABER_STYLES; ++style ) {
+			if ( ( knownStyles & ( 1u << style ) ) && WP_SaberStyleValidForSaber( &g_entities[0], style ) )
+				legalStyles |= 1u << style;
+		}
+		facts.legalStyleCount = TouchCaps_CountBits( legalStyles );
+		if ( ps->dualSabers )
+			facts.manualBladeToggle = WP_SaberCanTurnOffSomeBlades( &ps->saber[1] );
+		else if ( ps->saber[0].numBlades > 1 )
+			facts.manualBladeToggle = WP_SaberCanTurnOffSomeBlades( &ps->saber[0] );
+		for ( int i = 0; i < MAX_SHOWPOWERS; ++i )
+			if ( ForcePower_Valid( i ) ) ++facts.selectableForceCount;
+		for ( int weapon = WP_SABER; weapon <= WP_CONCUSSION; ++weapon )
+			weapons |= 1u << weapon;
+		facts.ownedWeaponCount = TouchCaps_CountBits( ps->stats[STAT_WEAPONS] & weapons );
+		const int staff=ps->saber[0].type==SABER_STAFF || ps->saber[0].numBlades>1 ||
+			(ps->dualSabers && (ps->saber[1].type==SABER_STAFF || ps->saber[1].numBlades>1));
+		facts.style = TouchCaps_SaberColor( cg.saberAnimLevelPending ? cg.saberAnimLevelPending : ps->saberAnimLevel, styles, staff );
+		facts.equipmentAllowed = TouchCaps_EquipmentAllowed( ps->pm_type == PM_DEAD ? 0 : ps->stats[STAT_HEALTH],
+			ps->pm_type == PM_SPECTATOR, cg.snap->ps.clientNum != 0, ps->pm_type == PM_INTERMISSION );
+	}
+	CG_PublishTouchState( TouchCaps_Pack( &facts, 0 ) );
+	touchForceReport_t report=TouchForce_Empty();
+	if(facts.equipmentAllowed) {
+		const playerState_t *ps=&g_entities[0].client->ps;
+		const int selected=TouchForce_SelectionIndex(cg.forcepowerSelect,showPowers,MAX_SHOWPOWERS);
+		report=TouchForce_Produce(ps->forcePowersKnown,ps->forcePowerLevel,selected,-1,1);
+	}
+	if(cg_touchForceAPI.integer==TOUCH_FORCE_API)
+		cgi_TouchForceReport(TOUCH_FORCE_API,(int)report.learned,report.selected,report.equipment);
+}
+#endif
 
 /*
 ===============

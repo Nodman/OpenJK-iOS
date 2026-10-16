@@ -591,3 +591,9 @@ void cgi_UI_Menu_Paint( void *menu, qboolean force )
 {
 	Q_syscall( CG_OPENJK_MENU_PAINT, menu, force );
 }
+
+#ifdef OPENJK_IOS
+void cgi_TouchForceReport(int version,int mask,int selected,int equipment) {
+	Q_syscall(CG_IOS_TOUCH_FORCE_REPORT,version,mask,selected,equipment);
+}
+#endif

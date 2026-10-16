@@ -1998,6 +1998,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView ) {
 	// if we are only updating the screen as a loading
 	// pacifier, don't even try to read snapshots
 	if ( cg.infoScreenText[0] != 0 ) {
+#ifdef OPENJK_IOS
+		CG_UpdateTouchState( qfalse );
+#endif
 		CG_DrawInformation();
 		return;
 	}
@@ -2020,6 +2023,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView ) {
 	// if we haven't received any snapshots yet, all
 	// we can draw is the information screen
 	if ( !cg.snap ) {
+#ifdef OPENJK_IOS
+		CG_UpdateTouchState( qfalse );
+#endif
 		//CG_DrawInformation();
 		return;
 	}
@@ -2080,6 +2086,9 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView ) {
 
 	// update cg.predicted_player_state
 	CG_PredictPlayerState();
+#ifdef OPENJK_IOS
+	CG_UpdateTouchState( qtrue );
+#endif
 
 	if (cg.snap->ps.eFlags&EF_HELD_BY_SAND_CREATURE)
 	{
@@ -2250,10 +2259,16 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView ) {
 		cg.refdefViewAngles[YAW] = -360 * cg_pano.integer/cg_panoNumShots.integer;	//choose angle
 		AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
 		CG_DrawActive( stereoView );
+#ifdef OPENJK_IOS
+	CG_UpdateTouchState(qtrue);
+#endif
 		cg.levelShot = qfalse;
 	} 	else {
 		// actually issue the rendering calls
 		CG_DrawActive( stereoView );
+#ifdef OPENJK_IOS
+	CG_UpdateTouchState(qtrue);
+#endif
 	}
 	/*
 	if ( in_camera && !cg_skippingcin.integer )

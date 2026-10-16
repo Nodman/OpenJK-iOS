@@ -27,6 +27,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "client.h"
 #ifdef OPENJK_IOS
 #include "sys/ios/sys_ios.h"
+#include "ios/touch/touch_atlas.h"
 #endif
 #include "cl_uiapi.h"
 
@@ -552,30 +553,111 @@ static void SCR_PublishSafeArea( void ) {
 	Com_DPrintf( "Safe area (l,t,r,b): %d %d %d %d\n", pixels[0], pixels[1], pixels[2], pixels[3] );
 }
 
-// small-char glyph cells are 1:2; keep that aspect on screen, in 640x480 coords
-static void CL_DrawTouchLabel( float cx, float cy, float charH, const char *s ) {
-	float charW = charH * 0.5f;
-	if ( SCR_GetAspectLayout().branch == ASPECT_LEGACY )
-		charW = charH * 0.5f * ( (float)SCREEN_WIDTH / cls.glconfig.vidWidth ) * ( (float)cls.glconfig.vidHeight / SCREEN_HEIGHT );
-	float x = cx - strlen( s ) * charW * 0.5f, y = cy - charH * 0.5f;
-	re->SetColor( colorWhite );
-	for ( ; *s; s++, x += charW ) {
-		int ch = *s & 255;
-		float frow = ( ch >> 4 ) * 0.0625f, fcol = ( ch & 15 ) * 0.0625f;
-		re->DrawStretchPic( x, y, charW, charH, fcol, frow, fcol + 0.03125f, frow + 0.0625f, cls.charSetShader );
+#include "sys/ios/ios_touch_force_media.h"
+static qhandle_t touchShader;
+static touchForceMedia_t touchForceMedia;
+static int touchForceMediaLive;
+
+void SCR_ResetTouchForceMedia(void) { TouchForceMedia_Reset(&touchForceMedia); }
+void SCR_StopTouchMedia(void) {
+	touchForceMediaLive=0; touchShader=0; SCR_ResetTouchForceMedia();
+}
+static int SCR_TouchForceReadable(const char *path,void *) {
+	fileHandle_t file=0;
+	const long length=FS_FOpenFileRead(path,&file,qfalse);
+	if(file) FS_FCloseFile(file);
+	return length>0 && file!=0;
+}
+static int SCR_TouchForceRegister(const char *stem,void *) {
+	return re->RegisterShaderNoMip(stem);
+}
+
+void SCR_RegisterTouchMedia( void ) {
+	SCR_ResetTouchForceMedia();
+	IN_TouchEndEdit();
+	touchShader = re->RegisterShaderNoMip( IOS_TOUCH_ATLAS_NAME );
+	touchForceMediaLive=1;
+}
+
+static void CL_DrawTouchQuad( const touchDrawItem_t *item, int glyph ) {
+	const touchAtlasUV_t uv = TouchAtlas_UV( glyph );
+	re->DrawStretchPic( item->x, item->y, item->w, item->h, uv.s1, uv.t1, uv.s2, uv.t2, touchShader );
+}
+
+static void CL_DrawTouchSettings( void ) {
+	touchSettingsItem_t items[IOS_TOUCH_SETTINGS_ITEMS];
+	float p=1;
+	const int count=IN_TouchGetSettingsDrawList(items,IOS_TOUCH_SETTINGS_ITEMS,&p);
+	const aspectLayout_t &layout=SCR_GetAspectLayout();
+	for(int i=0;i<count;++i) {
+		const touchRect_t r=TouchLayout_RectToVirtual(&layout,items[i].rect);
+		const vec4_t background={items[i].selected?.30f:.06f,items[i].selected?.25f:.06f,.08f,.95f};
+		SCR_FillRect(r.x,r.y,r.w,r.h,background);
+		if(items[i].fill>=0) {
+			const vec4_t yellow={.30f,.25f,.08f,.95f};
+			SCR_FillRect(r.x,r.y,r.w*items[i].fill,r.h,yellow);
+		}
+		const qhandle_t icon=TouchForceMedia_Resolve(&touchForceMedia,items[i].force,touchForceMediaLive && cls.rendererStarted && touchShader,
+			SCR_TouchForceReadable,SCR_TouchForceRegister,NULL);
+		float iconWidth=0;
+		if(icon) {
+			const aspectPoint_t square=AspectLayout_SizeToVirtual(&layout,items[i].rect.h*.65f,items[i].rect.h*.65f);
+			const vec4_t white={1,1,1,1};re->SetColor(white);
+			re->DrawStretchPic(r.x+square.x*.15f,r.y+(r.h-square.y)/2,square.x,square.y,0,0,1,1,icon);
+			iconWidth=square.x*1.3f;
+		}
+		const size_t length=strlen(items[i].label);
+		if(!length) continue;
+		const aspectPoint_t glyph=AspectLayout_SizeToVirtual(&layout,6*p,12*p);
+		const float width=fminf((float)glyph.x,((r.w-iconWidth)*.9f)/length),height=fminf((float)glyph.y,r.h*.8f);
+		const float x=r.x+iconWidth+(r.w-iconWidth-width*length)/2,y=r.y+(r.h-height)/2;
+		const vec4_t white={1,1,1,1};
+		re->SetColor(white);
+		for(size_t j=0;j<length;++j) {
+			const unsigned char ch=(unsigned char)items[i].label[j];
+			const float u=(ch&15)/16.0f,v=(ch>>4)/16.0f;
+			re->DrawStretchPic(x+j*width,y,width,height,u,v,u+.03125f,v+.0625f,cls.charSetShader);
+		}
 	}
-	re->SetColor( NULL );
+	re->SetColor(NULL);
 }
 
 static void CL_DrawTouchControls( void ) {
-	touchDrawItem_t items[16];
-	int n = IN_TouchGetDrawList( items, 16 );
-	for ( int i = 0; i < n; i++ ) {
-		vec4_t c = { 1.0f, 1.0f, 1.0f, items[i].pressed ? 0.45f : 0.2f };
-		SCR_FillRect( items[i].x, items[i].y, items[i].w, items[i].h, c );
-		if ( items[i].label )
-			CL_DrawTouchLabel( items[i].x + items[i].w * 0.5f, items[i].y + items[i].h * 0.5f, items[i].h * 0.3f, items[i].label );
+	touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
+	const int n = IN_TouchGetDrawList( items, IOS_TOUCH_MAX_DRAW_ITEMS );
+	const float opacity = IN_TouchIsEditing() ? 1.0f : IN_TouchGetOpacity();
+	if ( !touchShader || opacity <= 0 )
+		return;
+	for ( int i = 0; i < n; ++i ) {
+		vec4_t colour;
+		TouchDraw_Color( &items[i], 0, opacity, colour );
+		if ( items[i].kind==TOUCH_DRAW_DIM ) {
+			SCR_FillRect(items[i].x,items[i].y,items[i].w,items[i].h,colour);
+			continue;
+		}
+		re->SetColor( colour );
+		const int backdrop=TouchDraw_Backdrop(&items[i]);
+		if(backdrop>=0) CL_DrawTouchQuad( &items[i], backdrop );
+		if ( items[i].kind == TOUCH_DRAW_BUTTON && items[i].glyph >= 0 ) {
+			TouchDraw_Color( &items[i], 1, opacity, colour );
+			re->SetColor( colour );
+			const int force=items[i].force;
+			const qhandle_t shader=TouchForceMedia_Resolve(&touchForceMedia,force,touchForceMediaLive && cls.rendererStarted && touchShader,
+				SCR_TouchForceReadable,SCR_TouchForceRegister,NULL);
+			if(shader) {
+				const touchForceQuad_t quad=TouchForceMedia_Quad(items[i].x,items[i].y,items[i].w,items[i].h);
+				re->DrawStretchPic(quad.x,quad.y,quad.w,quad.h,0,0,1,1,shader);
+			} else CL_DrawTouchQuad( &items[i], items[i].glyph );
+		}
+		if(IN_TouchIsEditing() && items[i].button>=TB_FORCE_SLOT1 && items[i].button<=TB_FORCE_SLOT4) {
+			const unsigned char ch='1'+items[i].button-TB_FORCE_SLOT1;
+			const float u=(ch&15)/16.0f,v=(ch>>4)/16.0f;
+			const vec4_t white={1,1,1,1};re->SetColor(white);
+			re->DrawStretchPic(items[i].x+items[i].w*.70f,items[i].y+items[i].h*.60f,items[i].w*.20f,items[i].h*.30f,u,v,u+.03125f,v+.0625f,cls.charSetShader);
+		}
 	}
+	CL_DrawTouchSettings();
+	re->SetColor( NULL );
 }
 #endif
 
@@ -588,6 +670,7 @@ This will be called twice if rendering in stereo mode
 */
 void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 #ifdef OPENJK_IOS
+	TouchForceFrameScope forceFrame;
 	SCR_PublishSafeArea();
 #endif
 	SCR_GetAspectLayout( qtrue );
@@ -662,7 +745,9 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 	Con_DrawConsole ();
 
 #ifdef OPENJK_IOS
-	CL_DrawTouchControls();	// after the console, so CON stays visible to close it
+	if(uiFullscreen || cls.state!=CA_ACTIVE) IN_TouchClearForceFrame();
+	forceFrame.Finish();
+	CL_DrawTouchControls();
 #endif
 
 	// debug graph can be drawn on top of anything
@@ -680,6 +765,9 @@ text to the screen.
 ==================
 */
 void SCR_UpdateScreen( void ) {
+#ifdef OPENJK_IOS
+	TouchForceUpdateScope forceUpdate;
+#endif
 	static int	recursive;
 
 	if ( !scr_initialized ) {

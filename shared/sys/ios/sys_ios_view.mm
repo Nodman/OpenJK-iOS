@@ -31,6 +31,11 @@ void Sys_IOS_GetViewPointSize( SDL_Window *window, float *width, float *height )
 	*height = view ? view.bounds.size.height : 0.0f;
 }
 
+touchLayoutProfile_t Sys_IOS_TouchLayoutProfile( SDL_Window *window ) {
+	UIView *view = Sys_IOS_GLView( window );
+	return view && view.traitCollection.userInterfaceIdiom == UIUserInterfaceIdiomPhone ? TOUCH_LAYOUT_PHONE : TOUCH_LAYOUT_TABLET;
+}
+
 float Sys_IOS_GetNativeScale( SDL_Window *window ) {
 	UIView *view = Sys_IOS_GLView( window );
 	return view ? (float)view.window.screen.nativeScale : 1.0f;

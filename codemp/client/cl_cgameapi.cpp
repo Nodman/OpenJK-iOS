@@ -24,6 +24,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/stringed_ingame.h"
 #include "qcommon/timing.h"
 #include "client.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 #include "cl_uiapi.h"
 #include "botlib/botlib.h"
 #include "snd_ambient.h"
@@ -1815,6 +1818,9 @@ void CL_BindCGame( void ) {
 		cgi.GetUserCmd							= CL_GetUserCmd;
 		cgi.OpenUIMenu							= CL_OpenUIMenu;
 		cgi.SetClientForceAngle					= CL_SetClientForceAngle;
+		#ifdef OPENJK_IOS
+		cgi.TouchForceReport = IN_TouchReportForce;
+		#endif
 		cgi.SetUserCmdValue						= _CL_SetUserCmdValue;
 		cgi.Key_GetCatcher						= Key_GetCatcher;
 		cgi.Key_GetKey							= Key_GetKey;

@@ -28,6 +28,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "client.h"
 #include "client_ui.h"
 
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#include "sys/ios/ios_touch_math.h"
+#endif
 #ifndef _WIN32
 #include <cmath>
 #endif
@@ -150,6 +154,10 @@ void IN_MLookUp( void ) {
 	}
 }
 
+#ifdef OPENJK_IOS
+#include "sys/ios/ios_touch_force_client.inc"
+#endif
+
 void IN_KeyDown( kbutton_t *b ) {
 	int		k;
 	const char	*c;
@@ -160,6 +168,10 @@ void IN_KeyDown( kbutton_t *b ) {
 	} else {
 		k = -1;		// typed manually at the console for continuous down
 	}
+
+#ifdef OPENJK_IOS
+	if(k==A_AUX21 && !CL_TouchForceCentralAllowed()) return;
+#endif
 
 	if ( k == b->down[0] || k == b->down[1] ) {
 		return;		// repeating key
@@ -173,6 +185,10 @@ void IN_KeyDown( kbutton_t *b ) {
 		Com_Printf ("Three keys down for a button!\n");
 		return;
 	}
+
+#ifdef OPENJK_IOS
+	CL_TouchKeyDown(b,k);
+#endif
 
 	if ( b->active ) {
 		return;		// still down
@@ -201,6 +217,9 @@ void IN_KeyUp( kbutton_t *b ) {
 		return;
 	}
 
+#ifdef OPENJK_IOS
+	IN_ReleaseSource(b,k,(unsigned int)atoi(Cmd_Argv(2)));
+#else
 	if ( b->down[0] == k ) {
 		b->down[0] = 0;
 	} else if ( b->down[1] == k ) {
@@ -224,6 +243,7 @@ void IN_KeyUp( kbutton_t *b ) {
 	}
 
 	b->active = qfalse;
+#endif
 }
 
 
@@ -241,6 +261,9 @@ float CL_KeyState( kbutton_t *key ) {
 
 	msec = key->msec;
 	key->msec = 0;
+#ifdef OPENJK_IOS
+	CL_TouchConsumeMove(key);
+#endif
 
 	if ( key->active ) {
 		// still down
@@ -490,6 +513,7 @@ void CL_JoystickEvent( int axis, int value, int time ) {
 #ifdef OPENJK_IOS
 static cvar_t *j_twinStick;
 static cvar_t *j_lookSpeed;
+static cvar_t *in_touchLookScale,*in_touchLookScaleY;
 #endif
 
 /*
@@ -499,6 +523,15 @@ CL_JoystickMove
 */
 void CL_JoystickMove( usercmd_t *cmd ) {
 	float	anglespeed;
+
+#ifdef OPENJK_IOS
+	const qboolean touchLook=IN_GamepadTouchLookActive();
+	if(touchLook) {
+		const float rate=.001f*cls.frametime*IOS_TOUCH_AIM_RATE*cl.cgameSensitivity;
+		cl.viewangles[YAW]-=rate*TouchAim_Sensitivity(in_touchLookScale->value)*TouchAxes_NormalizeLook(cl.joystickAxis[AXIS_YAW],0,1);
+		cl.viewangles[PITCH]+=rate*TouchAim_Sensitivity(in_touchLookScaleY->value)*TouchAxes_NormalizeLook(cl.joystickAxis[AXIS_PITCH],0,1);
+	}
+#endif
 
 	if ( !in_joystick->integer )
 	{
@@ -518,10 +551,14 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 #ifdef OPENJK_IOS
 	if ( j_twinStick->integer ) {
 		float frameScale = 0.001f * cls.frametime * j_lookSpeed->value;
+		const float yaw = TouchAxes_NormalizeLook( cl.joystickAxis[AXIS_YAW], 0, 1 );
+		const float pitch = TouchAxes_NormalizeLook( cl.joystickAxis[AXIS_PITCH], 0, 1 );
 		cmd->rightmove = ClampChar( cmd->rightmove + cl.joystickAxis[AXIS_SIDE] );
 		cmd->forwardmove = ClampChar( cmd->forwardmove + cl.joystickAxis[AXIS_FORWARD] );
-		cl.viewangles[YAW] -= frameScale * cl_yawspeed->value * ( cl.joystickAxis[AXIS_YAW] / 127.0f );
-		cl.viewangles[PITCH] += frameScale * cl_pitchspeed->value * ( cl.joystickAxis[AXIS_PITCH] / 127.0f );
+		if(!touchLook) {
+			cl.viewangles[YAW] -= frameScale*cl_yawspeed->value*yaw;
+			cl.viewangles[PITCH] += frameScale*cl_pitchspeed->value*pitch;
+		}
 		return;
 	}
 #endif
@@ -654,6 +691,9 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		if ( in_buttons[i].active || in_buttons[i].wasPressed ) {
 			cmd->buttons |= 1 << i;
 		}
+#ifdef OPENJK_IOS
+		memset(&touchForcePulses[i],0,sizeof(touchForcePulses[i]));
+#endif
 		in_buttons[i].wasPressed = qfalse;
 	}
 
@@ -712,6 +752,10 @@ usercmd_t CL_CreateCmd( void ) {
 	usercmd_t	cmd;
 	vec3_t		oldAngles;
 
+#ifdef OPENJK_IOS
+	IN_TouchPrepareCommand();
+#endif
+
 	VectorCopy( cl.viewangles, oldAngles );
 
 	// keyboard angle adjustment
@@ -729,6 +773,15 @@ usercmd_t CL_CreateCmd( void ) {
 
 	// get basic movement from joystick
 	CL_JoystickMove( &cmd );
+
+#ifdef OPENJK_IOS
+	float dragYaw,dragPitch;
+	IN_TouchConsumeLookDelta(&dragYaw,&dragPitch);
+	if(!IN_GamepadPadLookActive()) {
+		cl.viewangles[YAW]-=dragYaw*cl.cgameSensitivity;
+		cl.viewangles[PITCH]+=dragPitch*cl.cgameSensitivity;
+	}
+#endif
 
 	// check to make sure the angles haven't wrapped
 	if ( cl.viewangles[PITCH] - oldAngles[PITCH] > 90 ) {
@@ -972,6 +1025,9 @@ CL_InitInput
 ============
 */
 void CL_InitInput( void ) {
+#ifdef OPENJK_IOS
+	CL_TouchForceInit();
+#endif
 	Cmd_AddCommand ("centerview",IN_CenterView);
 
 	Cmd_AddCommand ("+moveup",IN_UpDown);
@@ -1072,6 +1128,8 @@ void CL_InitInput( void ) {
 #ifdef OPENJK_IOS
 	j_twinStick = Cvar_Get( "j_twinStick", "0", CVAR_ARCHIVE );
 	j_lookSpeed = Cvar_Get( "j_lookSpeed", "1.5", CVAR_ARCHIVE );
+	in_touchLookScale = Cvar_Get( "in_touchLookScale", "1.0", CVAR_ARCHIVE );
+	in_touchLookScaleY = Cvar_Get( "in_touchLookScaleY", "0.6", CVAR_ARCHIVE );
 #endif
 }
 

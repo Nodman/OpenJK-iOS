@@ -24,6 +24,13 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 // cg_main.c -- initialization and primary entry point for cgame
 #include "cg_local.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/ios_touch_visibility.h"
+#include "sys/ios/ios_touch_force_producer.h"
+static vmCvar_t cg_touchState;
+static vmCvar_t cg_touchForceAPI;
+static int cg_lastTouchMask = -1;
+#endif
 
 #include "ui/ui_shared.h"
 
@@ -92,6 +99,90 @@ qboolean CG_NoUseableForce(void)
 	//no useable force powers, I guess.
 	return qtrue;
 }
+
+#ifdef OPENJK_IOS
+static void CG_PublishTouchState( unsigned int mask ) {
+	trap->Cvar_Update( &cg_touchState );
+	if ( TouchCaps_ShouldPublish( mask, cg_lastTouchMask, (unsigned int)cg_touchState.integer ) ) {
+		trap->Cvar_Set( "ui_touchState", va( "%u", mask ) );
+		cg_lastTouchMask = (int)mask;
+	}
+}
+
+void CG_ResetTouchState( void ) {
+	cg_lastTouchMask = -1;
+	CG_PublishTouchState( 0 );
+}
+
+int CG_TouchForceSelection( void ) {
+	playerState_t candidate;
+	playerState_t *ps;
+	int selected;
+	if(!cg.snap || (cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE) || cg.clientNum<0 || cg.clientNum>=MAX_CLIENTS ||
+		!cgs.clientinfo[cg.clientNum].infoValid) return cg.forceSelect;
+	ps=&cg.snap->ps;
+	if(!TouchCaps_EquipmentAllowed(ps->pm_type==PM_DEAD?0:ps->stats[STAT_HEALTH],
+		cgs.clientinfo[cg.clientNum].team==TEAM_SPECTATOR || ps->pm_type==PM_SPECTATOR,
+		(ps->pm_flags & PMF_FOLLOW) || ps->clientNum!=cg.clientNum,
+		cg.intermissionStarted || ps->pm_type==PM_INTERMISSION || ps->pm_type==PM_SPINTERMISSION)) return cg.forceSelect;
+	selected=cg.forceSelect;
+	if(TouchForce_Canonical(selected) && TouchForce_Known(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,selected)) return selected;
+	selected=ps->fd.forcePowerSelected;
+	if(TouchForce_Canonical(selected) && TouchForce_Known(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,selected))
+		// Keep the server selection sentinel across frames; the HUD uses a local fallback.
+		return cg.forceSelect=-1;
+	// Servers can spawn with an unlearned selection; use the stock selector before sending a command.
+	candidate=*ps;
+	if(selected<0 || selected>=NUM_FORCE_POWERS) candidate.fd.forcePowerSelected=FP_LEVITATION;
+	BG_CycleForce(&candidate,1);
+	selected=candidate.fd.forcePowerSelected;
+	if(TouchForce_Canonical(selected) && TouchForce_Known(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,selected)) {
+		cg.forceSelect=ps->fd.forcePowerSelected=selected;
+		cg.forceSelectTime=cg.time;
+	}
+	return cg.forceSelect;
+}
+
+void CG_UpdateTouchState( qboolean valid ) {
+	touchCapsFacts_t facts = { 0 };
+	if ( valid && cg.snap && !( cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE ) &&
+		cg.clientNum >= 0 && cg.clientNum < MAX_CLIENTS && cgs.clientinfo[cg.clientNum].infoValid ) {
+		const playerState_t *ps = &cg.predictedPlayerState;
+		const clientInfo_t *ci = &cgs.clientinfo[cg.clientNum];
+		const int follow = ( ps->pm_flags & PMF_FOLLOW ) || ps->clientNum != cg.clientNum;
+		const int spectator = ci->team == TEAM_SPECTATOR || ps->pm_type == PM_SPECTATOR;
+		const int intermission = cg.intermissionStarted || ps->pm_type == PM_INTERMISSION || ps->pm_type == PM_SPINTERMISSION;
+		static const int styles[7] = { SS_FAST, SS_MEDIUM, SS_STRONG, SS_DESANN, SS_TAVION, SS_DUAL, SS_STAFF };
+		facts.valid = facts.chatAvailable = 1;
+		facts.style = TOUCH_STYLE_UNKNOWN;
+		facts.equipmentAllowed = TouchCaps_EquipmentAllowed( ps->pm_type == PM_DEAD ? 0 : ps->stats[STAT_HEALTH], spectator, follow, intermission );
+		if ( !spectator && !follow ) {
+			unsigned int weapons = 0;
+			const int staff=ci->saber[0].type==SABER_STAFF || ci->saber[0].numBlades>1 ||
+				(ci->saber[1].model[0] && (ci->saber[1].type==SABER_STAFF || ci->saber[1].numBlades>1));
+			int weapon, power;
+			facts.weaponClass = TouchCaps_WeaponClass(ps->weapon,WP_NONE,WP_SABER,WP_MELEE,WP_STUN_BATON,WP_NUM_WEAPONS);
+			facts.saberOwned = ( ps->stats[STAT_WEAPONS] & ( 1u << WP_SABER ) ) != 0;
+			for ( power = FP_HEAL; power < NUM_FORCE_POWERS; ++power ) {
+				if ( power != FP_LEVITATION && power != FP_SABER_OFFENSE && power != FP_SABER_DEFENSE && power != FP_SABERTHROW &&
+					( ps->fd.forcePowersKnown & ( 1u << power ) ) ) ++facts.selectableForceCount;
+			}
+			for ( weapon = WP_STUN_BATON; weapon <= LAST_USEABLE_WEAPON; ++weapon )
+				if ( weapon != WP_MELEE || !facts.saberOwned ) weapons |= 1u << weapon;
+			facts.ownedWeaponCount = TouchCaps_CountBits( ps->stats[STAT_WEAPONS] & weapons );
+			facts.style = TouchCaps_SaberColor( ps->fd.saberDrawAnimLevel ? ps->fd.saberDrawAnimLevel : ps->fd.saberAnimLevel, styles, staff );
+		}
+	}
+	CG_PublishTouchState( TouchCaps_Pack( &facts, 1 ) );
+	touchForceReport_t report=TouchForce_Empty();
+	if(facts.equipmentAllowed) {
+		const playerState_t *ps=&cg.predictedPlayerState;
+		report=TouchForce_Produce(ps->fd.forcePowersKnown,ps->fd.forcePowerLevel,cg.forceSelect,cg.snap->ps.fd.forcePowerSelected,1);
+	}
+	if(cg_touchForceAPI.integer==TOUCH_FORCE_API && trap->TouchForceReport)
+		trap->TouchForceReport(TOUCH_FORCE_API,(int)report.learned,report.selected,report.equipment);
+}
+#endif
 
 static int C_PointContents( void ) {
 	TCGPointContents *data = &cg.sharedBuffer.pointContents;
@@ -2407,6 +2498,12 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
 	const char	*s;
 	int i = 0;
 
+#ifdef OPENJK_IOS
+	trap->Cvar_Register( &cg_touchState, "ui_touchState", "0", CVAR_ROM );
+	trap->Cvar_Register( &cg_touchForceAPI, "ui_touchForceAPI", "0", CVAR_ROM );
+	CG_ResetTouchState();
+#endif
+
 	Rand_Init( trap->Milliseconds() );
 
 	BG_InitAnimsets(); //clear it out
@@ -2695,6 +2792,9 @@ Called before every level change or subsystem restart
 */
 void CG_Shutdown( void )
 {
+#ifdef OPENJK_IOS
+	CG_ResetTouchState();
+#endif
 	BG_ClearAnimsets(); //free all dynamic allocations made through the engine
 
     CG_DestroyAllGhoul2();

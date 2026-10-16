@@ -25,6 +25,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 // cl_main.c  -- client main loop
 
 #include "client.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#endif
 
 #include <limits.h>
 #include "ghoul2/G2.h"
@@ -633,6 +636,9 @@ void CL_ShutdownAll( qboolean shutdownRef ) {
 	if(shutdownRef)
 		CL_ShutdownRef( qfalse );
 	if ( re && re->Shutdown ) {
+		#ifdef OPENJK_IOS
+		SCR_StopTouchMedia();
+		#endif
 		re->Shutdown( qfalse, qfalse );		// don't destroy window or context
 	}
 
@@ -681,6 +687,9 @@ memory on the hunk from cgame, ui, and renderer
 =====================
 */
 void CL_MapLoading( void ) {
+#ifdef OPENJK_IOS
+	IN_TouchResetState();
+#endif
 	if ( !com_cl_running->integer ) {
 		return;
 	}
@@ -724,6 +733,10 @@ Called before parsing a gamestate
 =====================
 */
 void CL_ClearState (void) {
+#ifdef OPENJK_IOS
+	IN_TouchResetState();
+	CL_TouchClearPulses();
+#endif
 
 //	S_StopAllSounds();
 	Com_Memset( &cl, 0, sizeof( cl ) );
@@ -2314,6 +2327,9 @@ static void CL_ShutdownRef( qboolean restarting ) {
 	{
 		if ( re->Shutdown )
 		{
+			#ifdef OPENJK_IOS
+			SCR_StopTouchMedia();
+			#endif
 			re->Shutdown( qtrue, restarting );
 		}
 	}
@@ -2335,7 +2351,13 @@ CL_InitRenderer
 */
 void CL_InitRenderer( void ) {
 	// this sets up the renderer and calls R_Init
+	#ifdef OPENJK_IOS
+	SCR_StopTouchMedia();
+	#endif
 	re->BeginRegistration( &cls.glconfig );
+#ifdef OPENJK_IOS
+	SCR_RegisterTouchMedia();
+#endif
 
 	// load character sets
 	cls.charSetShader = re->RegisterShaderNoMip("gfx/2d/charsgrid_med");

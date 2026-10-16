@@ -1062,6 +1062,7 @@ void Com_ExecuteCfg(void)
 	Cbuf_ExecuteText(EXEC_NOW, "exec mpdefault.cfg\n");
 	Cbuf_Execute(); // Always execute after exec to prevent text buffer overflowing
 #ifdef OPENJK_IOS
+	Cvar_Get( "ui_touchForceAPI", "1", CVAR_ROM | CVAR_PLATFORM_DEFAULT );
 	Cvar_BeginPlatformDefaults();
 	Cbuf_ExecuteText( EXEC_NOW, "exec ios_default.cfg\n" );
 	Cbuf_Execute();
@@ -1078,6 +1079,9 @@ void Com_ExecuteCfg(void)
 		Cbuf_ExecuteText(EXEC_NOW, "exec autoexec.cfg\n");
 		Cbuf_Execute();
 	}
+#ifdef OPENJK_IOS
+	IN_TouchRestoreDefaultBinds();
+#endif
 }
 
 /*

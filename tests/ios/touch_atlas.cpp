@@ -1,0 +1,320 @@
+#include "ios/touch/touch_atlas.h"
+#include "sys/ios/ios_touch_state.h"
+#include "sys/ios/ios_touch_visibility.h"
+#include <boost/test/unit_test.hpp>
+#include <cstring>
+#include <limits>
+
+BOOST_AUTO_TEST_SUITE( ios )
+BOOST_AUTO_TEST_SUITE( touch_atlas )
+
+BOOST_AUTO_TEST_CASE( immutable_cells_and_inner_texel_centres )
+{
+	const int glyphs[] = { TG_MENU, TG_CHAT, TG_PAD, TG_WEAPPREV, TG_SABER_SELECT, TG_WEAPNEXT,
+		TG_RING, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE_BLUE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_STYLE_RED, TG_RECT_PLATE };
+	for ( int i = 0; i < 20; ++i ) {
+		BOOST_CHECK_EQUAL( glyphs[i], i );
+		const touchAtlasUV_t uv = TouchAtlas_UV( i );
+		BOOST_CHECK_EQUAL( uv.s1 * 1024, ( i % 4 ) * 256 + 8.5f );
+		BOOST_CHECK_EQUAL( uv.t1 * 1280, ( i / 4 ) * 256 + 8.5f );
+		BOOST_CHECK_EQUAL( uv.s2 * 1024, ( i % 4 + 1 ) * 256 - 8.5f );
+		BOOST_CHECK_EQUAL( uv.t2 * 1280, ( i / 4 + 1 ) * 256 - 8.5f );
+		BOOST_CHECK_LT( uv.s1, uv.s2 );
+		BOOST_CHECK_LT( uv.t1, uv.t2 );
+		BOOST_CHECK_GE( uv.s1, 0 );
+		BOOST_CHECK_LE( uv.s2, 1 );
+		BOOST_CHECK_GE( uv.t1, 0 );
+		BOOST_CHECK_LE( uv.t2, 1 );
+	}
+	BOOST_CHECK_EQUAL( TouchAtlas_UV( -1 ).s2, 0 );
+	BOOST_CHECK_EQUAL( TouchAtlas_UV( 20 ).t2, 0 );
+	BOOST_CHECK_EQUAL( IOS_TOUCH_ATLAS_NAME, "*ios_touch_v2" );
+}
+
+static void HeldSticks( touchGestureState_t *state )
+{
+	TouchGesture_Reset( state );
+	touchGestureInput_t in = {};
+	in.visibleButtons = IOS_TOUCH_ALL_BUTTONS;
+	in.moveEnabled = in.lookEnabled = 1;
+	in.radius = 100;
+	in.slop = 10;
+	in.event = TOUCH_DOWN;
+	in.finger = 1;
+	in.target = TOUCH_TARGET_MOVE;
+	in.x = 400;
+	in.y = 800;
+	TouchGesture_Step( state, in );
+	in.event = TOUCH_MOTION;
+	in.x = 450;
+	TouchGesture_Step( state, in );
+	in.event = TOUCH_DOWN;
+	in.finger = 2;
+	in.target = TOUCH_TARGET_FIRE;
+	in.button = TB_ATTACK;
+	in.x = 2000;
+	TouchGesture_Step( state, in );
+	in.event = TOUCH_MOTION;
+	in.x = 2300;
+	in.y = 400;
+	TouchGesture_Step( state, in );
+}
+
+static touchDrawInput_t DrawInput( const aspectLayout_t *layout, const touchRect_t *rects, const touchGestureState_t *gestures )
+{
+	touchDrawInput_t input = {};
+	input.layout = layout;
+	input.rects = rects;
+	input.gestures = gestures;
+	input.visibleButtons = IOS_TOUCH_ALL_BUTTONS;
+	input.pressedButtons = 1u << TB_CONSOLE;
+	input.sticks = 1;
+	input.styleColor = TOUCH_STYLE_BLUE;
+	return input;
+}
+
+BOOST_AUTO_TEST_CASE( full_twenty_records_and_raw_knobs_round_trip )
+{
+	touchRect_t rects[TB_COUNT];
+	TouchLayout_Build( 2868, 1320, 132, 0, 132, 102, 3, rects );
+	touchGestureState_t gestures;
+	HeldSticks( &gestures );
+	for ( int corrected : { 0, 1 } ) {
+		const auto layout = AspectLayout_Build( 2868, 1320, corrected, 1.5f, 132, 0, 132, 102 );
+		auto input = DrawInput( &layout, rects, &gestures );
+		touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
+		BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, IOS_TOUCH_MAX_DRAW_ITEMS ), TB_COUNT+4 );
+		for ( int i = 0; i < TB_COUNT; ++i ) {
+			BOOST_CHECK_EQUAL( items[i].kind, TOUCH_DRAW_BUTTON );
+			BOOST_CHECK_EQUAL( items[i].glyph, i==TB_STYLE?TG_STYLE_BLUE:touchButtonDefs[i].glyph );
+			const unsigned int rectangular = ( 1u << TB_MENU ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) |
+				( 1u << TB_CONSOLE ) | ( 1u << TB_LOCK );
+			BOOST_CHECK_EQUAL( items[i].plate, rectangular & ( 1u << i ) ? TG_RECT_PLATE : TG_PLATE );
+			const auto virtualRect = TouchLayout_RectToVirtual( &layout, rects[i] );
+			BOOST_CHECK_EQUAL( items[i].x, virtualRect.x );
+			BOOST_CHECK_EQUAL( items[i].y, virtualRect.y );
+			BOOST_CHECK_EQUAL( items[i].w, virtualRect.w );
+			BOOST_CHECK_EQUAL( items[i].h, virtualRect.h );
+		}
+		BOOST_CHECK_EQUAL( items[TB_ATTACK].pressed, 1 );
+		BOOST_CHECK_EQUAL( items[TB_ALTATTACK].pressed, 0 );
+		BOOST_CHECK_EQUAL( items[TB_CONSOLE].pressed, 1 );
+		BOOST_CHECK_SMALL( items[TB_STYLE].rgb[0] - .567f, 1e-6f );
+		BOOST_CHECK_EQUAL( items[TB_ATTACK].rgb[0], 1 );
+		for ( int i = TB_COUNT; i < TB_COUNT+4; ++i ) {
+			BOOST_CHECK_EQUAL( items[i].glyph, TG_PLATE );
+			BOOST_CHECK_EQUAL( items[i].plate, TG_PLATE );
+			BOOST_CHECK_EQUAL( items[i].kind, (i-TB_COUNT) % 2 ? TOUCH_DRAW_STICK_KNOB : TOUCH_DRAW_STICK_BASE );
+			const auto centre = AspectLayout_ToPixels( &layout, items[i].x + items[i].w / 2, items[i].y + items[i].h / 2 );
+			const auto size = AspectLayout_SizeToPixels( &layout, items[i].w, items[i].h );
+			const float expectedX[] = { 400, 450, 2000, 2060 }, expectedY[] = { 800, 800, 800, 720 };
+			BOOST_CHECK_SMALL( centre.x - expectedX[i - TB_COUNT], 1e-3 );
+			BOOST_CHECK_SMALL( centre.y - expectedY[i - TB_COUNT], 1e-3 );
+			BOOST_CHECK_SMALL( size.x - ( (i-TB_COUNT) % 2 ? 60 : 200 ), 1e-3 );
+			BOOST_CHECK_SMALL( size.y - ( (i-TB_COUNT) % 2 ? 60 : 200 ), 1e-3 );
+		}
+		BOOST_CHECK_EQUAL( gestures.fingers[gestures.lookOwner].role, TOUCH_FIRE_AIM );
+	}
+}
+
+BOOST_AUTO_TEST_CASE( capacity_clips_whole_records_and_hidden_controls )
+{
+	const auto layout = AspectLayout_Build( 2868, 1320, 1, 1.5f, 132, 0, 132, 102 );
+	touchRect_t rects[TB_COUNT];
+	TouchLayout_Build( 2868, 1320, 132, 0, 132, 102, 3, rects );
+	touchGestureState_t gestures;
+	HeldSticks( &gestures );
+	auto input = DrawInput( &layout, rects, &gestures );
+	for ( int capacity = -1; capacity <= 33; ++capacity ) {
+		touchDrawItem_t items[34], sentinel;
+		std::memset( items, 0x5a, sizeof( items ) );
+		std::memset( &sentinel, 0x5a, sizeof( sentinel ) );
+		const int expected = capacity < 0 ? 0 : capacity < TB_COUNT+4 ? capacity : TB_COUNT+4;
+		BOOST_CHECK_EQUAL( TouchDraw_Build( &input, items, capacity ), expected );
+		BOOST_CHECK_EQUAL( std::memcmp( &items[expected], &sentinel, sizeof( sentinel ) ), 0 );
+		if ( expected > 0 ) BOOST_CHECK_EQUAL( items[0].kind, TOUCH_DRAW_BUTTON );
+	}
+	BOOST_CHECK_EQUAL( TouchDraw_Build( &input, NULL, 32 ), 0 );
+	touchDrawItem_t items[32];
+	input.visibleButtons = 1u << TB_CONSOLE;
+	input.sticks = 0;
+	BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, 32 ), 1 );
+	BOOST_CHECK_EQUAL( items[0].glyph, TG_CONSOLE );
+	input.visibleButtons = 0;
+	BOOST_CHECK_EQUAL( TouchDraw_Build( &input, items, 32 ), 0 );
+	BOOST_CHECK_EQUAL( gestures.fingers[gestures.lookOwner].role, TOUCH_FIRE_AIM );
+}
+
+BOOST_AUTO_TEST_CASE( held_and_promoted_fire_remain_pressed_at_zero_opacity )
+{
+	const auto layout = AspectLayout_Build( 2868, 1320, 1, 1.5f, 132, 0, 132, 102 );
+	touchRect_t rects[TB_COUNT];
+	TouchLayout_Build( 2868, 1320, 132, 0, 132, 102, 3, rects );
+	touchGestureState_t gestures;
+	TouchGesture_Reset( &gestures );
+	touchGestureInput_t event = {};
+	event.event = TOUCH_DOWN;
+	event.target = TOUCH_TARGET_FIRE;
+	event.button = TB_ATTACK;
+	event.radius = 100;
+	event.slop = 10;
+	event.visibleButtons = IOS_TOUCH_ALL_BUTTONS;
+	event.moveEnabled = event.lookEnabled = 1;
+	TouchGesture_Step( &gestures, event );
+	auto input = DrawInput( &layout, rects, &gestures );
+	touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
+	BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, 32 ), TB_COUNT );
+	BOOST_CHECK_EQUAL( items[TB_ATTACK].pressed, 1 );
+	event.event = TOUCH_MOTION;
+	event.x = 100;
+	TouchGesture_Step( &gestures, event );
+	BOOST_REQUIRE_EQUAL( TouchDraw_Build( &input, items, 32 ), TB_COUNT+2 );
+	BOOST_CHECK_EQUAL( items[TB_ATTACK].pressed, 1 );
+	float colour[4];
+	TouchDraw_Color( &items[TB_ATTACK], 1, 0, colour );
+	BOOST_CHECK_EQUAL( colour[3], 0 );
+	event.event = TOUCH_REFRESH;
+	const auto actions = TouchGesture_Step( &gestures, event );
+	BOOST_CHECK_EQUAL( actions.lookX, 127 );
+	BOOST_CHECK_EQUAL( actions.keyCount, 0 );
+	BOOST_CHECK_EQUAL( gestures.fingers[gestures.lookOwner].role, TOUCH_FIRE_AIM );
+}
+
+BOOST_AUTO_TEST_CASE( opacity_and_style_only_affect_draw_colour )
+{
+	BOOST_CHECK_EQUAL( TouchDraw_Opacity( -1 ), 0 );
+	BOOST_CHECK_EQUAL( TouchDraw_Opacity( 2 ), 1 );
+	BOOST_CHECK_EQUAL( TouchDraw_Opacity( .5f ), .5f );
+	BOOST_CHECK_EQUAL( TouchDraw_Opacity( std::numeric_limits<float>::quiet_NaN() ), 0 );
+	touchDrawItem_t item = {};
+	item.kind = TOUCH_DRAW_BUTTON;
+	const float expected[][3] = { { .567f, .685f, 1 }, { 1, 1, 0 }, { .835f, .015f, .015f }, { 1, 1, 1 } };
+	for ( int style = 0; style < 4; ++style ) {
+		TouchDraw_StyleRGB( style, item.rgb );
+		for ( int channel = 0; channel < 3; ++channel ) BOOST_CHECK_EQUAL( item.rgb[channel], expected[style][channel] );
+		for ( int pressed : { 0, 1 } ) {
+			item.pressed = pressed;
+			for ( float opacity : { 0.f, .5f, 1.f } ) {
+				float colour[4];
+				TouchDraw_Color( &item, 0, opacity, colour );
+				BOOST_CHECK_EQUAL( colour[0], 1 );
+				BOOST_CHECK_EQUAL( colour[1], 1 );
+				BOOST_CHECK_EQUAL( colour[2], 1 );
+				BOOST_CHECK_EQUAL( colour[3], ( pressed ? .40f : .20f ) * opacity );
+				TouchDraw_Color( &item, 1, opacity, colour );
+				BOOST_CHECK_EQUAL( colour[3], ( pressed ? 1.f : .85f ) * opacity );
+				for ( int channel = 0; channel < 3; ++channel ) BOOST_CHECK_EQUAL( colour[channel], expected[style][channel] );
+			}
+		}
+	}
+	float colour[4];
+	item.kind = TOUCH_DRAW_STICK_BASE;
+	TouchDraw_Color( &item, 0, 1, colour );
+	BOOST_CHECK_EQUAL( colour[3], .20f );
+	item.kind = TOUCH_DRAW_STICK_KNOB;
+	TouchDraw_Color( &item, 0, 1, colour );
+	BOOST_CHECK_EQUAL( colour[3], .40f );
+}
+
+BOOST_AUTO_TEST_CASE( weapon_classes_pack_decode_and_choose_glyphs )
+{
+	for(int c=0;c<4;++c) {
+		touchCapsFacts_t facts={};facts.valid=1;facts.weaponClass=c;
+		const unsigned int mask=TouchCaps_Pack(&facts,0);
+		BOOST_CHECK_EQUAL((mask>>11)&3u,(unsigned int)c);
+		BOOST_CHECK_EQUAL(TouchCaps_Visible(mask,0).weaponClass,c);
+		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ATTACK,c),c==2||c==3?TG_GUN_ATTACK:TG_ATTACK);
+		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_ALTATTACK,c),TG_ALTATTACK);
+		BOOST_CHECK_EQUAL(TouchDraw_WeaponGlyph(TB_JUMP,c),TG_JUMP);
+		facts.valid=0;BOOST_CHECK_EQUAL(TouchCaps_Pack(&facts,0),0);
+	}
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(0,0,1,2,-1,20),TOUCH_WEAPON_UNKNOWN);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(1,0,1,2,-1,20),TOUCH_WEAPON_SABER);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(2,0,1,2,-1,20),TOUCH_WEAPON_MELEE);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(3,0,1,2,-1,20),TOUCH_WEAPON_GUN);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(4,0,1,2,4,20),TOUCH_WEAPON_MELEE);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(-1,0,1,2,-1,20),TOUCH_WEAPON_UNKNOWN);
+	BOOST_CHECK_EQUAL(TouchCaps_WeaponClass(20,0,1,2,-1,20),TOUCH_WEAPON_UNKNOWN);
+}
+
+BOOST_AUTO_TEST_CASE( selected_weapon_reaches_pressed_draw_records )
+{
+	const auto layout=AspectLayout_Build(2048,1536,1,1.5f,0,0,0,0);
+	touchRect_t rects[TB_COUNT];TouchLayout_Build(2048,1536,0,0,0,0,2,rects);
+	touchGestureState_t gestures;HeldSticks(&gestures);
+	auto input=DrawInput(&layout,rects,&gestures);input.weaponClass=TOUCH_WEAPON_GUN;
+	touchDrawItem_t items[32];TouchDraw_Build(&input,items,32);
+	BOOST_CHECK_EQUAL(items[TB_ATTACK].glyph,TG_GUN_ATTACK);
+	BOOST_CHECK_EQUAL(items[TB_ALTATTACK].glyph,TG_ALTATTACK);
+	BOOST_CHECK(items[TB_ATTACK].pressed);
+	touchCapsFacts_t facts={};facts.valid=1;
+	const unsigned int before=TouchCaps_Pack(&facts,1);facts.weaponClass=TOUCH_WEAPON_GUN;
+	BOOST_CHECK(TouchCaps_ShouldPublish(TouchCaps_Pack(&facts,1),(int)before,before));
+	facts.weaponClass=99;BOOST_CHECK_EQUAL(TouchCaps_Visible(TouchCaps_Pack(&facts,1),1).weaponClass,TOUCH_WEAPON_UNKNOWN);
+}
+
+BOOST_AUTO_TEST_CASE( round_buttons_have_no_fill_and_style_glyphs_keep_rects )
+{
+	const auto layout=AspectLayout_Build(2868,1320,1,1.5f,132,0,132,102);
+	touchRect_t rects[TB_COUNT]; TouchLayout_Build(2868,1320,132,0,132,102,3,rects);
+	touchGestureState_t gestures; HeldSticks(&gestures);
+	auto input=DrawInput(&layout,rects,&gestures);
+	for(int style=0;style<4;++style) {
+		input.styleColor=style;
+		touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
+		BOOST_REQUIRE_EQUAL(TouchDraw_Build(&input,items,IOS_TOUCH_MAX_DRAW_ITEMS),TB_COUNT+4);
+		for(int i=0;i<TB_COUNT;++i) {
+			const int backdrop=TouchDraw_Backdrop(&items[i]);
+			if(items[i].plate==TG_RECT_PLATE) BOOST_CHECK_EQUAL(backdrop,TG_RECT_PLATE);
+			else BOOST_CHECK_EQUAL(backdrop,items[i].glyph<0?TG_RING:-1);
+		}
+		const int expected[]={TG_STYLE_BLUE,TG_SABER_SELECT,TG_STYLE_RED,TG_SABER_SELECT};
+		BOOST_CHECK_EQUAL(items[TB_STYLE].glyph,expected[style]);
+		BOOST_CHECK_EQUAL(items[TB_SABER_SELECT].glyph,TG_SABER_SELECT);
+		const auto r=TouchLayout_RectToVirtual(&layout,rects[TB_STYLE]);
+		BOOST_CHECK_EQUAL(items[TB_STYLE].x,r.x); BOOST_CHECK_EQUAL(items[TB_STYLE].y,r.y);
+		BOOST_CHECK_EQUAL(items[TB_STYLE].w,r.w); BOOST_CHECK_EQUAL(items[TB_STYLE].h,r.h);
+		for(int i=TB_COUNT;i<TB_COUNT+4;++i) BOOST_CHECK_EQUAL(TouchDraw_Backdrop(&items[i]),TG_PLATE);
+	}
+	input.editing=1; input.dragButton=TB_ATTACK;
+	touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
+	const int count=TouchDraw_Build(&input,items,IOS_TOUCH_MAX_DRAW_ITEMS);
+	for(int i=0;i<count;++i) if(items[i].kind==TOUCH_DRAW_HIGHLIGHT) BOOST_CHECK_EQUAL(TouchDraw_Backdrop(&items[i]),TG_RING);
+	float colour[4];
+	for(int i=0;i<count;++i) if(items[i].kind==TOUCH_DRAW_BUTTON && items[i].glyph<0) {
+		TouchDraw_Color(&items[i],0,1,colour); BOOST_CHECK_EQUAL(colour[3],.65f);
+	}
+}
+
+BOOST_AUTO_TEST_CASE( style_canvas_mapping_keeps_physical_axes_on_both_aspect_paths )
+{
+	for(const auto &f : {touchRect_t{2868,1320,3,0},touchRect_t{2388,1668,2,0},touchRect_t{2048,1536,2,0},touchRect_t{1434,660,1.5f,0}}) {
+		for(int corrected=0;corrected<2;++corrected) {
+			const auto layout=AspectLayout_Build(f.x,f.y,corrected,1.5f,0,0,0,0);
+			touchRect_t rects[TB_COUNT]; TouchLayout_Build(f.x,f.y,0,0,0,0,f.w,rects);
+			touchGestureState_t gestures; TouchGesture_Reset(&gestures);
+			auto input=DrawInput(&layout,rects,&gestures);
+			const double cx=rects[TB_STYLE].x+rects[TB_STYLE].w/2,cy=rects[TB_STYLE].y+rects[TB_STYLE].h/2;
+			for(int style=0;style<3;++style) {
+				input.styleColor=style;
+				touchDrawItem_t items[IOS_TOUCH_MAX_DRAW_ITEMS];
+				TouchDraw_Build(&input,items,IOS_TOUCH_MAX_DRAW_ITEMS);
+				const auto &item=items[TB_STYLE];
+				const float degrees[]={10,45,90};
+				const double angle=degrees[style]*3.141592653589793/180;
+				const auto uv=TouchAtlas_UV(item.glyph);
+				const double u=((item.glyph%4)*256+128+60*cos(angle))/1024;
+				const double v=((item.glyph/4)*256+128+60*sin(angle))/1280;
+				const auto center=AspectLayout_ToPixels(&layout,item.x+item.w/2,item.y+item.h/2);
+				const auto edge=AspectLayout_ToPixels(&layout,item.x+(u-uv.s1)/(uv.s2-uv.s1)*item.w,item.y+(v-uv.t1)/(uv.t2-uv.t1)*item.h);
+				const double radius=rects[TB_STYLE].w*60/239;
+				BOOST_CHECK_SMALL(center.x-cx,.001); BOOST_CHECK_SMALL(center.y-cy,.001);
+				BOOST_CHECK_SMALL(hypot(edge.x-cx,edge.y-cy)-radius,.001);
+				BOOST_CHECK_SMALL(atan2(edge.y-cy,edge.x-cx)*180/3.141592653589793-degrees[style],.001);
+			}
+		}
+	}
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END()

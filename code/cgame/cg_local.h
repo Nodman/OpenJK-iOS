@@ -705,6 +705,12 @@ Ghoul2 Insert End
 //
 // cg_drawtools.c
 //
+#ifdef OPENJK_IOS
+void CG_UpdateTouchState( qboolean valid );
+void CG_ResetTouchState( void );
+void cgi_TouchForceReport(int version,int mask,int selected,int equipment);
+#endif
+
 const aspectLayout_t *CG_AspectLayout( void );
 
 
