@@ -53,7 +53,8 @@ static void CL_TouchQueueToken(unsigned int generation,int operation) {
 	char text[96];Com_sprintf(text,sizeof(text),"touchForceAction %u %d",generation,operation);
 	Sys_QueEvent(0,SE_CONSOLE,0,0,(int)strlen(text)+1,CopyString(text));
 }
-static void CL_TouchFence(void) {
+static void CL_TouchFence(int refresh=0) {
+	if(refresh) touchForceDispatch.fenceQueued=0;
 	if(!touchForceDispatch.generation || touchForceDispatch.fenceQueued) return;
 	touchForceDispatch.fenceQueued=1;CL_TouchQueueToken(touchForceDispatch.generation,0);
 }
@@ -125,7 +126,7 @@ void CL_TouchForceQueue(int down) {
 void CL_TouchForceCancel(void) {
 	touchForceDispatch_t *s=&touchForceDispatch;if(!s->generation) return;
 	TouchForce_Cancel(s);CL_TouchReleaseSource(s->source,Sys_Milliseconds());
-	CL_TouchForceQueue(0);CL_TouchFence();
+	CL_TouchForceQueue(0);CL_TouchFence(1);
 }
 void CL_TouchForceReset(void) {
 	// Client/input resets leave queued keys and commands alive until their fence.
@@ -145,4 +146,5 @@ void CL_TouchCancelAllSources(void) {
 	CL_TouchForceCancel();
 	for(int i=0;i<12;++i) CL_TouchCancelSource(A_AUX16+i);
 	for(int i=0;i<4;++i) CL_TouchCancelSource(IOS_TOUCH_FORCE_SOURCE_BASE+i);
+	CL_TouchFence(1);
 }

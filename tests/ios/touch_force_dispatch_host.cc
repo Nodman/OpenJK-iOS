@@ -56,6 +56,7 @@ static const int centralButton=9;
 static const int centralButton=2;
 #endif
 static std::deque<sysEvent_t> events;
+static unsigned int droppedEvents;
 int Sys_Milliseconds(bool) { return testTime; }
 #ifdef TEST_MP
 uint32_t cvar_modifiedFlags;
@@ -63,6 +64,7 @@ uint32_t cvar_modifiedFlags;
 int cvar_modifiedFlags;
 #endif
 void Sys_QueEvent(int time,sysEventType_t type,int value,int value2,int length,void *ptr) {
+	if(events.size()==256) {free(events.front().evPtr);events.pop_front();++droppedEvents;}
 	sysEvent_t e={};e.evTime=time?time:testTime;e.evType=type;e.evValue=value;e.evValue2=value2;e.evPtrLength=length;e.evPtr=ptr;events.push_back(e);
 }
 char *CopyString(const char *text) { return strdup(text); }
@@ -176,6 +178,8 @@ float AngleSubtract(float a,float b) { return a-b; }
 #endif
 static void Reset(void) {
 	assert(events.empty());Cbuf_Init();cmd_wait=0;commandsSeen.clear();
+	kg.anykeydown=qfalse;kg.keyDownCount=0;
+	for(auto &key:kg.keys) {key.down=qfalse;key.repeats=0;}
 	memset(in_buttons,0,sizeof(in_buttons));memset(touchForcePulses,0,sizeof(touchForcePulses));
 	memset(&in_up,0,sizeof(in_up));memset(&in_down,0,sizeof(in_down));memset(touchMovePulses,0,sizeof(touchMovePulses));
 	memset(&touchForceDispatch,0,sizeof(touchForceDispatch));memset(&cl,0,sizeof(cl));
@@ -259,6 +263,42 @@ static void CancellationAndSourcePulses(void) {
 	CL_TouchCancelAllSources();Hardware("-attack",A_AUX16,103);Drain();assert(Buttons() & 1u);
 	Reset();Cbuf_AddText("wait\n");Sys_QueEvent(0,SE_KEY,A_AUX16,qtrue,0,NULL);ExpandEvents();Cbuf_Execute();
 	Sys_QueEvent(0,SE_KEY,A_AUX16,qfalse,0,NULL);CL_TouchCancelAllSources();ExpandEvents();Cbuf_Execute();assert(!Buttons());
+}
+static unsigned int ActionButtons(void) {
+#ifdef TEST_MP
+	return Buttons() & ~BUTTON_ANY;
+#else
+	return Buttons();
+#endif
+}
+static void FenceOverflowRecovery(void) {
+	for(int central:{0,1}) for(int reset:{0,1}) for(int queuedDown:{0,1}) {
+		Reset();droppedEvents=0;Key_SetBinding(A_AUX21,"+useforce");
+		assert(CL_TouchForceReserve(central?0:10,central?-1:0));
+		const unsigned int old=touchForceDispatch.generation;
+		CL_TouchForceQueue(1);if(!queuedDown) Drain();CL_TouchForceQueue(0);
+		for(int i=0;i<256;++i) Sys_QueEvent(0,SE_CONSOLE,0,0,1,CopyString(""));
+		assert(droppedEvents && events.size()==256 && CL_TouchForceBusy());
+		Cbuf_AddText("wait\n");
+		if(!reset) {
+			Sys_QueEvent(0,SE_KEY,A_AUX16,qtrue,0,NULL);
+			Sys_QueEvent(0,SE_KEY,A_AUX16,qfalse,0,NULL);
+		}
+		if(reset) CL_TouchForceReset();else CL_TouchCancelAllSources();
+		ExpandEvents();Cbuf_Execute();assert(CL_TouchForceBusy());
+		Drain();
+		assert(!CL_TouchForceBusy() && !ActionButtons() && !in_buttons[0].active);
+		assert(CL_TouchForceReserve(10,0));const unsigned int next=touchForceDispatch.generation;
+		assert(next!=old);CL_TouchQueueToken(old,0);CL_TouchQueueToken(old,1);CL_TouchQueueToken(old,2);
+		Drain();assert(touchForceDispatch.generation==next && !touchForceDispatch.dispatched);
+		CL_TouchForceQueue(1);Drain();assert(in_buttons[6].active);
+		CL_TouchForceCancel();CL_TouchForceCancel();Drain();assert(!CL_TouchForceBusy() && !ActionButtons());
+	}
+	Reset();Cbuf_AddText("wait\n");Sys_QueEvent(0,SE_KEY,A_AUX18,qtrue,0,NULL);
+	Sys_QueEvent(0,SE_KEY,A_AUX16,qtrue,0,NULL);
+	Sys_QueEvent(0,SE_KEY,A_AUX18,qfalse,0,NULL);Sys_QueEvent(0,SE_KEY,A_AUX16,qfalse,0,NULL);ExpandEvents();Cbuf_Execute();
+	assert(!in_up.active && !in_buttons[0].active);
+	CL_TouchCancelAllSources();Drain();assert(!in_up.active && !in_buttons[0].active && !ActionButtons());
 }
 static void SelectionAndAssignment(void) {
 	Reset();touchForceBridge_t bridge={};bridge.producerSeen=1;
@@ -860,13 +900,19 @@ static void SDLPerAxisSettings(void) {
 	}
 }
 
-int main() {
+int main(int argc,char **argv) {
 	cls.state=CA_ACTIVE;Cbuf_Init();Register();
-	SDLZoomAim();
+	if(argc==2) {
+		if(!strcmp(argv[1],"zoom")) SDLZoomAim();
+		else if(!strcmp(argv[1],"overflow")) FenceOverflowRecovery();
+		else assert(false);
+		return 0;
+	}
+	FenceOverflowRecovery();SDLZoomAim();
 	CommandNamesAndTap();CancellationAndSourcePulses();SelectionAndAssignment();CentralAndReset();
 #ifdef TEST_MP
 	PacketTiming();
 #endif
 	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();SDLHeldActionAim();SDLPhoneProfileDefaults();SDLResetLayoutRouting();SDLTabletProfileDefaults();SDLPerAxisAim();SDLPerAxisSettings();
-	puts("PASS: actual phone/tablet SP/MP per-axis drag/joystick/timing/scales/fire and captured mode/axis settings; tablet current Console draw/hit/drag/native migration/saved center/reset; actual Appearance Reset layout and held-finger cancellation; native profile cache/Console/editor/saved v2; late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
+	puts("PASS: zoom 1/.25, bounded 256-event fence recovery; actual phone/tablet SP/MP per-axis drag/joystick/timing/scales/fire and captured mode/axis settings; tablet current Console draw/hit/drag/native migration/saved center/reset; actual Appearance Reset layout and held-finger cancellation; native profile cache/Console/editor/saved v2; late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
 }
