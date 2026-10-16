@@ -153,7 +153,7 @@
 - Existing saved configs keep their resolution and FPS values. To adopt the new defaults on a 120 Hz panel, enter `seta r_renderScale 1` and `seta com_maxfps 120`, then `vid_restart`.
 - Video → `FPS counter` offers Off / On. Apply shows a small gold frame-rate readout at the top right inside the safe area in a map. Off is the default.
 - `in_touchControls 0`: hide touch controls except the console button. `1`: default; hide them when a pad is connected, or a hardware keyboard and mouse/trackpad are both connected. A keyboard alone keeps touch look and buttons. `2`: keep them visible with these devices. Menus and the console show only the console button. Full-screen cinematics and SP in-game videos hide all controls in every mode; camera cutscenes still show them.
-- `in_touchAimMode 1`: default Free drag; `0` selects Joystick. Joystick turns at up to 210 degrees/second on each axis times its sensitivity. Free drag turns .20 degrees per view point times its sensitivity, without a frame-time multiplier.
+- `in_touchAimMode 1`: default Free drag; `0` selects Joystick. Joystick turns at up to 210 degrees/second on each axis times its sensitivity. Free drag turns .20 degrees per view point times its sensitivity, without a frame-time multiplier. Both modes also apply the game zoom/FOV sensitivity once on each axis. Vehicle mouse yaw/pitch overrides are mouse coefficients and are not applied to touch angle rates.
 - `in_touchAimCurve 2`: default Precise. After the radial deadzone, these are generic deterministic curve approximations, not Sony firmware equivalents:
 
 | Value | Curve | Response after deadzone (`q` from 0 to 1) |

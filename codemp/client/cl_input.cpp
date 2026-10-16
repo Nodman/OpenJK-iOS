@@ -1025,7 +1025,7 @@ void CL_JoystickMove( usercmd_t *cmd ) {
 #ifdef OPENJK_IOS
 	const qboolean touchLook=IN_GamepadTouchLookActive();
 	if(touchLook) {
-		const float rate=.001f*cls.frametime*IOS_TOUCH_AIM_RATE;
+		const float rate=.001f*cls.frametime*IOS_TOUCH_AIM_RATE*cl.cgameSensitivity;
 		cl.viewangles[YAW]-=rate*TouchAim_Sensitivity(in_touchLookScale->value)*TouchAxes_NormalizeLook(cl.joystickAxis[AXIS_YAW],0,1);
 		cl.viewangles[PITCH]+=rate*TouchAim_Sensitivity(in_touchLookScaleY->value)*TouchAxes_NormalizeLook(cl.joystickAxis[AXIS_PITCH],0,1);
 	}
@@ -1440,8 +1440,8 @@ usercmd_t CL_CreateCmd( void ) {
 	float dragYaw,dragPitch;
 	IN_TouchConsumeLookDelta(&dragYaw,&dragPitch);
 	if(!IN_GamepadPadLookActive()) {
-		cl.viewangles[YAW]-=dragYaw;
-		cl.viewangles[PITCH]+=dragPitch;
+		cl.viewangles[YAW]-=dragYaw*cl.cgameSensitivity;
+		cl.viewangles[PITCH]+=dragPitch*cl.cgameSensitivity;
 	}
 #endif
 

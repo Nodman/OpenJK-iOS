@@ -816,6 +816,24 @@ static void SDLPerAxisAim(void) {
 	IN_TouchReleaseAll();Drain();touchWindow=NULL;
 }
 
+static void SDLZoomAim(void) {
+	for(int mode:{0,1}) for(float zoom:{1.f,.25f}) for(int pad:{0,1}) {
+		AimFixture(mode);cl.cgameSensitivity=zoom;
+		SetTouchVar("in_touchLookScale","1.7");SetTouchVar("in_touchLookScaleY","0.4");
+		SetTouchVar("in_touchDragScale","3");SetTouchVar("in_touchDragScaleY","1.8");IN_TouchSyncAim();Drain();
+		SDLEvent(SDL_FINGERDOWN,260,500,300);
+		const float dx=mode?20:.6f*IOS_TOUCH_STICK_RADIUS*touchUnit;
+		const float dy=mode?10:.8f*IOS_TOUCH_STICK_RADIUS*touchUnit;
+		SDLEvent(SDL_FINGERMOTION,260,500+dx,300+dy);
+		if(pad) {axesState.pad[2]=127;axesState.pad[3]=64;}
+		CommandFrame();
+		const float yaw=pad?-2.24f:zoom*(mode?-12:-.016f*210*1.7f*76/127);
+		const float pitch=pad?2.24f*64/127:zoom*(mode?3.6f:.016f*210*.4f*102/127);
+		assert(fabsf(cl.viewangles[YAW]-yaw)<.002f && fabsf(cl.viewangles[PITCH]-pitch)<.002f);
+		if(mode) {CommandFrame();assert(fabsf(cl.viewangles[YAW]-yaw*(pad?2:1))<.002f && fabsf(cl.viewangles[PITCH]-pitch*(pad?2:1))<.002f);}
+		IN_TouchReleaseAll();Drain();touchWindow=NULL;
+	}
+}
 static void SDLPerAxisSettings(void) {
 	for(int mode:{0,1}) for(int axis:{0,1}) {
 		AimFixture(mode);SetTouchVar("in_touchLookScale","1.17");SetTouchVar("in_touchDragScale","2.33");SetTouchVar("in_touchLookScaleY","0.73");SetTouchVar("in_touchDragScaleY","1.93");IN_TouchSyncAim();Drain();
@@ -844,6 +862,7 @@ static void SDLPerAxisSettings(void) {
 
 int main() {
 	cls.state=CA_ACTIVE;Cbuf_Init();Register();
+	SDLZoomAim();
 	CommandNamesAndTap();CancellationAndSourcePulses();SelectionAndAssignment();CentralAndReset();
 #ifdef TEST_MP
 	PacketTiming();
