@@ -3,7 +3,7 @@
 ## What it is
 
 - OpenJK SP runs Jedi Academy single player. OpenJK MP is the multiplayer client.
-- Both apps use rd-vanilla through gl4es. Apple's OpenGL ES provider (EAGL) remains the default. The local development build also offers ANGLE over Metal as an opt-in; see [provider selection](#choose-a-provider-local-opt-in-build).
+- Both apps use rd-vanilla through gl4es. Apple's OpenGL ES (EAGL) is the default provider. ANGLE over Metal is an opt-in; see [Choose a provider](#choose-a-provider).
 - Game files are not included. Copy them from your own retail game.
 - OpenJK is not affiliated with Disney, Lucasfilm or Raven Software. You need your own copy of the game.
 
@@ -14,19 +14,17 @@
 - iPad 8th generation or later, Air 3 or later, mini 5 or later, and iPad Pro models from 2018 or later.
 - A11 and older, including A10 / A10X iPads, are outside the supported device list.
 - ProMotion screens: iPhone 13 Pro through 17 Pro Max, iPhone 17, iPhone Air, and iPad Pro models from 2018 or later. Screen refresh support does not guarantee the game's frame rate.
-- Fresh configs and `reset com_maxfps` use 60 fps, including on ProMotion panels. 120 is an explicit opt-in. Existing saved 60 or 120 choices stay unchanged; an update does not reset them. Saved settings, autoexec and startup overrides take priority over fresh defaults.
-- On the measured iPhone 17 Pro Max with iOS 27.0.1, EAGL showed about 60 frames/s even when 120 was requested. The cause is unproven; this is not a universal iPhone or EAGL limit. EAGL showed 120 on the tested 2018 and M4 iPad Pro setups (iPadOS 26.5 and 27.0.1).
-- Local ANGLE iPhone tests demonstrated about 117.375 displayed frames/s in one MP window and 119.198 in one SP window. These short results show capability, not a guaranteed rate or full qualification. See [measurements and remaining gaps](ios-angle.md#observations-and-limits).
+- Fresh configs default to 120 fps on 120 Hz panels and 60 elsewhere. Saved choices are kept.
+- On the tested iPhone 17 Pro Max (iOS 27.0.1), EAGL shows about 60 fps even at `com_maxfps 120`. ANGLE showed about 117–119 displayed fps in short MP and SP tests. EAGL shows 120 on the tested 2018 and M4 iPad Pro.
 - The 2018 A12X iPad Pro passed a 20-minute MP run at 60 Hz and auto scale. Its median window p95 frame interval was 16.72 ms.
 - Memory was tested on a 4 GB iPad with `r_picmip 1` and `r_texturebits 32`. The MP map `mp/ctf1` peaked at 277 MB; the SP map `taspir2` peaked at 394 MB and loaded in 2.7 s. A real 3 GB device was not tested.
 
 ## Install
 
-The ANGLE opt-in described here is available in local development builds. The exact pinned ANGLE dependency is hosted; no public ANGLE app IPA release is offered by these instructions. Obtain a local IPA from its builder, or use the [local build instructions](#build-yourself).
-
-- Use SideStore, AltStore or Sideloadly to sign and install an IPA you have obtained. Locally signed development apps need the builder's provisioning to cover your device.
+- Install SideStore or AltStore. Add the [OpenJK source](https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/altstore/source.json), then install OpenJK SP, OpenJK MP, or both.
+- With Sideloadly, download the app's IPA from [GitHub Releases](https://github.com/Nodman/OpenJK-iOS/releases). Open it in Sideloadly and sign it with your Apple ID.
 - A free Apple ID needs re-signing every 7 days and allows 3 active apps. SideStore, OpenJK SP, and OpenJK MP use all three slots.
-- The repository's [AltStore source](https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/altstore/source.json) and [Releases page](https://github.com/Nodman/OpenJK-iOS/releases) are distribution locations, not confirmation that this local candidate is published. Check the actual release notes, assets and checksums before using a release; older builds may lack this opt-in or the corrected defaults.
+- Each release includes `SHA256SUMS` for the IPAs.
 
 ## Copy game files
 
@@ -42,15 +40,16 @@ The ANGLE opt-in described here is available in local development builds. The ex
 ## Build yourself
 
 - Use macOS, Xcode 26.x, and CMake 3.28 or later.
-- Run `scripts/build-ios.sh`. A clean configure downloads the exact hosted ANGLE package: `manifest.json`, `SHA256SUMS`, `libEGL.xcframework.zip` and `libGLESv2.xcframework.zip`, validated against [the consumer pins](../scripts/ios/angle-consumer.json). An optional offline override is `OPENJK_IOS_ANGLE_LOCAL_ASSETS=/absolute/path/to/exact-package scripts/build-ios.sh`; it must contain the same pinned bytes. The checked-in source recipe is for rebuilding and auditing new packages; it does not reproduce the exact pinned package identity. See [dependency delivery and source-build limits](ios-angle.md#dependency-delivery).
+- From a checkout of the `ios` branch, run `scripts/build-ios.sh`.
+- A clean configure downloads the pinned ANGLE package. See [ANGLE dependency](ios-angle.md).
 - The script uses the `ios` configure preset and `ios-release` build preset. It builds both apps in Release mode.
 - Without a team ID, it makes unsigned IPAs for a sideloader to sign.
-- For a signed build, run `OPENJK_IOS_TEAM_ID=YOUR_TEAM_ID scripts/build-ios.sh`. Replace `YOUR_TEAM_ID` with your local value; the same optional offline override is supported.
+- For a signed build, run `OPENJK_IOS_TEAM_ID=<your team> scripts/build-ios.sh`. Replace `<your team>` with your Xcode team ID.
 - Apps: `build-ios/apps/Release-iphoneos/OpenJK-SP.app` and `OpenJK-MP.app`.
 - IPAs: `build-ios/dist/OpenJK-SP-<version>.ipa` and `OpenJK-MP-<version>.ipa`. Checksums: `build-ios/dist/SHA256SUMS`.
 - `OPENJK_IOS_VERSION` sets the version. Its default is `0.1.0`.
-- The script refuses iOS SDK 27 or later. Select an Xcode 26.x installation with `DEVELOPER_DIR` if needed. SDK 26 builds have been tested on iOS 27; SDK 27 / UIScene work is separate (P8).
-- Build output paths above describe local products. They do not imply a CI artifact, release tag or published download exists for this candidate.
+- The script refuses iOS SDK 27 or later. Select an Xcode 26.x installation with `DEVELOPER_DIR` if needed.
+- CI uploads the `ipas` artifact. Tags named `ios-v*` publish both IPAs and checksums to a GitHub Release.
 
 ## Controls
 
@@ -146,11 +145,10 @@ The ANGLE opt-in described here is available in local development builds. The ex
 
 ## Settings
 
-### Choose a provider (local opt-in build)
+### Choose a provider
 
-SP and MP save settings separately. Tap Console and enter one command per line in the app you want to change. To try ANGLE and request 120 fps:
-
-**OpenJK SP console:**
+- SP and MP save settings separately. In the app you want to change, tap Console and enter one command per line.
+- To try ANGLE at 120 fps:
 
 ```text
 seta r_glesProvider angle
@@ -158,36 +156,20 @@ seta com_maxfps 120
 writeconfig openjk_sp.cfg
 ```
 
-**OpenJK MP console:**
-
-```text
-seta r_glesProvider angle
-seta com_maxfps 120
-writeconfig openjk.cfg
-```
-
-Fully close that app from the app switcher, then open it again. Returning from Home is not a full relaunch. A provider change is saved for the next launch (the console may call it “latched”). `vid_restart` applies resolution/resources but cannot switch providers during the current launch. Keep any provider/rate lines in that app's autoexec or launch arguments consistent with your choice.
-
-After relaunch, enter each name alone to check it:
-
-```text
-r_glesProvider
-r_glesProviderActive
-com_maxfps
-```
-
-`r_glesProvider` is the requested choice; `r_glesProviderActive` is read-only and reports the provider actually in use. Do not set or archive the active value. For ANGLE, it must read `angle`. The startup console/log also prints `iOS display: provider=angle requested=angle ...`; `provider=eagl requested=angle` means EAGL is running despite the ANGLE request. The `max_fps` field in this provider line is the requested rate, not measured display output.
-
-To return to EAGL at 60 fps, enter `seta r_glesProvider eagl` and `seta com_maxfps 60`, then `writeconfig openjk_sp.cfg` in SP or `writeconfig openjk.cfg` in MP. Fully close and reopen the app, and check `r_glesProviderActive` again. If the app cannot reach the console, add those two `seta` lines to its autoexec in Files while it is closed (`base/autoexec_sp.cfg` for SP, `base/autoexec.cfg` for MP), then relaunch. Edit those lines again before a later opt-in.
-
-The code attempts EAGL in the same launch if ANGLE fails during initial setup, before rendering starts. Those failure cases are not fully verified on devices; use the manual fallback above if needed. A failure after rendering starts can require a relaunch. Falling back to EAGL does not promise displayed 120 fps or automatically change your saved 120 choice to 60.
+- In MP, use `writeconfig openjk.cfg` instead.
+- Fully close the app from the app switcher, then open it again. A provider change applies only at the next launch; `vid_restart` does not switch it.
+- To check, enter `r_glesProvider` (your choice) and `r_glesProviderActive` (read-only, the provider in use). The startup log also prints `iOS display: provider=<active> requested=<choice>`.
+- To return to EAGL, use `seta r_glesProvider eagl`, then `writeconfig` and relaunch the same way.
+- If the console is unreachable, put the `seta` lines in that app's autoexec in Files while it is closed (`base/autoexec_sp.cfg` for SP, `base/autoexec.cfg` for MP).
+- If ANGLE fails during setup, the app tries EAGL in the same launch.
 
 ### Request 60 or 120 fps
 
-- Video → `120 Hz (ProMotion)` offers Off (60) / On (120) only on 120 Hz panels. Off is the fresh default. Apply restarts video; it does not select ANGLE. Its help describes the active provider: ANGLE requests 120 Hz with a device-dependent actual rate; EAGL may stay at 60 on iPhone. Use the provider instructions above to select ANGLE.
-- In either app's console, use `seta com_maxfps 120` to opt in or `seta com_maxfps 60` to return to 60. `reset com_maxfps` selects the corrected default of 60 only when you explicitly request a reset. None of these instructions requires deleting saved configs.
-- A rate change updates pacing without a full relaunch. At Auto resolution (`r_renderScale 0`), run `vid_restart` after changing the rate so the drawable uses the matching scale. Changing `r_renderScale` also needs `vid_restart`. If changing provider too, fully relaunch instead.
-- 120 needs a capable panel and suitable iOS display/power settings. Selecting 120 cannot override system refresh limits, Low Power Mode, workload or heat. The code caps targets at the panel maximum, lowers a target above 60 to 60 at Serious thermal state, and uses 30 at Critical. It leaves resolution scale and your saved requested rate unchanged. Device testing of these thermal transitions remains incomplete; see the evidence note.
+- Video → `120 Hz (ProMotion)` offers Off (60) / On (120) on 120 Hz panels. Apply restarts video. It does not change the provider.
+- Console: `seta com_maxfps 60|120` (choose one value).
+- Fresh configs default to 120 on 120 Hz panels, 60 elsewhere. Saved choices are kept. `reset com_maxfps` returns to the panel default.
+- A rate change updates pacing at once. At Auto resolution (`r_renderScale 0`), run `vid_restart` so the scale matches.
+- 120 needs a capable panel. Low Power Mode, workload and heat can lower it. The game caps at the panel maximum, drops to 60 at Serious thermal state and 30 at Critical.
 
 ### Other settings
 
@@ -197,7 +179,7 @@ The code attempts EAGL in the same launch if ANGLE fails during initial setup, b
 - Video → Resolution offers Auto, Native, 3/4 and Native/2 with the predicted pixel size. Native is the default. Apply restarts the video. For custom menus, use `seta r_renderScale 0|1|0.75|0.5` (choose one value), then `vid_restart`. `r_mode` stays a desktop selector.
 - `r_renderScale 1`: default Native resolution. `r_renderScale 0` selects Auto. A value from `0.5` to `1.0` sets a fixed scale. Lower values reduce detail and GPU load. Run `vid_restart` to apply a change.
 - Auto scale: below Apple GPU family 7 uses `0.6`; families 7 / 8 use `0.75`; family 9 or later uses `1.0`. With `com_maxfps` above 60, auto scale is multiplied by `0.8`. Scale is clamped to `0.5`–`1.0`, then raised for a drawable at least 540 px tall, up to full scale.
-- Existing saved configs keep their resolution and FPS values, including custom values and saved 120. Native resolution (`r_renderScale 1`) and 60 fps are fresh defaults, not an automatic migration.
+- Existing saved configs keep their resolution and FPS values. To adopt the defaults on a 120 Hz panel, enter `seta r_renderScale 1` and `seta com_maxfps 120`, then `vid_restart`.
 - Video → `FPS counter` offers Off / On. Apply shows a small gold frame-rate readout at the top right inside the safe area in a map. Off is the default.
 - `in_touchControls 0`: hide touch controls except the console button. `1`: default; hide them when a pad is connected, or a hardware keyboard and mouse/trackpad are both connected. A keyboard alone keeps touch look and buttons. `2`: keep them visible with these devices. Menus and the console show only the console button. Full-screen cinematics and SP in-game videos hide all controls in every mode; camera cutscenes still show them.
 - `in_touchAimMode 1`: default Free drag; `0` selects Joystick. Joystick turns at up to 210 degrees/second on each axis times its sensitivity. Free drag turns .20 degrees per view point times its sensitivity, without a frame-time multiplier. Both modes also apply the game zoom/FOV sensitivity once on each axis. Vehicle mouse yaw/pitch overrides are mouse coefficients and are not applied to touch angle rates.
@@ -225,7 +207,7 @@ The code attempts EAGL in the same launch if ANGLE fails during initial setup, b
 - `r_surfaceSprites` and `r_texturebits` use `CVAR_ARCHIVE_ND`. A value equal to the engine default is not saved. For example, `seta r_surfaceSprites 1` on A12 is lost at restart. Put such overrides in the app's autoexec file.
 - `r_gl4esEnv` defaults to `LIBGL_USEVBO=3`. gl4es reads it once at renderer init. Changes after init are ignored, including across `vid_restart`. Fully relaunch with the setting supplied at startup, for example `+set r_gl4esEnv LIBGL_USEVBO=3`.
 - `ios_frameStats 1` logs frame intervals, frame and present times, and memory use. `ios_frameStats 0` stops the log. `ios_frameStatsReset` starts a new measurement window.
-- `cg_drawFPS 1` shows the engine frame rate in a map. Display-link callbacks and the engine counter do not prove how many frames reached the display. Apple's Metal Performance HUD can help inspect ANGLE's Metal path; it does not draw over EAGL. Project displayed-frame measurements and their trace/export limits are linked in the [evidence note](ios-angle.md#observations-and-limits).
+- `cg_drawFPS 1` shows the engine frame rate in a map. For frames the display actually showed, plug the device in by USB and run `scripts/ios/shown-fps.py --device <name, OS version or id>`. It records a 3 second Metal System Trace and counts the app's displayed frames. Apple's Metal Performance HUD does not draw over EAGL.
 - Frame-stats CPU counters measure wall time. They can include driver waits. They are not pure CPU work counters.
 
 ### Aspect-correct 2D, FOV and safe area
