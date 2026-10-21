@@ -122,27 +122,28 @@ static void RatePlatformDefaults() {
 			Com_StartupVariable(NULL); // final command-line precedence
 			RegisterRate(); // actual late Sys_Init registration
 		};
-		startup("", "", false); Expect("com_maxfps", "60", "60");
+		const char *fresh = panel >= 120 ? "120" : "60";
+		startup("", "", false); Expect("com_maxfps", fresh, fresh);
 		Expect("r_texturebits", "32", "32");
 		if(gpu == IOS_CLASS_A12) Expect("r_surfaceSprites", "0", "0");
 		for(const char *savedRate : {"60", "120"}) {
 			startup(std::string("seta com_maxfps ") + savedRate + "\n", "", false);
-			Expect("com_maxfps", savedRate, "60");
+			Expect("com_maxfps", savedRate, fresh);
 			auto *fps = Cvar_FindVar("com_maxfps");
 			assert((fps->flags & (CVAR_ARCHIVE | CVAR_PLATFORM_DEFAULT)) == (CVAR_ARCHIVE | CVAR_PLATFORM_DEFAULT));
 			savedConfig.clear(); Cvar_WriteVariables(1);
 			// The real Sys_Init registration archives both saved rates.
 			assert(savedConfig.find(std::string("seta com_maxfps \"") + savedRate + "\"\n") != std::string::npos);
 			const std::string archived = savedConfig;
-			startup(archived, "", false); Expect("com_maxfps", savedRate, "60");
-			Cvar_Reset("com_maxfps"); Expect("com_maxfps", "60", "60");
-			Seta("com_maxfps", "120"); Cvar_Restart(qfalse); Expect("com_maxfps", "60", "60");
+			startup(archived, "", false); Expect("com_maxfps", savedRate, fresh);
+			Cvar_Reset("com_maxfps"); Expect("com_maxfps", fresh, fresh);
+			Seta("com_maxfps", savedRate); Cvar_Restart(qfalse); Expect("com_maxfps", fresh, fresh);
 		}
 		startup("seta com_maxfps 60\n", "seta com_maxfps 120\n", false);
-		Expect("com_maxfps", "120", "60");
+		Expect("com_maxfps", "120", fresh);
 		startup("seta com_maxfps 60\n", "seta com_maxfps 60\n", true);
-		Expect("com_maxfps", "120", "60");
-		printf("PASS: actual device/startup defaults panel=%d GPU=%d fresh60, saved60/120, archive/reload, reset/restart, autoexec120, command-line120\n",panel,gpu);
+		Expect("com_maxfps", "120", fresh);
+		printf("PASS: actual device/startup defaults panel=%d GPU=%d fresh%s, saved60/120, archive/reload, reset/restart, autoexec120, command-line120\n",panel,gpu,fresh);
 	}
 	while(cvar_vars) Cvar_Unset(cvar_vars);
 }
