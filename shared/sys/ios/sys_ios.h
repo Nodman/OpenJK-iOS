@@ -17,6 +17,11 @@ void Sys_IOS_PrepareDocuments( void );
 void Sys_IOS_WaitForAssets( void );
 
 // sys_ios_view.mm (P0b)
+void Sys_IOS_GetDrawableSize( struct SDL_Window *window, int *width, int *height );
+void Sys_IOS_ConfigureMetalView( struct SDL_Window *window, int drawables );
+float Sys_IOS_GetDrawableScale( struct SDL_Window *window );
+int Sys_IOS_MetalDrawableCount( struct SDL_Window *window );
+void Sys_IOS_LogView( struct SDL_Window *window );
 void Sys_IOS_SetDrawableScale( struct SDL_Window *window, float scale );
 void Sys_IOS_GetViewPointSize( struct SDL_Window *window, float *width, float *height );
 touchLayoutProfile_t Sys_IOS_TouchLayoutProfile( struct SDL_Window *window );
@@ -29,6 +34,11 @@ qboolean Sys_IOS_PointerConnected( void );
 
 // sdl_window.cpp (P0b)
 struct SDL_Window *GLimp_IOS_Window( void );
+void *GLimp_IOS_MetalView( struct SDL_Window *window );
+const char *GLimp_IOS_GLESProvider( void );
+void *GLimp_IOS_GetProcAddress( const char *name );
+qboolean GLimp_IOS_MakeCurrent( void );
+void GLimp_IOS_CheckPresentSize( void );
 
 // sys_ios_device.mm (stubs P0b; filled P0c T0c.0; P3 adds a line)
 float Sys_IOS_DefaultRenderScale( qboolean highRefresh );

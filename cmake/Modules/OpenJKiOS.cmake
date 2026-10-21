@@ -6,6 +6,7 @@ if(NOT CMAKE_GENERATOR STREQUAL "Xcode")
 endif()
 enable_language(OBJC OBJCXX)
 set(OPENJK_GLES ON)
+include(OpenJKiOSANGLE)
 include(OpenJKiOSDeps)	# T0a.2: SDL2, gl4es, GL4ES_INCLUDE_DIR
 
 # All iOS-only files live here; globbed so parallel phases never edit this list.
@@ -13,6 +14,9 @@ file(GLOB OPENJK_IOS_SOURCES CONFIGURE_DEPENDS
 	"${SharedDir}/sys/ios/*.h" "${SharedDir}/sys/ios/*.cpp" "${SharedDir}/sys/ios/*.mm")
 
 function(openjk_ios_configure_app target flavor)
+	set_source_files_properties("${SharedDir}/sys/ios/sys_ios_egl.mm"
+		TARGET_DIRECTORY ${target} PROPERTIES INCLUDE_DIRECTORIES
+		"${OPENJK_IOS_ANGLE_PREPARED}/libEGL.xcframework/ios-arm64/libEGL.framework/Headers;${OPENJK_IOS_ANGLE_PREPARED}/libGLESv2.xcframework/ios-arm64/libGLESv2.framework/Headers")
 	string(TOLOWER "${flavor}" flavor_lower)
 	set_target_properties(${target} PROPERTIES
 		OUTPUT_NAME "OpenJK-${flavor}"
@@ -22,6 +26,7 @@ function(openjk_ios_configure_app target flavor)
 		XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "org.openjk.ios.${flavor_lower}"
 		XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
 		XCODE_ATTRIBUTE_LLVM_LTO NO
+		XCODE_ATTRIBUTE_COPY_PHASE_STRIP NO	# preserve the qualified, already-stripped ANGLE bytes
 		XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES)	# the .mm files are written ARC-style
 	set_target_properties(${target} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks")
 	execute_process(COMMAND git rev-list --count HEAD

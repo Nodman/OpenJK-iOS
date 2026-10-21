@@ -573,13 +573,15 @@ if(BuildMPEngine)
 	if(OPENJK_IOS)
 		add_executable(${MPEngine} MACOSX_BUNDLE ${MPEngineFiles})
 		openjk_ios_configure_app(${MPEngine} MP)
+		set(_app_frameworks ${OPENJK_IOS_ANGLE_FRAMEWORKS})
 		if(NOT OPENJK_STATIC_MODULES)
-			# signed with the app; loaded from .app/Frameworks only
-			set_target_properties(${MPEngine} PROPERTIES
-				XCODE_EMBED_FRAMEWORKS "${MPGame};${MPCGame};${MPUI};${MPVanillaRenderer}"
-				XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES)
+			list(APPEND _app_frameworks ${MPGame};${MPCGame};${MPUI};${MPVanillaRenderer})
 			add_dependencies(${MPEngine} ${MPGame} ${MPCGame} ${MPUI} ${MPVanillaRenderer})
 		endif()
+		set_target_properties(${MPEngine} PROPERTIES
+			XCODE_EMBED_FRAMEWORKS "${_app_frameworks}"
+			XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY YES
+			XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES)
 	elseif(WIN32)
 		add_executable(${MPEngine} WIN32 ${MPEngineFiles})
 		if(UseInternalSDL2)

@@ -136,6 +136,22 @@ static char iosProMotionLabels[2][4] = { "Off", "On" };
 static char iosProMotionCaption[] = "120 Hz (ProMotion)";
 static char iosDrawFPSCaption[] = "FPS counter";
 
+static char iosProMotionHelp[64];
+
+static char *UI_IOS_ProMotionHelp( void )
+{
+	char provider[32];
+	const char *help = "120 Hz depends on the active graphics provider.";
+	DC->getCVarString( "r_glesProviderActive", provider, sizeof( provider ) );
+	if ( !Q_stricmp( provider, "angle" ) ) {
+		help = "ANGLE: request 120 Hz; actual rate varies by device.";
+	} else if ( !Q_stricmp( provider, "eagl" ) ) {
+		help = "EAGL: iPad up to 120 Hz; iPhone may stay at 60.";
+	}
+	Q_strncpyz( iosProMotionHelp, help, sizeof( iosProMotionHelp ) );
+	return iosProMotionHelp;
+}
+
 static qboolean UI_IOS_IsVideoMenu( const menuDef_t *menu )
 {
 	const char *name = menu ? menu->window.name : NULL;
@@ -178,7 +194,7 @@ static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
 			( !Q_stricmp( item->cvar, "ui_r_fullscreen" ) || !Q_stricmp( item->cvar, "ui_iosProMotion" ) ) ) {
 			item->cvar = "ui_iosProMotion";
 			item->text = iosProMotionCaption;
-			item->descText = "iPad: 120 Hz. iPhone: needs the Metal path (coming)";
+			item->descText = UI_IOS_ProMotionHelp();
 			item->cvarTest = "r_iosMaxRefresh";
 			item->enableCvar = "120";
 			item->cvarFlags = CVAR_SHOW;
@@ -236,6 +252,8 @@ void UI_IOS_RefreshVideoMenus( qboolean force )
 	const float custom = DC->getCVarValue( "r_renderScale" );
 	const char *names[] = { "Auto", "Native", "3/4", "Native/2", "Custom" };
 	int id, i;
+	// Existing items retain this buffer even when geometry and rate are unchanged.
+	UI_IOS_ProMotionHelp();
 	if ( !force && w == lastW && h == lastH && high == lastHigh && preset == lastPreset &&
 		base == lastBase && custom == lastCustom ) {
 		return;

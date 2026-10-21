@@ -19,6 +19,7 @@ on:
 
 jobs:
   msvc:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'angle-')
     name: Windows ${{ matrix.arch }} ${{ matrix.build_type }} (${{ matrix.portable }})
     runs-on: windows-2022
     strategy:
@@ -94,6 +95,7 @@ jobs:
           if-no-files-found: error
 
   ubuntu:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'angle-')
     name: Ubuntu ${{ matrix.arch }} ${{ matrix.build_type }} (${{ matrix.portable }})
     runs-on: ubuntu-22.04
     strategy:
@@ -186,6 +188,7 @@ jobs:
           if-no-files-found: error
 
   macos:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'angle-')
     name: macOS ${{ matrix.arch }} ${{ matrix.build_type }} (${{ matrix.portable}})
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -309,7 +312,7 @@ jobs:
             *.tar.gz
 
   create-release:
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && !startsWith(github.event.release.tag_name, 'angle-')
     needs: [msvc, ubuntu, macos]
     runs-on: ubuntu-22.04
 

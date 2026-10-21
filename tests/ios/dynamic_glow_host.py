@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise the actual SP/MP iOS menu patch, visibility and focus functions."""
 from pathlib import Path
+import os
 import subprocess
 
 root = Path(__file__).resolve().parents[2]
@@ -40,10 +41,24 @@ typedef struct { const char *name; rectDef_t rect; int flags; } window_t;
 typedef struct { int strDef,count; float cvarValue[32]; const char *cvarList[32]; } multiDef_t;
 typedef struct { window_t window; int type; const char *cvar,*text,*descText,*cvarTest,*enableCvar,*onFocus; int cvarFlags,disabled,focusSound; void *parent; TYPE_DATA float textalignx,textscale; int font,iMenuFont; rectDef_t textRect; } itemDef_t;
 typedef struct { window_t window; int itemCount,cursorItem; itemDef_t *items[1]; } menuDef_t;
-static int glowSupported;
-static float getValue(const char *name) { (void)name; return 0; }
+static menuDef_t Menus[4];
+static int menuCount;
+static int glowSupported, maxRefresh=120;
+static const char *activeProvider="", *requestedProvider="";
+static float getValue(const char *name) {
+ if(!strcmp(name,"r_iosNativeWidth")) return 1920;
+ if(!strcmp(name,"r_iosNativeHeight")) return 1080;
+ if(!strcmp(name,"ui_iosProMotion")) return 1;
+ if(!strcmp(name,"ui_r_mode")) return 0;
+ if(!strcmp(name,"r_iosBaseAutoScale") || !strcmp(name,"r_renderScale")) return 1;
+ assert(0);return 0;
+}
 static void getString(const char *name,char *value,int size) {
- assert(!strcmp(name,"r_iosDynamicGlow"));snprintf(value,size,"%d",glowSupported);
+ if(!strcmp(name,"r_iosDynamicGlow")) snprintf(value,size,"%d",glowSupported);
+ else if(!strcmp(name,"r_iosMaxRefresh")) snprintf(value,size,"%d",maxRefresh);
+ else if(!strcmp(name,"r_glesProviderActive")) snprintf(value,size,"%s",activeProvider);
+ else if(!strcmp(name,"r_glesProvider")) snprintf(value,size,"%s",requestedProvider);
+ else assert(0);
 }
 static int textWidth(const char *text,float scale,int font) { (void)scale;(void)font;return (int)strlen(text); }
 static void sound(int s,int c) { (void)s;(void)c; }
@@ -56,7 +71,79 @@ static void Item_RunScript(itemDef_t *item,const char *script) { (void)item;(voi
 '''
 
 checks = r'''
+static void checkProMotion(itemDef_t *item,multiDef_t *multi,const char *help) {
+ assert(!strcmp(item->descText,help));
+ assert(!strcmp(item->text,"120 Hz (ProMotion)"));
+ assert(!strcmp(item->cvar,"ui_iosProMotion"));
+ assert(!strcmp(item->cvarTest,"r_iosMaxRefresh") && !strcmp(item->enableCvar,"120") && item->cvarFlags==CVAR_SHOW);
+ assert(!multi->strDef && multi->count==2 && multi->cvarValue[0]==0 && multi->cvarValue[1]==1);
+ assert(!strcmp(multi->cvarList[0],"Off") && !strcmp(multi->cvarList[1],"On"));
+ maxRefresh=60;assert(!Item_EnableShowViaCvar(item,CVAR_SHOW));
+ maxRefresh=120;assert(Item_EnableShowViaCvar(item,CVAR_SHOW));
+}
+static void checkProviders(void) {
+ const char *names[]={"setupMenu","ingameSetupMenu","setup_menu","ingame_setup"};
+ const char *active[]={"angle","eagl","ANGLE","","unexpected"};
+ const char *requested[]={"eagl","angle","eagl","angle","angle"};
+ const char *angle="ANGLE: request 120 Hz; actual rate varies by device.";
+ const char *eagl="EAGL: iPad up to 120 Hz; iPhone may stay at 60.";
+ const char *unknown="120 Hz depends on the active graphics provider.";
+ const char *expected[5];
+ itemDef_t items[4];multiDef_t multis[4];const char *saved[4];int i,j;
+ expected[0]=angle;expected[1]=eagl;expected[2]=angle;expected[3]=unknown;expected[4]=unknown;
+ memset(Menus,0,sizeof Menus);memset(items,0,sizeof items);memset(multis,0,sizeof multis);menuCount=4;
+ for(i=0;i<4;i++) {
+  menuDef_t *menu=&Menus[i];itemDef_t *item=&items[i];
+  menu->window.name=names[i];menu->itemCount=1;menu->items[0]=item;
+  item->parent=menu;item->type=ITEM_TYPE_MULTI;item->window.name="fullscreen";item->cvar="ui_r_fullscreen";
+  SET_MULTI_POINTER
+ }
+ for(j=0;j<5;j++) {
+  activeProvider=active[j];requestedProvider=requested[j];
+  for(i=0;i<4;i++) {
+   UI_IOS_PatchVideoMenu(&Menus[i]);checkProMotion(&items[i],&multis[i],expected[j]);saved[i]=items[i].descText;
+  }
+  /* Stack churn and a second load must leave a persistent help string. */
+  { volatile char scratch[1024];for(i=0;i<1024;i++) scratch[i]=(char)i;(void)scratch; }
+  for(i=0;i<4;i++) { assert(!strcmp(saved[i],expected[j]));UI_IOS_PatchVideoMenu(&Menus[i]);checkProMotion(&items[i],&multis[i],expected[j]); }
+ }
+ activeProvider="";UI_IOS_RefreshVideoMenus(qtrue);
+ for(i=0;i<4;i++) saved[i]=items[i].descText;
+ for(i=0;i<4;i++) checkProMotion(&items[i],&multis[i],unknown);
+ activeProvider="angle";UI_IOS_RefreshVideoMenus(qfalse);
+ for(i=0;i<4;i++) checkProMotion(&items[i],&multis[i],angle);
+ activeProvider="eagl";requestedProvider="angle";UI_IOS_RefreshVideoMenus(qfalse);
+ for(i=0;i<4;i++) {
+  assert(items[i].descText==saved[i]);checkProMotion(&items[i],&multis[i],eagl);
+ }
+ activeProvider="unknown";UI_IOS_RefreshVideoMenus(qfalse);
+ for(i=0;i<4;i++) checkProMotion(&items[i],&multis[i],unknown);
+ UI_IOS_RefreshVideoMenus(qfalse);
+ for(i=0;i<4;i++) checkProMotion(&items[i],&multis[i],unknown);
+ items[0].descText="sentinel";UI_IOS_RefreshVideoMenus(qtrue);checkProMotion(&items[0],&multis[0],unknown);
+ /* Invalid and unrelated controls keep their original text and binding. */
+ for(j=0;j<7;j++) {
+  itemDef_t item=items[0];menuDef_t menu=Menus[0];
+  item.descText="sentinel";item.cvar="ui_r_fullscreen";item.parent=&menu;menu.items[0]=&item;
+  switch(j) {
+   case 0:menu.window.name="custom";break;
+   case 1:item.type=ITEM_TYPE_TEXT;break;
+   case 2:item.window.name=NULL;break;
+   case 3:item.cvar=NULL;break;
+   case 4:item.parent=NULL;break;
+   case 5:CLEAR_MULTI_POINTER break;
+   case 6:menu.items[0]=NULL;break;
+  }
+  UI_IOS_PatchVideoMenu(&menu);assert(!strcmp(item.descText,"sentinel"));
+  assert(item.cvar==NULL || !strcmp(item.cvar,"ui_r_fullscreen"));
+ }
+ { itemDef_t item=items[0];item.descText="sentinel";item.cvar="unrelated";Menus[0].items[0]=&item;
+   UI_IOS_PatchVideoMenu(&Menus[0]);assert(!strcmp(item.descText,"sentinel"));assert(!strcmp(item.cvar,"unrelated")); }
+ menuCount=0;UI_IOS_PatchVideoMenu(NULL);
+ puts("PASS: actual SP/MP ProMotion patch+refresh, providers/mismatches/unknown/transitions/force, persistent help, bindings/values/visibility, invalid controls; no cvar-write API exposed");
+}
 int main(void) {
+ checkProviders();
  const char *names[]={"setupMenu","ingameSetupMenu","setup_menu","ingame_setup"};
  int i;
  for(i=0;i<4;i++) {
@@ -90,22 +177,30 @@ int main(void) {
 }
 '''
 
+failures = []
 for tree, extension, compiler in [('code', 'cpp', 'c++'), ('codemp', 'c', 'cc')]:
-    source = (root / tree / ('ui/ui_shared.' + extension)).read_text()
+    source = (Path(os.environ.get('OPENJK_UI_SOURCE_ROOT', root)) / tree / ('ui/ui_shared.' + extension)).read_text()
     start = source.index('static char iosVideoLabels')
     end = source.index('void UI_IOS_RefreshVideoMenus', start)
-    block = source[start:end]
+    block = source[start:end] + function(source, 'void UI_IOS_RefreshVideoMenus( qboolean force )')
     block += function(source, 'qboolean Item_EnableShowViaCvar(itemDef_t *item, int flag)')
     block += function(source, 'qboolean Item_SetFocus(itemDef_t *item, float x, float y)')
     data_type = 'void *typeData;' if tree == 'code' else 'union { multiDef_t *multi; } typeData;'
     data = 'item.typeData' if tree == 'code' else 'item.typeData.multi'
-    harness = (stubs + block + checks).replace('TYPE_DATA', data_type)
+    scale_header = '#include "' + str(root / 'shared/qcommon/ios_render_scale.h') + '"\n'
+    harness = (scale_header + stubs + block + checks).replace('TYPE_DATA', data_type)
     harness = harness.replace('PARSE_CHAR', 'const char' if tree == 'code' else 'char')
     harness = harness.replace('ASSIGNMENT', data + '=&multi;').replace('CLEAR_DATA', data + '=NULL;')
+    harness = harness.replace('SET_MULTI_POINTER', data.replace('item.', 'item->') + '=&multis[i];')
+    harness = harness.replace('CLEAR_MULTI_POINTER', data + '=NULL;')
     path = out / (tree + '-glow.' + extension)
     path.write_text(harness)
     binary = out / (tree + '-glow')
     subprocess.run([compiler, '-std=c++11' if tree == 'code' else '-std=c99',
                     '-Wall', '-Wextra', '-Werror', str(path), '-o', str(binary)], check=True, cwd=root)
     print(tree + ':', flush=True)
-    subprocess.run([str(binary)], check=True, cwd=root)
+    result = subprocess.run([str(binary)], cwd=root)
+    if result.returncode:
+        failures.append(tree)
+if failures:
+    raise SystemExit('FAIL: ' + ', '.join(failures))

@@ -15,6 +15,10 @@
 #endif
 
 static std::string savedConfig;
+static std::string commandArgs[3];
+int Cmd_Argc( void ) { return 3; }
+char *Cmd_Argv( int arg ) { return const_cast<char *>( commandArgs[arg].c_str() ); }
+char *Cmd_ArgsFrom( int arg ) { assert( arg == 2 ); return Cmd_Argv( arg ); }
 qboolean com_errorEntered = qfalse;
 char *CopyString( const char *s ) { return strdup( s ); }
 #ifdef TEST_MP
@@ -50,6 +54,8 @@ static cvar_t *Seta( const char *name, const char *value ) {
 
 static void Expect( const char *name, const char *value, const char *reset ) {
 	cvar_t *var = Cvar_FindVar( name );
+	if(!var || strcmp(var->string,value) || strcmp(var->resetString,reset))
+		fprintf(stderr,"%s: expected %s/reset%s, got %s/reset%s\n",name,value,reset,var ? var->string : "missing",var ? var->resetString : "missing");
 	assert( var && !strcmp( var->string, value ) && !strcmp( var->resetString, reset ) );
 }
 
@@ -63,6 +69,85 @@ static void ReadSetas(std::istream &input) {
 		Seta(name.c_str(),value.c_str());
 	}
 }
+
+#ifdef __APPLE__
+// The complete device-default body is compiled as Objective-C++. Foundation's
+// process-memory query is real; GPU classification and panel maximum are inputs.
+#import <Foundation/Foundation.h>
+static int hostPanelFPS = 60, hostGPUClass = 0;
+enum { IOS_CLASS_A12, IOS_CLASS_A14, IOS_CLASS_A17 };
+static int Sys_IOS_Class() { return hostGPUClass; }
+int Sys_IOS_MaxFramesPerSecond() { return hostPanelFPS; }
+#include "device_defaults.inc"
+
+// Config storage and token transport are bounded stubs. Startup/capture/order,
+// command-line application and all cvar/reset/archive logic are production code.
+static std::string hostSaved, hostAutoexec;
+static int com_numConsoleLines;
+static char hostConsoleLine[] = "set com_maxfps 120";
+static char *com_consoleLines[] = {hostConsoleLine};
+qboolean Com_SafeMode() { return qfalse; }
+void IN_TouchRestoreDefaultBinds() {}
+void Cbuf_Execute() {}
+void Cbuf_ExecuteText(int, const char *text) {
+	std::istringstream input(text);
+	std::string command, file;
+	input >> command >> file;
+	if(command != "exec") { std::istringstream values(text); ReadSetas(values); return; }
+	if(file == "ios_default.cfg") {
+		std::ifstream cfg("shared/ios/ios_default.cfg"); assert(cfg.good()); ReadSetas(cfg);
+	} else if(file == "autoexec.cfg" || file == "autoexec_sp.cfg") {
+		std::istringstream cfg(hostAutoexec); ReadSetas(cfg);
+	} else if(file != "default.cfg" && file != "mpdefault.cfg") {
+		std::istringstream cfg(hostSaved); ReadSetas(cfg);
+	}
+}
+void Cmd_TokenizeString(const char *text) {
+	std::istringstream input(text);
+	for(auto &token : commandArgs) input >> token;
+}
+#include "startup_defaults.inc"
+#include "rate_registration.inc"
+
+static void RatePlatformDefaults() {
+	for(int panel : {60, 120}) for(int gpu : {IOS_CLASS_A12, IOS_CLASS_A14, IOS_CLASS_A17}) {
+		hostPanelFPS = panel; hostGPUClass = gpu;
+		auto startup = [&](const std::string &saved, const std::string &autoexec, bool optIn) {
+			while(cvar_vars) Cvar_Unset(cvar_vars);
+			cvar_cheats = Cvar_Get("host_cheats", "1", 0);
+			hostSaved = saved; hostAutoexec = autoexec;
+			com_numConsoleLines = optIn ? 1 : 0;
+			Com_StartupVariable(NULL); // early +set, as in Com_Init
+			Com_ExecuteCfg();
+			Com_StartupVariable(NULL); // final command-line precedence
+			RegisterRate(); // actual late Sys_Init registration
+		};
+		startup("", "", false); Expect("com_maxfps", "60", "60");
+		Expect("r_texturebits", "32", "32");
+		if(gpu == IOS_CLASS_A12) Expect("r_surfaceSprites", "0", "0");
+		for(const char *savedRate : {"60", "120"}) {
+			startup(std::string("seta com_maxfps ") + savedRate + "\n", "", false);
+			Expect("com_maxfps", savedRate, "60");
+			auto *fps = Cvar_FindVar("com_maxfps");
+			assert((fps->flags & (CVAR_ARCHIVE | CVAR_PLATFORM_DEFAULT)) == (CVAR_ARCHIVE | CVAR_PLATFORM_DEFAULT));
+			savedConfig.clear(); Cvar_WriteVariables(1);
+			// The real Sys_Init registration archives both saved rates.
+			assert(savedConfig.find(std::string("seta com_maxfps \"") + savedRate + "\"\n") != std::string::npos);
+			const std::string archived = savedConfig;
+			startup(archived, "", false); Expect("com_maxfps", savedRate, "60");
+			Cvar_Reset("com_maxfps"); Expect("com_maxfps", "60", "60");
+			Seta("com_maxfps", "120"); Cvar_Restart(qfalse); Expect("com_maxfps", "60", "60");
+		}
+		startup("seta com_maxfps 60\n", "seta com_maxfps 120\n", false);
+		Expect("com_maxfps", "120", "60");
+		startup("seta com_maxfps 60\n", "seta com_maxfps 60\n", true);
+		Expect("com_maxfps", "120", "60");
+		printf("PASS: actual device/startup defaults panel=%d GPU=%d fresh60, saved60/120, archive/reload, reset/restart, autoexec120, command-line120\n",panel,gpu);
+	}
+	while(cvar_vars) Cvar_Unset(cvar_vars);
+}
+
+#endif
 
 static void TouchPlatformDefaults(void) {
 	const char *names[]={"in_touchAimMode","in_touchLookScale","in_touchLookScaleY","in_touchDragScale","in_touchDragScaleY"};
@@ -91,6 +176,139 @@ static void TouchPlatformDefaults(void) {
 	Cvar_Restart(qfalse);registration();for(int i=0;i<5;++i) Expect(names[i],defaults[i],defaults[i]);
 	while(cvar_vars) Cvar_Unset(cvar_vars);
 	puts("PASS: actual ios_default.cfg fresh touch mode/H/V, saved old H/mode and explicit new Y, archive/reload/custom Y, cvar_restart");
+}
+
+static cvar_t *ConsoleSet( const char *command, const char *name, const char *value ) {
+	commandArgs[0] = command;
+	commandArgs[1] = name;
+	commandArgs[2] = value;
+	Cvar_Set_f();
+	return Cvar_FindVar( name );
+}
+
+static bool Writes( const char *name, const char *value ) {
+	savedConfig.clear();
+	Cvar_WriteVariables( 1 );
+	return savedConfig.find( std::string("seta ") + name + " \"" + value + "\"\n" ) != std::string::npos;
+}
+
+static int archiveFailures;
+static void CheckROMArchive( cvar_t *var, const char *attempt ) {
+	const bool archived = (var->flags & CVAR_ARCHIVE) != 0;
+	const bool modified = (cvar_modifiedFlags & CVAR_ARCHIVE) != 0;
+	savedConfig.clear();
+	Cvar_WriteVariables( 1 );
+	const bool written = savedConfig.find( std::string("seta ") + var->name + " " ) != std::string::npos;
+	if ( archived || modified || written ) {
+		printf( "FAIL: %s %s value=%s archive=%d modifiedArchive=%d serialized=%d\n",
+			var->name, attempt, var->string, archived, modified, written );
+		++archiveFailures;
+	}
+}
+
+static void ConsoleFlagRegressions( void ) {
+	const char *actualName = "r_glesProviderActive";
+	for ( const char *actual : {"eagl", "angle"} ) {
+		for ( bool adopt : {false, true} ) {
+			while ( cvar_vars ) Cvar_Unset( cvar_vars );
+			cvar_cheats = Cvar_Get( "host_cheats", "1", 0 );
+			if ( adopt ) {
+				cvar_t *user = ConsoleSet( "seta", actualName, "user-supplied" );
+				assert( (user->flags & (CVAR_USER_CREATED | CVAR_ARCHIVE)) == (CVAR_USER_CREATED | CVAR_ARCHIVE) );
+				assert( Writes( actualName, "user-supplied" ) );
+			}
+			cvar_t *var = Cvar_Get( actualName, "", CVAR_ROM );
+			var->flags = CVAR_ROM;
+			Cvar_Set( actualName, "" );
+			assert( !strcmp(var->string, "") && var->flags == CVAR_ROM );
+			Cvar_Set( actualName, actual );
+			assert( !strcmp(var->string, actual) );
+			const char *different = !strcmp(actual, "eagl") ? "angle" : "eagl";
+			for ( const char *value : {different, actual, different, actual} ) {
+				// Isolate each attempt from prior legitimate archive writes.
+				cvar_modifiedFlags = 0;
+				ConsoleSet( "seta", actualName, value );
+				assert( !strcmp(var->string, actual) && (var->flags & CVAR_ROM) );
+				CheckROMArchive( var, value );
+			}
+			Cvar_Set( actualName, different );
+			assert( !strcmp(var->string, different) && (var->flags & CVAR_ROM) );
+		}
+	}
+	puts( "CHECKED: ROM eagl/angle, different/same/repeated seta, exact adoption and engine force-set" );
+
+	while ( cvar_vars ) Cvar_Unset( cvar_vars );
+	cvar_cheats = Cvar_Get( "host_cheats", "1", 0 );
+	for ( const char *name : {"host_console_new", "host_console_writable", "host_console_same", "host_console_archived"} ) {
+		if ( strcmp(name, "host_console_new") )
+			Cvar_Get( name, !strcmp(name, "host_console_same") ? "next" : "old",
+				!strcmp(name, "host_console_archived") ? CVAR_ARCHIVE : 0 );
+		cvar_modifiedFlags = 0;
+		cvar_t *var = ConsoleSet( "seta", name, "next" );
+		assert( !strcmp(var->string, "next") && (var->flags & CVAR_ARCHIVE) );
+		assert( cvar_modifiedFlags & CVAR_ARCHIVE );
+		assert( Writes(name, "next") );
+		cvar_modifiedFlags = 0;
+		ConsoleSet( "seta", name, "next" );
+		assert( !strcmp(var->string, "next") && (var->flags & CVAR_ARCHIVE) );
+		assert( !(cvar_modifiedFlags & CVAR_ARCHIVE) && Writes(name, "next") );
+		ConsoleSet( "seta", name, "last" );
+		assert( !strcmp(var->string, "last") && Writes(name, "last") );
+	}
+	cvar_t *requested = Cvar_Get( "r_glesProvider", "eagl", CVAR_ARCHIVE | CVAR_LATCH );
+	for ( int i = 0; i < 3; ++i ) {
+		ConsoleSet( "seta", "r_glesProvider", "angle" );
+		assert( !strcmp(requested->string, "eagl") );
+		assert( requested->latchedString && !strcmp(requested->latchedString, "angle") );
+		assert( (requested->flags & (CVAR_ARCHIVE | CVAR_LATCH)) == (CVAR_ARCHIVE | CVAR_LATCH) );
+		assert( Writes("r_glesProvider", "angle") );
+		assert( !strcmp(requested->string, "eagl") && !strcmp(requested->latchedString, "angle") );
+	}
+	puts( "PASS: console writable/new/same/already-archived seta and repeated pending requested-provider serialization" );
+
+	for ( const char *command : {"setu", "sets"} ) {
+		const int info = !strcmp(command, "setu") ? CVAR_USERINFO : CVAR_SERVERINFO;
+		for ( bool rom : {false, true} ) {
+			for ( bool same : {false, true} ) {
+				const std::string name = std::string("host_") + command + (rom ? "_rom" : "_writable") + (same ? "_same" : "_different");
+				cvar_t *var = Cvar_Get( name.c_str(), "old", rom ? CVAR_ROM : 0 );
+				const char *value = same ? "old" : "next";
+				cvar_modifiedFlags = 0;
+				ConsoleSet( command, name.c_str(), value );
+				assert( !strcmp(var->string, rom ? "old" : value) );
+				assert( (var->flags & info) && (cvar_modifiedFlags & info) );
+				assert( !(var->flags & CVAR_ARCHIVE) );
+				cvar_modifiedFlags = 0;
+				ConsoleSet( command, name.c_str(), var->string );
+				assert( !(cvar_modifiedFlags & info) );
+				cvar_modifiedFlags = 0;
+				ConsoleSet( command, name.c_str(), "changed" );
+				assert( (var->flags & info) && (cvar_modifiedFlags & info) );
+				assert( !strcmp(var->string, rom ? "old" : "changed") );
+				if ( rom ) {
+					assert( var->flags & CVAR_ROM );
+					for ( const char *attempt : {"old", "changed", "old"} ) {
+						cvar_modifiedFlags = 0;
+						ConsoleSet( "seta", name.c_str(), attempt );
+						assert( !strcmp(var->string, "old") && (var->flags & CVAR_ROM) && (var->flags & info) );
+						CheckROMArchive( var, attempt );
+					}
+				}
+			}
+		}
+	}
+	cvar_modifiedFlags = 0;
+	cvar_t *plain = ConsoleSet( "set", "host_console_plain", "old" );
+	assert( !(plain->flags & (CVAR_ARCHIVE | CVAR_USERINFO | CVAR_SERVERINFO)) );
+	ConsoleSet( "set", "host_console_plain", "new" );
+	ConsoleSet( "set", "host_console_plain", "new" );
+	assert( !strcmp(plain->string, "new") && !Writes("host_console_plain", "new") );
+	cvar_t *rom = Cvar_Get( "host_plain_rom", "old", CVAR_ROM );
+	ConsoleSet( "set", "host_plain_rom", "new" );
+	ConsoleSet( "set", "host_plain_rom", "old" );
+	assert( !strcmp(rom->string, "old") && rom->flags == CVAR_ROM );
+	puts( "PASS: writable/ROM same/different setu/sets info flags and modified bits; plain set" );
+	while ( cvar_vars ) Cvar_Unset( cvar_vars );
 }
 
 int main() {
@@ -172,4 +390,10 @@ int main() {
 	puts( "PASS: creation, late/early registration, unchanged/empty/latched defaults, outside-window seta, archive/relaunch, reset, restart, desktop control" );
 	while ( cvar_vars ) Cvar_Unset( cvar_vars );
 	TouchPlatformDefaults();
+	#ifdef __APPLE__
+	RatePlatformDefaults();
+	#endif
+	ConsoleFlagRegressions();
+	printf( "%s: command-driven ROM archive regressions (%d failures)\n", archiveFailures ? "FAIL" : "PASS", archiveFailures );
+	return archiveFailures ? 1 : 0;
 }
