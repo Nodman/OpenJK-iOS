@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 import zipfile
 
 spec = importlib.util.spec_from_file_location('consumer', pathlib.Path(__file__).with_name('angle-consumer.py'))
@@ -52,7 +53,12 @@ class ConsumerTests(unittest.TestCase):
             self.assertTrue((dst / (name + '.xcframework') / 'ios-arm64' / (name + '.framework') / 'Headers').exists())
 
     def test_missing_release(self):
-        self.rejects('unresolved: release_commit', c.prepare, self.root / 'prepared')
+        pins = json.loads(c.PINS.read_text())
+        pins['release_commit'] = None
+        unresolved = self.root / 'pins.json'
+        unresolved.write_text(json.dumps(pins))
+        with unittest.mock.patch.object(c, 'PINS', unresolved):
+            self.rejects('unresolved: release_commit', c.prepare, self.root / 'prepared')
         self.assertFalse((self.root / 'prepared').exists())
 
     def test_missing_asset(self):
