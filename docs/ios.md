@@ -19,9 +19,17 @@
 
 ## Install
 
-- Install SideStore or AltStore. Add the [OpenJK source](https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/altstore/source.json), then install OpenJK SP, OpenJK MP, or both.
-- With Sideloadly, download the app's IPA from [GitHub Releases](https://github.com/Nodman/OpenJK-iOS/releases). Open it in Sideloadly and sign it with your Apple ID.
-- A free Apple ID needs re-signing every 7 days and allows 3 active apps. SideStore, OpenJK SP, and OpenJK MP use all three slots.
+The IPAs are unsigned. A sideloading tool signs them with your own Apple ID. Pick one:
+
+1. **SideStore** (recommended): set it up once with a computer using [iloader](https://iloader.app/), install the LocalDevVPN app, then refresh on the phone over Wi-Fi with no computer. Add the [OpenJK source](https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/altstore/source.json) and install OpenJK SP, OpenJK MP, or both. [SideStore guide](https://docs.sidestore.io/).
+2. **AltStore Classic**: run AltServer on a Mac or PC, install AltStore (iOS 17.4 or later), add the same source, install. AltServer refreshes the apps while the phone is on the same Wi-Fi or USB. [AltStore guide](https://faq.altstore.io/).
+3. **Sideloadly, Impactor or Xcode**: download the IPA from [GitHub Releases](https://github.com/Nodman/OpenJK-iOS/releases), open it in the tool, sign in with your Apple ID. Re-sign with the computer every 7 days. Use this when SideStore or AltStore cannot sign in.
+
+Limits set by Apple, not by the tools:
+
+- A free Apple ID: apps expire after 7 days and only 3 sideloaded apps can be active. SideStore or AltStore, OpenJK SP and OpenJK MP use all three slots.
+- A paid Apple Developer account ($99/year): apps last one year, no 3-app limit.
+- If signing fails with "provisioning profile is banned", use a fresh Apple ID or a paid account.
 - Each release includes `SHA256SUMS` for the IPAs.
 
 ## Copy game files
@@ -29,6 +37,7 @@
 - Launch each app once to create its `base` folder.
 - From your Jedi Academy installation's `GameData/base`, copy `assets0.pk3`, `assets1.pk3`, `assets2.pk3`, and `assets3.pk3`.
 - In Files, open **On My iPhone / iPad → OpenJK SP → base** or **OpenJK MP → base**. Put the files directly in `base`.
+- From a computer: connect the device by USB, open it in Finder (macOS) or iTunes (Windows), go to the Files tab, and drag the pk3 files into the app's `base` folder.
 - SP and MP each need their own copy. Their app folders are separate.
 - Return to the app and tap **Check again** in the **Game files needed** box.
 - Startup checks for `assets0.pk3` and `default.cfg` for SP or `mpdefault.cfg` for MP. The cfg can be inside a pk3. The retail files supply it; `assets0.pk3` alone is not enough.
