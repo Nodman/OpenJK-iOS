@@ -11,9 +11,7 @@ import re
 import subprocess
 
 NATIVE = re.compile(r'^_(gl|egl)[A-Z]')
-# SDL 2.32.10 SDL_uikitopenglview.m, verified against the retained P12 EAGL control.
-# Control OpenJK-MP SHA256: 6a3e232633ad3a11f57331508a28b25983f75130b550dcddf095336ed4f5e17a.
-# Tar SHA256: 5f5993c530f084535c65a6879e9b26ad441169b3e25d789d83287040a9ca5165.
+# GL calls made by SDL 2.32.10 SDL_uikitopenglview.m.
 SDL_GL = '''_glBindFramebuffer
 _glBindRenderbuffer
 _glBlitFramebuffer

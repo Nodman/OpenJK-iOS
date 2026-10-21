@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Exercise the actual SP/MP iOS menu patch, visibility and focus functions."""
 from pathlib import Path
-import os
 import subprocess
 
 root = Path(__file__).resolve().parents[2]
@@ -179,7 +178,7 @@ int main(void) {
 
 failures = []
 for tree, extension, compiler in [('code', 'cpp', 'c++'), ('codemp', 'c', 'cc')]:
-    source = (Path(os.environ.get('OPENJK_UI_SOURCE_ROOT', root)) / tree / ('ui/ui_shared.' + extension)).read_text()
+    source = (root / tree / ('ui/ui_shared.' + extension)).read_text()
     start = source.index('static char iosVideoLabels')
     end = source.index('void UI_IOS_RefreshVideoMenus', start)
     block = source[start:end] + function(source, 'void UI_IOS_RefreshVideoMenus( qboolean force )')

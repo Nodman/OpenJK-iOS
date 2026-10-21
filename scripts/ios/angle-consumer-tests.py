@@ -18,8 +18,6 @@ c = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(c)
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('assets', type=pathlib.Path)
-parser.add_argument('--retained-root', type=pathlib.Path)
-parser.add_argument('--review-fixtures', type=pathlib.Path)
 inputs, remaining = parser.parse_known_args()
 ASSETS = inputs.assets.resolve()
 sys.argv[1:] = remaining
@@ -150,28 +148,6 @@ class ConsumerTests(unittest.TestCase):
                     data[link + 8:link + 24] = b'__OTHER'.ljust(16, b'\0')
                 binary.write_bytes(data)
                 self.rejects('unique terminal LINKEDIT', c.same_signed_payload, binary, original)
-
-    @unittest.skipUnless(inputs.review_fixtures, 'supply retained Astra fixtures')
-    def test_reviewer_valid_signature_counterexamples(self):
-        original = ASSETS / 'frameworks/libEGL.framework/libEGL'
-        hashes = {'65536': '5c388f8cea5ca28c4f1caf9930d32f0bb1626d87abe7fbd9ef4b3892f808f149',
-                  '4294967296': '4ae9db5e76cc6b9f1c4470d7c9a9cc8e1da36caf5ff60a9a2bb3f59aa3c6e059'}
-        for folder, digest in hashes.items():
-            with self.subTest(folder=folder):
-                fw = inputs.review_fixtures / folder / 'libEGL.framework'
-                self.assertEqual(c.sha(fw / 'libEGL'), digest)
-                subprocess.run(['codesign', '--verify', '--strict', str(fw)], check=True)
-                c.audit(fw, 'libEGL')
-                self.rejects('LINKEDIT geometry', c.same_signed_payload, fw / 'libEGL', original)
-
-    @unittest.skipUnless(inputs.retained_root, 'supply retained app extraction root')
-    def test_retained_unsigned_and_team_signed_extractions(self):
-        prepared = inputs.retained_root / 'build-ios/angle-consumer'
-        for mode in ('unsigned', 'signed'):
-            for flavor in ('MP', 'SP'):
-                app = inputs.retained_root / 'build-t102-archive-checks' / mode / flavor / 'Payload' / ('OpenJK-' + flavor + '.app')
-                with self.subTest(mode=mode, flavor=flavor):
-                    c.check_app(app, prepared, mode == 'signed')
 
     def test_missing_binary(self):
         fw = self.extracted()

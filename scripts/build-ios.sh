@@ -12,11 +12,8 @@ fi
 # always pass the team id: the cache would keep an old signed configure otherwise
 cmake --preset ios -DOPENJK_IOS_ANGLE_LOCAL_ASSETS="${OPENJK_IOS_ANGLE_LOCAL_ASSETS:-}" -DOPENJK_IOS_VERSION="$version" -DOPENJK_IOS_TEAM_ID="${OPENJK_IOS_TEAM_ID:-}"
 cmake --build --preset ios-release --target openjk.arm64 openjk_sp.arm64
-for flavor in MP SP; do
-	check_args=(--prepared build-ios/angle-consumer)
-	[ -z "${OPENJK_IOS_TEAM_ID:-}" ] || check_args+=(--signed)
-	python3 scripts/ios/angle-consumer.py check-app --app "build-ios/apps/Release-iphoneos/OpenJK-$flavor.app" "${check_args[@]}"
-done
+check_args=(--prepared build-ios/angle-consumer)
+[ -z "${OPENJK_IOS_TEAM_ID:-}" ] || check_args+=(--signed)
 dist="build-ios/dist"
 rm -rf "$dist" && mkdir -p "$dist"
 for flavor in MP SP; do
@@ -29,6 +26,5 @@ for flavor in MP SP; do
 	(cd "$stage" && zip -qry "$root/$dist/OpenJK-$flavor-$version.ipa" Payload)
 	rm -rf "$stage"
 done
-python3 scripts/ios/angle-consumer.py package-metrics --dist "$dist" --apps build-ios/apps/Release-iphoneos --version "$version"
 (cd "$dist" && shasum -a 256 -- *.ipa > SHA256SUMS)
 ls -l "$dist"

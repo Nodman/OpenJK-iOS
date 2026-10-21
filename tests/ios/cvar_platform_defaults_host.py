@@ -1,25 +1,18 @@
 #!/usr/bin/env python3
 """Compile and run the real SP/MP cvar implementations with host service stubs."""
 from pathlib import Path
-import argparse
 import subprocess
 import sys
 import re
 
 root = Path(__file__).resolve().parents[2]
-parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--device-source', type=Path,
-                    default=root / 'shared/sys/ios/sys_ios_device.mm',
-                    help='Production device-default source for before/after control')
-args = parser.parse_args()
 out = root / 'build-desktop' / 't11-16-host'
 out.mkdir(parents=True, exist_ok=True)
 strings = out / 'q_string.o'
 subprocess.run(['cc', '-std=c99', '-ffunction-sections', '-fdata-sections',
                 '-I' + str(root / 'shared'), '-c', str(root / 'shared/qcommon/q_string.c'),
                 '-o', str(strings)], check=True, cwd=root)
-# Extract complete production functions, retaining the panel-dependent branch in
-# the before control. Only OS services and config/command transport are host stubs.
+# Extract real production functions; only OS services and config transport are stubbed.
 def function(source, signature):
     start = source.index(signature)
     brace = source.index('{', start)
@@ -30,7 +23,7 @@ def function(source, signature):
         end += 1
     return source[start:end] + '\n'
 
-device = args.device_source.read_text()
+device = (root / 'shared/sys/ios/sys_ios_device.mm').read_text()
 (out / 'device_defaults.inc').write_text(function(device, 'const char *Sys_IOS_DeviceDefaults('))
 failures = 0
 for tree in ('code', 'codemp'):

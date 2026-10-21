@@ -227,20 +227,6 @@ def check_app(app, prepared, signed):
     print('PASS:', app, 'signed' if signed else 'unsigned', pins['frameworks'])
 
 
-def package_metrics(dist, apps, version):
-    pins = json.loads(PINS.read_text())
-    metrics = {'identity': pins['identity'], 'recipe_sha256': pins['recipe_sha256'],
-               'args_sha256': pins['args_sha256'], 'use_custom_libcxx': False,
-               'qualified_stripped_frameworks': pins['frameworks'], 'apps': {}}
-    for flavor in ('MP', 'SP'):
-        ipa = dist / f'OpenJK-{flavor}-{version}.ipa'
-        app = apps / f'OpenJK-{flavor}.app'
-        metrics['apps'][flavor] = {'ipa_bytes': ipa.stat().st_size, 'ipa_sha256': sha(ipa),
-            'embedded_framework_bytes': {n: (app / 'Frameworks' / (n + '.framework') / n).stat().st_size for n in NAMES},
-            'ipa_delta_vs_matching_eagl': None}
-    (dist / 'ANGLE.json').write_text(json.dumps(metrics, indent=2) + '\n')
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
@@ -251,17 +237,11 @@ def main():
     check.add_argument('--app', type=pathlib.Path, required=True)
     check.add_argument('--prepared', type=pathlib.Path, required=True)
     check.add_argument('--signed', action='store_true')
-    metrics = sub.add_parser('package-metrics')
-    metrics.add_argument('--dist', type=pathlib.Path, required=True)
-    metrics.add_argument('--apps', type=pathlib.Path, required=True)
-    metrics.add_argument('--version', required=True)
     args = parser.parse_args()
     if args.command == 'prepare':
         prepare(args.destination, args.local_assets)
-    elif args.command == 'check-app':
-        check_app(args.app, args.prepared, args.signed)
     else:
-        package_metrics(args.dist, args.apps, args.version)
+        check_app(args.app, args.prepared, args.signed)
 
 
 if __name__ == '__main__':
