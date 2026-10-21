@@ -35,6 +35,7 @@ extern qboolean tr_distortionNegate; //tr_shadows.cpp
 extern void RB_CaptureScreenImage(void); //tr_shadows.cpp
 extern void RB_DistortionFill(void); //tr_shadows.cpp
 #ifdef OPENJK_GLES
+extern qboolean R_GLES_ANGLE;
 extern void (*R_NativeDiscardFramebuffer)( GLenum target, GLsizei count, const GLenum *attachments );
 #endif
 static void RB_DrawGlowOverlay();
@@ -1642,7 +1643,10 @@ const void	*RB_SwapBuffers( const void *data ) {
 	{
 		qglFlush();	// gl4es submission work stays inside the measured time
 		if ( R_NativeDiscardFramebuffer ) {	// depth/stencil are cleared next frame; do not store them
-			static const GLenum attachments[] = { 0x8D00 /* GL_DEPTH_ATTACHMENT */, 0x8D20 /* GL_STENCIL_ATTACHMENT */ };
+			const GLenum attachments[] = {
+				R_GLES_ANGLE ? 0x1801u /* GL_DEPTH */ : 0x8D00u /* GL_DEPTH_ATTACHMENT */,
+				R_GLES_ANGLE ? 0x1802u /* GL_STENCIL */ : 0x8D20u /* GL_STENCIL_ATTACHMENT */
+			};
 			R_NativeDiscardFramebuffer( 0x8D40 /* GL_FRAMEBUFFER */, 2, attachments );
 		}
 #ifdef OPENJK_IOS_PERF

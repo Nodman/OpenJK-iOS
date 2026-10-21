@@ -18,10 +18,15 @@ static void Sys_IOS_EnterBackground( void ) {
 	backgroundStartNs = clock_gettime_nsec_np( CLOCK_MONOTONIC );	// keeps counting while the device sleeps
 	Com_Printf( "iOS lifecycle: background\n" );
 	Sys_IOS_SetFramePaused( qtrue );	// no GL calls while in background
-	// iOS kills apps with GL work in flight in background; gl4es has nothing pending (swap ran qglFlush)
-	void ( *nativeFinish )( void ) = (void ( * )( void ))SDL_GL_GetProcAddress( "glFinish" );
-	if ( nativeFinish )
-		nativeFinish();
+	// Swap flushed gl4es; finish the selected driver's submitted work before suspension.
+	if ( GLimp_IOS_Window() ) {
+		if ( !GLimp_IOS_MakeCurrent() ) {
+			Com_Error( ERR_FATAL, "iOS context suspend failed; relaunch required" );
+			return;
+		}
+		void ( *nativeFinish )( void ) = (void ( * )( void ))GLimp_IOS_GetProcAddress( "glFinish" );
+		if ( nativeFinish ) nativeFinish();
+	}
 	SNDDMA_Activate( qfalse );
 	IN_TouchReleaseAll();
 	IN_GamepadReleaseAll();	// UIKit cancels touches, not pad buttons
@@ -43,6 +48,10 @@ static void Sys_IOS_EnterForeground( void ) {
 		Cbuf_ExecuteText( EXEC_INSERT, "disconnect\n" );
 	}
 #endif
+	if ( GLimp_IOS_Window() && !GLimp_IOS_MakeCurrent() ) {
+		Com_Error( ERR_FATAL, "iOS context resume failed; relaunch required" );
+		return;
+	}
 	SNDDMA_Activate( qtrue );
 	Sys_IOS_SetFramePaused( qfalse );
 }

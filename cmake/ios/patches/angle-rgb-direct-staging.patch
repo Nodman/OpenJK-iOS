@@ -1,0 +1,34 @@
+diff --git a/src/libANGLE/renderer/metal/TextureMtl.mm b/src/libANGLE/renderer/metal/TextureMtl.mm
+--- a/src/libANGLE/renderer/metal/TextureMtl.mm
++++ b/src/libANGLE/renderer/metal/TextureMtl.mm
+@@ -2517,6 +2517,30 @@
+                 conversionBytes <= kMaxRGBConversionBytes)
+             {
+                 const size_t conversionRowPitch = checkedRowPitch.ValueOrDie();
++                const mtl::Format &mtlFormat = contextMtl->getPixelFormat(dstFormat.id);
++                if (!imageDef.image->isCPUAccessible() ||
++                    PreferStagedTextureUploads(context, imageDef.image, mtlFormat,
++                                               mtl::StagingPurpose::Upload))
++                {
++                    mtl::BufferRef stagingBuffer;
++                    ANGLE_TRY(mtl::Buffer::MakeBuffer(contextMtl, conversionBytes, &stagingBuffer));
++                    uint8_t *stagingData = stagingBuffer->map(contextMtl).data();
++                    ANGLE_CHECK_GL_ALLOC(contextMtl, stagingData);
++                    loadFunctionInfo.loadFunction(
++                        contextMtl->getImageLoadContext(), mtlArea.size.width, mtlArea.size.height, 1,
++                        pixels, pixelsRowPitch, pixelsDepthPitch, stagingData, conversionRowPitch,
++                        conversionBytes);
++                    stagingBuffer->unmap(contextMtl);
++
++                    mtl::BlitCommandEncoder *encoder = GetBlitCommandEncoderForResources(
++                        contextMtl, {stagingBuffer.get(), imageDef.image.get()});
++                    CopyBufferToOriginalTextureIfDstIsAView(
++                        contextMtl, encoder, stagingBuffer, 0, conversionRowPitch, conversionBytes,
++                        mtlArea.size, imageDef.image, slice, mtl::kZeroNativeMipLevel, mtlArea.origin,
++                        0);
++                    return angle::Result::Continue;
++                }
++
+                 angle::MemoryBuffer conversion;
+                 ANGLE_CHECK_GL_ALLOC(contextMtl, conversion.resize(conversionBytes));
+                 loadFunctionInfo.loadFunction(contextMtl->getImageLoadContext(), mtlArea.size.width,

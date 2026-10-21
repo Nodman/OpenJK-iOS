@@ -1090,7 +1090,7 @@ void Cvar_Set_f( void ) {
 	}
 	switch( cmd[3] ) {
 		case 'a':
-			if( !( v->flags & CVAR_ARCHIVE ) ) {
+			if( !( v->flags & (CVAR_ARCHIVE | CVAR_ROM) ) ) {
 				v->flags |= CVAR_ARCHIVE;
 				cvar_modifiedFlags |= CVAR_ARCHIVE;
 			}

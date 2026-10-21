@@ -50,6 +50,15 @@ static qboolean R_GLES_ExtensionSupported( const char *extension ) {
 	}
 	return qfalse;
 }
+static qboolean R_GLES_NativeExtensionSupported( const char *extension ) {
+	auto getString = (const unsigned char *(*)(GLenum))R_NativeGetProcAddress( "glGetString" );
+	const char *list = getString ? (const char *)getString( GL_EXTENSIONS ) : nullptr;
+	size_t len = strlen( extension );
+	for ( const char *p = list; p && ( p = strstr( p, extension ) ); p += len ) {
+		if ( ( p == list || p[-1] == ' ' ) && ( p[len] == ' ' || p[len] == '\0' ) ) return qtrue;
+	}
+	return qfalse;
+}
 // e.g. +set r_gl4esEnv LIBGL_USEVBO=3,LIBGL_NOHIGHP=1; gl4es reads env only in initialize_gl4es()
 static void R_GLES_ApplyEnv( void ) {
 	char buf[256];
@@ -63,7 +72,8 @@ static void R_GLES_ApplyEnv( void ) {
 		ri.Printf( PRINT_ALL, "gl4es env %s=%s\n", tok, eq + 1 );
 	}
 }
-// native entry point; gl4es does not expose it, and it must act on SDL's bound view FBO
+qboolean R_GLES_ANGLE;
+static cvar_t *r_glesProviderActive;
 void (*R_NativeDiscardFramebuffer)( GLenum target, GLsizei count, const GLenum *attachments );
 #endif
 
@@ -307,6 +317,9 @@ void R_Splash()
 		qglEnd();
 	}
 
+#ifdef OPENJK_GLES
+	qglFlush();
+#endif
 	ri.WIN_Present( &window );
 }
 
@@ -752,8 +765,10 @@ static void InitOpenGL( void )
 
 		window = ri.WIN_Init(&windowDesc, &glConfig);
 #ifdef OPENJK_GLES
+		r_glesProviderActive = ri.Cvar_Get( "r_glesProviderActive", "eagl", CVAR_ROM );
+		R_GLES_ANGLE = !strcmp( r_glesProviderActive->string, "angle" ) ? qtrue : qfalse;
 		GLint sdlFbo = 0;
-		{
+		if ( !R_GLES_ANGLE ) {
 			void (*nativeGetIntegerv)( GLenum, GLint * ) = (void (*)( GLenum, GLint * ))R_NativeGetProcAddress( "glGetIntegerv" );
 			nativeGetIntegerv( 0x8CA6 /* GL_FRAMEBUFFER_BINDING */, &sdlFbo );
 		}
@@ -765,8 +780,10 @@ static void InitOpenGL( void )
 			initialize_gl4es();
 			gl4esStarted = qtrue;
 		}
-		R_NativeDiscardFramebuffer = (void (*)( GLenum, GLsizei, const GLenum * ))R_NativeGetProcAddress( "glDiscardFramebufferEXT" );
-		gl4es_setBorrowedMainFramebuffer( (unsigned int)sdlFbo );	// EAGL's drawable is not FBO 0
+		R_NativeDiscardFramebuffer = R_GLES_NativeExtensionSupported( "GL_EXT_discard_framebuffer" ) ?
+			(void (*)( GLenum, GLsizei, const GLenum * ))R_NativeGetProcAddress( "glDiscardFramebufferEXT" ) : nullptr;
+		ri.Printf( PRINT_ALL, "iOS GLES: provider=%s native_discard=%d\n", r_glesProviderActive->string, R_NativeDiscardFramebuffer != nullptr );
+		if ( !R_GLES_ANGLE ) gl4es_setBorrowedMainFramebuffer( (unsigned int)sdlFbo );
 #endif
 
 		// get our config strings
@@ -1288,6 +1305,9 @@ extern bool g_bTextureRectangleHack;
 
 void GfxInfo_f( void )
 {
+#ifdef OPENJK_GLES
+	if ( r_glesProviderActive ) ri.Printf( PRINT_ALL, "provider=%s\n", r_glesProviderActive->string );
+#endif
 	const char *enablestrings[] =
 	{
 		"disabled",

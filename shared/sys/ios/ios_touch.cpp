@@ -104,7 +104,7 @@ static qboolean IN_TouchOnConsole( float x, float y ) {
 
 static void IN_TouchUpdateLayout( void ) {
 	int w, h;
-	SDL_GL_GetDrawableSize( touchWindow, &w, &h );
+	Sys_IOS_GetDrawableSize( touchWindow, &w, &h );
 	float l, t, r, b;
 	Sys_IOS_GetSafeAreaPixels( touchWindow, &l, &t, &r, &b );
 	float pointW, pointH;

@@ -383,13 +383,15 @@ if(BuildSPEngine OR BuildJK2SPEngine)
 		if(OPENJK_IOS)
 			add_executable(${ProjectName} MACOSX_BUNDLE ${SPEngineFiles})
 			openjk_ios_configure_app(${ProjectName} SP)
+			set(_app_frameworks ${OPENJK_IOS_ANGLE_FRAMEWORKS})
 			if(NOT OPENJK_STATIC_MODULES)
-				# signed with the app; loaded from .app/Frameworks only
-				set_target_properties(${ProjectName} PROPERTIES
-					XCODE_EMBED_FRAMEWORKS "${SPGame};${SPRDVanillaRenderer}"
-					XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES)
+				list(APPEND _app_frameworks ${SPGame};${SPRDVanillaRenderer})
 				add_dependencies(${ProjectName} ${SPGame} ${SPRDVanillaRenderer})
 			endif()
+			set_target_properties(${ProjectName} PROPERTIES
+				XCODE_EMBED_FRAMEWORKS "${_app_frameworks}"
+				XCODE_EMBED_FRAMEWORKS_REMOVE_HEADERS_ON_COPY YES
+				XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES)
 		elseif(WIN32)
 			set(SPEngineWin32Files
 				"${SPDirName}/win32/resource.h"

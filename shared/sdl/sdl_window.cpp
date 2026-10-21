@@ -25,6 +25,11 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "rd-common/tr_types.h"
 #include "sys/sys_local.h"
 #include "sdl_icon.h"
+#ifdef OPENJK_IOS
+#include "sys/ios/sys_ios.h"
+#include "sys/ios/sys_ios_egl.h"
+#include <SDL_metal.h>
+#endif
 
 enum rserr_t
 {
@@ -148,8 +153,13 @@ void WIN_Present( window_t *window )
 	{
 #ifdef OPENJK_IOS
 		uint64_t presentStart = clock_gettime_nsec_np( CLOCK_UPTIME_RAW );
-		SDL_GL_SwapWindow(screen);
+		if ( !strcmp( GLimp_IOS_GLESProvider(), "angle" ) ) {
+			if ( !Sys_IOS_EGL_Present() ) Com_Error( ERR_FATAL, "ANGLE present failed; relaunch required" );
+		} else {
+			SDL_GL_SwapWindow(screen);
+		}
 		Sys_IOS_NotePresent( ( clock_gettime_nsec_np( CLOCK_UPTIME_RAW ) - presentStart ) / 1.0e6f );
+		GLimp_IOS_CheckPresentSize();
 #else
 		SDL_GL_SwapWindow(screen);
 #endif
@@ -157,7 +167,11 @@ void WIN_Present( window_t *window )
 		if ( r_swapInterval->modified )
 		{
 			r_swapInterval->modified = qfalse;
-			if ( SDL_GL_SetSwapInterval( r_swapInterval->integer ) == -1 )
+			if (
+#ifdef OPENJK_IOS
+				strcmp( GLimp_IOS_GLESProvider(), "angle" ) &&
+#endif
+				SDL_GL_SetSwapInterval( r_swapInterval->integer ) == -1 )
 			{
 				Com_DPrintf( "SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError() );
 			}
@@ -672,11 +686,69 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 }
 
 #ifdef OPENJK_IOS
-#include "sys/ios/sys_ios.h"
 #include "qcommon/ios_render_scale.h"
 static cvar_t *r_renderScale;
+static SDL_MetalView metalView;
+static bool providerChosen, angleAttempted, angleActive, checkEGLSize;
+static char requestedProvider[64];
+static const int angleDrawables = 3;
 
 SDL_Window *GLimp_IOS_Window( void ) { return screen; }
+void *GLimp_IOS_MetalView( SDL_Window *window ) { return window == screen ? metalView : nullptr; }
+const char *GLimp_IOS_GLESProvider( void ) { return angleActive ? "angle" : "eagl"; }
+void *GLimp_IOS_GetProcAddress( const char *name ) {
+	if ( !screen ) return nullptr;
+	return angleActive ? Sys_IOS_EGL_GetProcAddress( name ) : SDL_GL_GetProcAddress( name );
+}
+qboolean GLimp_IOS_MakeCurrent( void ) {
+	if ( !screen ) return qfalse;
+	if ( angleActive ) {
+		if ( Sys_IOS_EGL_MakeCurrent() ) return qtrue;
+		Com_Error( ERR_FATAL, "ANGLE make-current failed; relaunch required" );
+		return qfalse;
+	}
+	return opengl_context && SDL_GL_MakeCurrent( screen, opengl_context ) == 0 ? qtrue : qfalse;
+}
+
+void GLimp_IOS_CheckPresentSize( void ) {
+	if ( !checkEGLSize ) return;
+	checkEGLSize = false;
+	int width, height;
+	Sys_IOS_GetDrawableSize( screen, &width, &height );
+	Sys_IOS_EGL_CheckSize( width, height, true );
+}
+
+static void GLimp_IOS_ChooseProvider( void ) {
+	if ( providerChosen ) return;
+	providerChosen = true;
+	cvar_t *provider = Cvar_Get( "r_glesProvider", "eagl", CVAR_ARCHIVE | CVAR_LATCH );
+	cvar_t *active = Cvar_Get( "r_glesProviderActive", "", CVAR_ROM );
+	active->flags = CVAR_ROM;
+	Cvar_Set( "r_glesProviderActive", "" );
+	Q_strncpyz( requestedProvider, provider->string, sizeof(requestedProvider) );
+	if ( strcmp( requestedProvider, "angle" ) && strcmp( requestedProvider, "eagl" ) )
+		Com_Printf( "iOS GLES: invalid requested=%s; using eagl\n", requestedProvider );
+}
+
+static bool GLimp_IOS_CreateANGLE( void ) {
+	if ( !Sys_IOS_EGL_Probe() ) return false;
+	screen = SDL_CreateWindow( CLIENT_WINDOW_TITLE, 0, 0, 0, 0,
+		SDL_WINDOW_METAL | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_BORDERLESS );
+	if ( screen ) metalView = SDL_Metal_CreateView( screen );
+	void *layer = metalView ? SDL_Metal_GetLayer( metalView ) : nullptr;
+	if ( layer ) {
+		Sys_IOS_ConfigureMetalView( screen, angleDrawables );
+		if ( Sys_IOS_EGL_Attach( layer, Sys_IOS_GetNativeScale( screen ) ) ) return true;
+	} else {
+		Com_Printf( "iOS GLES: requested=angle failed stage=SDL-metal-view error=%s fallback=eagl\n", SDL_GetError() );
+	}
+	Sys_IOS_EGL_AbortInit();
+	if ( metalView ) SDL_Metal_DestroyView( metalView );
+	metalView = nullptr;
+	if ( screen ) SDL_DestroyWindow( screen );
+	screen = nullptr;
+	return false;
+}
 
 static float GLimp_IOS_RenderScale( void ) {
 	return IOS_RenderScale_Resolve( r_renderScale->value,
@@ -684,10 +756,14 @@ static float GLimp_IOS_RenderScale( void ) {
 		Cvar_VariableValue( "r_iosNativeWidth" ), Cvar_VariableValue( "r_iosNativeHeight" ) ).scale;
 }
 
-// Window and EAGL context live for the whole process: gl4es keeps GL object
-// ids and cannot be reset when a context is destroyed.
+// The provider context lives for the process because gl4es keeps its object IDs.
 static rserr_t GLimp_IOS_SetMode( glconfig_t *glConfig )
 {
+	GLimp_IOS_ChooseProvider();
+	if ( !screen && !angleAttempted && !strcmp( requestedProvider, "angle" ) ) {
+		angleAttempted = true;
+		angleActive = GLimp_IOS_CreateANGLE();
+	}
 	if ( !screen ) {
 		SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES );
 		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 2 );
@@ -709,9 +785,10 @@ static rserr_t GLimp_IOS_SetMode( glconfig_t *glConfig )
 			screen = NULL;
 			return RSERR_UNKNOWN;
 		}
-	} else {
-		SDL_GL_MakeCurrent( screen, opengl_context );
+	} else if ( !GLimp_IOS_MakeCurrent() ) {
+		return RSERR_UNKNOWN;
 	}
+	Cvar_Set( "r_glesProviderActive", GLimp_IOS_GLESProvider() );
 	float w, h;
 	Sys_IOS_GetViewPointSize( screen, &w, &h );
 	const float nativeScale = Sys_IOS_GetNativeScale( screen );
@@ -729,14 +806,30 @@ static rserr_t GLimp_IOS_SetMode( glconfig_t *glConfig )
 	Cvar_SetValue( "r_iosBaseAutoScale", Sys_IOS_DefaultRenderScale( qfalse ) );
 	Cvar_SetValue( "r_iosMaxRefresh", Sys_IOS_MaxFramesPerSecond() );
 	Cvar_SetValue( "r_iosDynamicGlow", 0 );
-	Sys_IOS_SetDrawableScale( screen, GLimp_IOS_RenderScale() );
-	SDL_GL_GetDrawableSize( screen, &glConfig->vidWidth, &glConfig->vidHeight );
+	const float renderScale = GLimp_IOS_RenderScale();
+	if ( angleActive && fabs( Sys_IOS_GetDrawableScale( screen ) - nativeScale * renderScale ) >= 0.001 ) {
+		// ANGLE detects resize only when acquiring a new drawable.
+		if ( !Sys_IOS_EGL_Present() ) {
+			Com_Error( ERR_FATAL, "ANGLE pre-resize present failed; relaunch required" );
+			return RSERR_UNKNOWN;
+		}
+	}
+	Sys_IOS_SetDrawableScale( screen, renderScale );
+	Sys_IOS_GetDrawableSize( screen, &glConfig->vidWidth, &glConfig->vidHeight );
 	glConfig->colorBits = 32;
 	glConfig->depthBits = 24;
 	glConfig->stencilBits = 8;
 	glConfig->isFullscreen = qtrue;
 	glConfig->displayFrequency = Sys_IOS_MaxFramesPerSecond();
 	Com_Printf( "iOS drawable %d x %d\n", glConfig->vidWidth, glConfig->vidHeight );
+	Com_Printf( "iOS display: provider=%s requested=%s drawable=%dx%d scale=%.3f drawables=%d max_fps=%d r_renderScale=%.3f\n",
+		Cvar_VariableString( "r_glesProviderActive" ), requestedProvider, glConfig->vidWidth, glConfig->vidHeight,
+		Sys_IOS_GetDrawableScale( screen ), angleActive ? Sys_IOS_MetalDrawableCount( screen ) : 0, Cvar_VariableIntegerValue( "com_maxfps" ), r_renderScale->value );
+	Sys_IOS_LogView( screen );
+	if ( angleActive ) {
+		Sys_IOS_EGL_CheckSize( glConfig->vidWidth, glConfig->vidHeight, false );
+		checkEGLSize = true;
+	}
 	return RSERR_OK;
 }
 #endif
@@ -978,10 +1071,25 @@ void WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte bl
 
 void *WIN_GL_GetProcAddress( const char *proc )
 {
+#ifdef OPENJK_IOS
+	return GLimp_IOS_GetProcAddress( proc );
+#else
 	return SDL_GL_GetProcAddress( proc );
+#endif
 }
 
 qboolean WIN_GL_ExtensionSupported( const char *extension )
 {
+#ifdef OPENJK_IOS
+	auto getString = (const unsigned char *(*)(unsigned))GLimp_IOS_GetProcAddress( "glGetString" );
+	if ( !getString || !extension || !*extension || strchr( extension, ' ' ) ) return qfalse;
+	const char *list = (const char *)getString( 0x1F03 );
+	size_t len = strlen( extension );
+	for ( const char *p = list; p && ( p = strstr( p, extension ) ); p += len ) {
+		if ( ( p == list || p[-1] == ' ' ) && ( p[len] == ' ' || p[len] == '\0' ) ) return qtrue;
+	}
+	return qfalse;
+#else
 	return SDL_GL_ExtensionSupported( extension ) == SDL_TRUE ? qtrue : qfalse;
+#endif
 }
