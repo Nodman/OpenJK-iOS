@@ -14,7 +14,7 @@ import unittest
 import unittest.mock
 import zipfile
 
-spec = importlib.util.spec_from_file_location('consumer', pathlib.Path(__file__).with_name('angle-consumer.py'))
+spec = importlib.util.spec_from_file_location('consumer', pathlib.Path(__file__).resolve().parents[2] / 'scripts/ios/angle-consumer.py')
 c = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(c)
 parser = argparse.ArgumentParser(add_help=False)
