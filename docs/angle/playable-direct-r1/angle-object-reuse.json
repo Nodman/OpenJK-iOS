@@ -1,0 +1,2846 @@
+[
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/Float16ToFloat32.o",
+    "before": "30113cd499bfaefe6a5e80dc471bbafcbcd208ff90e1fe56b81de6795e95c348",
+    "after": "30113cd499bfaefe6a5e80dc471bbafcbcd208ff90e1fe56b81de6795e95c348",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/MemoryBuffer.o",
+    "before": "4d69668e2563493d480d9ee5eb9cf018be86a326bb0c1b11e0a816ed8b5dbfa3",
+    "after": "4d69668e2563493d480d9ee5eb9cf018be86a326bb0c1b11e0a816ed8b5dbfa3",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/PackedEGLEnums_autogen.o",
+    "before": "9a5c9001bd1bc806fbb7450dcd8eb059d189ebe9dc13eea31da0683aa62d2c63",
+    "after": "9a5c9001bd1bc806fbb7450dcd8eb059d189ebe9dc13eea31da0683aa62d2c63",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/PackedEnums.o",
+    "before": "472236176d1c7a9f1d025eecd24270531aba681027641201bce9cf8ba16c099d",
+    "after": "472236176d1c7a9f1d025eecd24270531aba681027641201bce9cf8ba16c099d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/PackedGLEnums_autogen.o",
+    "before": "fcd4b6999322813e6b53eb96cdd1688312b8a462108e618ee7c4970d504708b8",
+    "after": "fcd4b6999322813e6b53eb96cdd1688312b8a462108e618ee7c4970d504708b8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/PoolAlloc.o",
+    "before": "375d216a350fc38fb10b9a7d7b3998b360e9173d6f178be6eaa978bfb46942ae",
+    "after": "375d216a350fc38fb10b9a7d7b3998b360e9173d6f178be6eaa978bfb46942ae",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/SimpleMutex.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/WorkerThread.o",
+    "before": "ff9a4d6d251a686f7e6856cd55f42dcab7d80ee42e3b82567921e709a18b93ca",
+    "after": "ff9a4d6d251a686f7e6856cd55f42dcab7d80ee42e3b82567921e709a18b93ca",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/aligned_memory.o",
+    "before": "6b1ade27cf28a63e7ea769fd4cbd796cc31f9144922c4003ea9c47450e13697b",
+    "after": "6b1ade27cf28a63e7ea769fd4cbd796cc31f9144922c4003ea9c47450e13697b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/android_util.o",
+    "before": "f20fd6624e313f554a0bc016e94dcb9365a511eb723b7f2be9057927b5276c25",
+    "after": "f20fd6624e313f554a0bc016e94dcb9365a511eb723b7f2be9057927b5276c25",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/angleutils.o",
+    "before": "4c693be6a5ed8b06f6782c71cf528a0ee00e9d3e0231fac4fb05408412416bb6",
+    "after": "4c693be6a5ed8b06f6782c71cf528a0ee00e9d3e0231fac4fb05408412416bb6",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/apple_platform_utils.o",
+    "before": "c5d826254aea63b2ef231711d2af6c38e85bbd700661b41dac2ad68dad98fa7d",
+    "after": "c5d826254aea63b2ef231711d2af6c38e85bbd700661b41dac2ad68dad98fa7d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/backtrace_utils_noop.o",
+    "before": "e98af86254359ddf0fa9a4eb34c0843580d00cce790f255c2d2f8dc64825412b",
+    "after": "e98af86254359ddf0fa9a4eb34c0843580d00cce790f255c2d2f8dc64825412b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/debug.o",
+    "before": "99069d81b09cab4f69cfccba57085dfdd41d21a3ea93d2004d538826f4fae7d3",
+    "after": "99069d81b09cab4f69cfccba57085dfdd41d21a3ea93d2004d538826f4fae7d3",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/entry_points_enum_autogen.o",
+    "before": "39afc9efe9d82d60059145e8c493fc8b5f18346b545489145c998694bbaffa57",
+    "after": "39afc9efe9d82d60059145e8c493fc8b5f18346b545489145c998694bbaffa57",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/event_tracer.o",
+    "before": "8e576241f9ddf7e765a75fdd8cef045da9c9dcb833d872b1e59d772640791d11",
+    "after": "8e576241f9ddf7e765a75fdd8cef045da9c9dcb833d872b1e59d772640791d11",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/mathutil.o",
+    "before": "6526fa5e4d521630a8a6756463c899e84d2c1ab7546ae3d49bd0fa4b603c4526",
+    "after": "6526fa5e4d521630a8a6756463c899e84d2c1ab7546ae3d49bd0fa4b603c4526",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/matrix_utils.o",
+    "before": "307ab8edee0bc22c1ba4d717f9a6d292a16ec263ce003529fea69f7600471eb8",
+    "after": "307ab8edee0bc22c1ba4d717f9a6d292a16ec263ce003529fea69f7600471eb8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/platform_helpers.o",
+    "before": "4b317d247d693d990cab18a37773a71d328ff5d0222c7a9300c3b69c602d577b",
+    "after": "4b317d247d693d990cab18a37773a71d328ff5d0222c7a9300c3b69c602d577b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/sha1.o",
+    "before": "c94b89443f34c2414f5988ca95c8cacf674a333a25a1ae191b6e6f5829396fc6",
+    "after": "c94b89443f34c2414f5988ca95c8cacf674a333a25a1ae191b6e6f5829396fc6",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/string_utils.o",
+    "before": "eb6235302f6eaf554b071791248594af50cb3542572c39e3beee62785b94015f",
+    "after": "eb6235302f6eaf554b071791248594af50cb3542572c39e3beee62785b94015f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/system_utils.o",
+    "before": "d101d2edb692feff4204faa360ad6a442b0df184c36fd19c0dd612c3ce5fdc8d",
+    "after": "d101d2edb692feff4204faa360ad6a442b0df184c36fd19c0dd612c3ce5fdc8d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/system_utils_apple.o",
+    "before": "a2ff313f5c9895611946926709b0f57038652b0f74bd63928db43ee557874b65",
+    "after": "a2ff313f5c9895611946926709b0f57038652b0f74bd63928db43ee557874b65",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/system_utils_ios.o",
+    "before": "f9d3f286db9f1cc96390a51c03110ef19357b812431f188c1626deb787cc2193",
+    "after": "f9d3f286db9f1cc96390a51c03110ef19357b812431f188c1626deb787cc2193",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/system_utils_posix.o",
+    "before": "23f55daa635cda9c712c09faf1f2ff7d4dedbcaa8a8a939f71e863d23487dc28",
+    "after": "23f55daa635cda9c712c09faf1f2ff7d4dedbcaa8a8a939f71e863d23487dc28",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/tls.o",
+    "before": "e413dd88e48a80939b8c6ea5fd1353af1853b7fff1db0aa5144566a65ee28477",
+    "after": "e413dd88e48a80939b8c6ea5fd1353af1853b7fff1db0aa5144566a65ee28477",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/trace_categories.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/uniform_type_info_autogen.o",
+    "before": "908b5f0da4f3fbff2a085a2ea0677bfdfceaefb77006f96722d3b80fa7c51f7f",
+    "after": "908b5f0da4f3fbff2a085a2ea0677bfdfceaefb77006f96722d3b80fa7c51f7f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common/utilities.o",
+    "before": "e0b4d4bed9ba5ad07f6325508ef7d449e34df9cb6fec4518c044fca18e6ce087",
+    "after": "e0b4d4bed9ba5ad07f6325508ef7d449e34df9cb6fec4518c044fca18e6ce087",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_common_shader_state/CompiledShaderState.o",
+    "before": "d5408191f9dabce52cf375590cedd9cc1ab903da3eb2c5694b1b5f0efc291c92",
+    "after": "d5408191f9dabce52cf375590cedd9cc1ab903da3eb2c5694b1b5f0efc291c92",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_frame_capture_mock/FrameCapture_mock.o",
+    "before": "449f06a32f792c8165efed79f755c4c741bf66ef2f520e898c63ffaff8445d00",
+    "after": "449f06a32f792c8165efed79f755c4c741bf66ef2f520e898c63ffaff8445d00",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_frame_capture_mock/serialize_mock.o",
+    "before": "d833e068a8a9f74e9c5173b200685050b8d2048ac40fc20508ebc4c9be00c942",
+    "after": "d833e068a8a9f74e9c5173b200685050b8d2048ac40fc20508ebc4c9be00c942",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_gpu_info_util/SystemInfo.o",
+    "before": "0fe01f3f870ee47a3af07a493ce3678bd416e18fda3ca1005f18de007c282151",
+    "after": "0fe01f3f870ee47a3af07a493ce3678bd416e18fda3ca1005f18de007c282151",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_gpu_info_util/SystemInfo_apple.o",
+    "before": "3e82eb8d3a0c73d6b2939336c1281edd6698e980c0acb4b3357deaa83c5a97c9",
+    "after": "3e82eb8d3a0c73d6b2939336c1281edd6698e980c0acb4b3357deaa83c5a97c9",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_gpu_info_util/SystemInfo_ios.o",
+    "before": "2ed38d4365ca73fa7c4457fb54cf2fa04256b75e6d2e2ed4d3816cdc43abdb76",
+    "after": "2ed38d4365ca73fa7c4457fb54cf2fa04256b75e6d2e2ed4d3816cdc43abdb76",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_gpu_info_util/SystemInfo_vulkan.o",
+    "before": "0cd9db28a8d9ba2690d75151a9d7b1ad884802cd8e3f4e126863c1096deaaf9a",
+    "after": "0cd9db28a8d9ba2690d75151a9d7b1ad884802cd8e3f4e126863c1096deaaf9a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_image_util/AstcDecompressor.o",
+    "before": "e2241cfaf6acb85ad9a147eaea9d6c1f74f80bc5fb01d4c8c913aefaad6a3d99",
+    "after": "e2241cfaf6acb85ad9a147eaea9d6c1f74f80bc5fb01d4c8c913aefaad6a3d99",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_image_util/copyimage.o",
+    "before": "3ab9724ebe0180e643e47aae1e6d2e31947d2d99130e425747bf93cb7a5f59aa",
+    "after": "3ab9724ebe0180e643e47aae1e6d2e31947d2d99130e425747bf93cb7a5f59aa",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_image_util/imageformats.o",
+    "before": "d98fc2d39c3b2c1287de4162c5fa421a1b82b9e26b3ae9b22dd1debf290b3b61",
+    "after": "d98fc2d39c3b2c1287de4162c5fa421a1b82b9e26b3ae9b22dd1debf290b3b61",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_image_util/loadimage.o",
+    "before": "6b3e111c9c2767039180469ecb66eb7d1145174e2e58ab51b224b65dabd23f21",
+    "after": "6b3e111c9c2767039180469ecb66eb7d1145174e2e58ab51b224b65dabd23f21",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_image_util/loadimage_astc.o",
+    "before": "9134506663e6300aef5c1b6f7ae14c1e6dbc430a900e782a8a2604fbc163ab7e",
+    "after": "9134506663e6300aef5c1b6f7ae14c1e6dbc430a900e782a8a2604fbc163ab7e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_image_util/loadimage_etc.o",
+    "before": "6b9e1399426f512218e989b96d16c70a6158402fe76cafc0a19e2d9cb8b60950",
+    "after": "6b9e1399426f512218e989b96d16c70a6158402fe76cafc0a19e2d9cb8b60950",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_image_util/loadimage_paletted.o",
+    "before": "ba880e2499a8d3301779f59554990bb0dab63badb43e95481669f7264c90c2e6",
+    "after": "ba880e2499a8d3301779f59554990bb0dab63badb43e95481669f7264c90c2e6",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_image_util/storeimage_paletted.o",
+    "before": "4f913416eaa39fb9b601c6b4afc5201021cb883f6a665c156a7cd889d2d44296",
+    "after": "4f913416eaa39fb9b601c6b4afc5201021cb883f6a665c156a7cd889d2d44296",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/angle_version_info/angle_version_info.o",
+    "before": "ee9ed10469c1b3497d8f2209b63ab2a09823c3ecc41a89402aa4a2cada169bba",
+    "after": "bec0d4fd5f5ffeefd7d2c1da521a39af5cdd812532e9bcc58febe11915496057",
+    "reused_identical": false
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/AttributeMap.o",
+    "before": "c4e12b3b1bc5904916356b94639ad69137ac979512082b8b899f591cd7a602ef",
+    "after": "c4e12b3b1bc5904916356b94639ad69137ac979512082b8b899f591cd7a602ef",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/BlobCache.o",
+    "before": "902b98da8ceea226802cb3bad3d0e4b7936d4cfcec6699aed78ceeba25a7ca50",
+    "after": "902b98da8ceea226802cb3bad3d0e4b7936d4cfcec6699aed78ceeba25a7ca50",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Buffer.o",
+    "before": "ae5be2775879d06a52370e987d7c1796f5d8c2284b679ad46f97288719f7811a",
+    "after": "ae5be2775879d06a52370e987d7c1796f5d8c2284b679ad46f97288719f7811a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/BufferImpl.o",
+    "before": "cbd5ccd6b72ff769b633e5517e68ebe063a0ca55ada798336d8ffbc519ed7778",
+    "after": "cbd5ccd6b72ff769b633e5517e68ebe063a0ca55ada798336d8ffbc519ed7778",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Caps.o",
+    "before": "eff55d1cc29dfa72f6ae5a24d891ac29df8889e474b48b40633e5e6ab31fe98f",
+    "after": "eff55d1cc29dfa72f6ae5a24d891ac29df8889e474b48b40633e5e6ab31fe98f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Compiler.o",
+    "before": "f120f593fac1733366d1b50026f6bc590c71628140e0c0c27eee7461127c6071",
+    "after": "f120f593fac1733366d1b50026f6bc590c71628140e0c0c27eee7461127c6071",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Config.o",
+    "before": "5a81fdc389de24141ea20979d509586778ffbf79aa420e1ab17ab39b647c6444",
+    "after": "5a81fdc389de24141ea20979d509586778ffbf79aa420e1ab17ab39b647c6444",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Context.o",
+    "before": "db8a0f2f5b63caf443274376bd919666ecaf750211e12853367ea83f6f399355",
+    "after": "db8a0f2f5b63caf443274376bd919666ecaf750211e12853367ea83f6f399355",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ContextImpl.o",
+    "before": "2d9bf84d16f8c0190d8085afe2b9235c93c57ec064c65f554c77d62e6a69229d",
+    "after": "2d9bf84d16f8c0190d8085afe2b9235c93c57ec064c65f554c77d62e6a69229d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ContextMutex.o",
+    "before": "3effc407c8181f603c82e62a358018fe572a43fcc404821c3930aea099727cb7",
+    "after": "3effc407c8181f603c82e62a358018fe572a43fcc404821c3930aea099727cb7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Context_gles_1_0.o",
+    "before": "e623718927d7150bc038cfd7fa40b1d8fa73913a6f47c609c2460733ec0393f7",
+    "after": "e623718927d7150bc038cfd7fa40b1d8fa73913a6f47c609c2460733ec0393f7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Debug.o",
+    "before": "36d385ebba5b8acb2050f818495836be65be9fa9aaed39a734033a957aff4dc6",
+    "after": "36d385ebba5b8acb2050f818495836be65be9fa9aaed39a734033a957aff4dc6",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Device.o",
+    "before": "85d65c8163e36085ce659c73db1f0be27d845b1a8ac628c54964b2abae28e0e8",
+    "after": "85d65c8163e36085ce659c73db1f0be27d845b1a8ac628c54964b2abae28e0e8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/DeviceImpl.o",
+    "before": "740f0106cfdc937530c0966eb6619e78d59e330c9c53542023a8a7f142d5bc3f",
+    "after": "740f0106cfdc937530c0966eb6619e78d59e330c9c53542023a8a7f142d5bc3f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Display.o",
+    "before": "80d87d500b46250aa282f6e28006f4c1bd0ca2c3ee8df1eb18843a06342c7a5c",
+    "after": "80d87d500b46250aa282f6e28006f4c1bd0ca2c3ee8df1eb18843a06342c7a5c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/DisplayImpl.o",
+    "before": "6ffc82fbd512e98de1970add12db766021a04e358d464fcce097fa3713d3afa5",
+    "after": "6ffc82fbd512e98de1970add12db766021a04e358d464fcce097fa3713d3afa5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/EGLReusableSync.o",
+    "before": "9d883dc3a793eb8727d705ff7926c2576280573ce9c7fdc401813e98c9ff486c",
+    "after": "9d883dc3a793eb8727d705ff7926c2576280573ce9c7fdc401813e98c9ff486c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/EGLSync.o",
+    "before": "dcbbc7147e5d98260eaab58a70f147268ca41f16291ee3ce8b5ea8ba2398494c",
+    "after": "dcbbc7147e5d98260eaab58a70f147268ca41f16291ee3ce8b5ea8ba2398494c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/EGLSyncImpl.o",
+    "before": "6607e6cfc040603ddd22f7d8b652a99e35300893de8b98915ca76174b532b616",
+    "after": "6607e6cfc040603ddd22f7d8b652a99e35300893de8b98915ca76174b532b616",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Error.o",
+    "before": "b1704a98f3b0faa34185b7e8547aebde21c33dbf30739d86137395cae22dd399",
+    "after": "b1704a98f3b0faa34185b7e8547aebde21c33dbf30739d86137395cae22dd399",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Fence.o",
+    "before": "2dda5ed0d30669ab8493423f6d518a6cd636450a5000109c4df602df2e443fe1",
+    "after": "2dda5ed0d30669ab8493423f6d518a6cd636450a5000109c4df602df2e443fe1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Format_table_autogen.o",
+    "before": "862667a68dd8c952ab01bfe7dbad09cb9fd2465ce6f7b7a4cb81781449df73a2",
+    "after": "862667a68dd8c952ab01bfe7dbad09cb9fd2465ce6f7b7a4cb81781449df73a2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Framebuffer.o",
+    "before": "a91f48ebcabadf3905df99ba4daf21bd622ec0c311942b4f481e04fca22e31b6",
+    "after": "a91f48ebcabadf3905df99ba4daf21bd622ec0c311942b4f481e04fca22e31b6",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/FramebufferAttachment.o",
+    "before": "5848aa1115d508d37d465af9bda0a00e66eaef273a589abb44eb0e4478224cbd",
+    "after": "5848aa1115d508d37d465af9bda0a00e66eaef273a589abb44eb0e4478224cbd",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/FramebufferImpl.o",
+    "before": "a6618af17e785ac3ef6507e16ebc9b92d310ff80424dd03b5f079cf5751e5164",
+    "after": "a6618af17e785ac3ef6507e16ebc9b92d310ff80424dd03b5f079cf5751e5164",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/GLES1Renderer.o",
+    "before": "0f53b5eeaac97119bcc00652587679f1163e43f75326b7567478c02bc391fc9f",
+    "after": "0f53b5eeaac97119bcc00652587679f1163e43f75326b7567478c02bc391fc9f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/GLES1State.o",
+    "before": "91bfbacdf23e5c9509ad7b3d3a9bcf3825777925d029ab587aed95cb7d1e1b23",
+    "after": "91bfbacdf23e5c9509ad7b3d3a9bcf3825777925d029ab587aed95cb7d1e1b23",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/GlobalMutex.o",
+    "before": "048eb0e7e5edf8d433875ebf89006856c1a845545d3e4f805719987ffc2afec7",
+    "after": "048eb0e7e5edf8d433875ebf89006856c1a845545d3e4f805719987ffc2afec7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/HandleAllocator.o",
+    "before": "c1bc9c0f260687286c6c5889cf6511572421dffb2ead7a6c690e34a8e1d722bf",
+    "after": "c1bc9c0f260687286c6c5889cf6511572421dffb2ead7a6c690e34a8e1d722bf",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Image.o",
+    "before": "51da8ffd481055117f83bbd590c526b690f94a03bba7e18d70d0f6910244a71d",
+    "after": "51da8ffd481055117f83bbd590c526b690f94a03bba7e18d70d0f6910244a71d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ImageImpl.o",
+    "before": "bde8b9a0af64206a333f00d92c177ee5a1b67c139d189c424a1f2e0fe565ef48",
+    "after": "bde8b9a0af64206a333f00d92c177ee5a1b67c139d189c424a1f2e0fe565ef48",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ImageIndex.o",
+    "before": "fd49ae431d7019129170d97b42048cb974d38f08b1de213674541a33b4685b3b",
+    "after": "fd49ae431d7019129170d97b42048cb974d38f08b1de213674541a33b4685b3b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/IndexRangeCache.o",
+    "before": "51972235a7c936d09cb5c34056e4972f57d6868f2c0c4d5d65bf5981034c8bbb",
+    "after": "51972235a7c936d09cb5c34056e4972f57d6868f2c0c4d5d65bf5981034c8bbb",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/LoggingAnnotator.o",
+    "before": "8aa70801d4ac5612cc396f846de4e68810140d318b9af23043d43baabf44d52e",
+    "after": "8aa70801d4ac5612cc396f846de4e68810140d318b9af23043d43baabf44d52e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/MemoryObject.o",
+    "before": "85224fabd0da0522b60a8cbe212e90a2f61660f9bbd9bfef99253b05f1ba8753",
+    "after": "85224fabd0da0522b60a8cbe212e90a2f61660f9bbd9bfef99253b05f1ba8753",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/MemoryProgramCache.o",
+    "before": "fd0eabcc9cad49b05c0711f3116264e8750a03a32915ca2f6b023abd6ddf3282",
+    "after": "fd0eabcc9cad49b05c0711f3116264e8750a03a32915ca2f6b023abd6ddf3282",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/MemoryShaderCache.o",
+    "before": "249db678232cb403c1897065c34400aa21e9602ac06cdc0a255478de6f2a9c88",
+    "after": "249db678232cb403c1897065c34400aa21e9602ac06cdc0a255478de6f2a9c88",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Observer.o",
+    "before": "cd1c82582fca1e24534bb1335592802cc20e005145ba379c74e3878edd7adfb5",
+    "after": "cd1c82582fca1e24534bb1335592802cc20e005145ba379c74e3878edd7adfb5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/PixelLocalStorage.o",
+    "before": "d9c46004e4714cee32a65e592cb617eadb712a493b405fb495cc4ee1d651225f",
+    "after": "d9c46004e4714cee32a65e592cb617eadb712a493b405fb495cc4ee1d651225f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Platform.o",
+    "before": "207ae17846d7eb848fe4aff1b102ce2badde9184dff3063d8e5620268fae3ea3",
+    "after": "207ae17846d7eb848fe4aff1b102ce2badde9184dff3063d8e5620268fae3ea3",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Program.o",
+    "before": "25452cbbf156f51f2a8b158064c27720483f21d70d613102847e73daedc58d3e",
+    "after": "25452cbbf156f51f2a8b158064c27720483f21d70d613102847e73daedc58d3e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ProgramExecutable.o",
+    "before": "14716e03eb8c38d20dd365e188c4894ad05501e85781e746f89aa04f93132013",
+    "after": "14716e03eb8c38d20dd365e188c4894ad05501e85781e746f89aa04f93132013",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ProgramImpl.o",
+    "before": "001c5fd6e20b12fed4422c8573f17266bb3797c91d4f9b769feeff12b0854ffc",
+    "after": "001c5fd6e20b12fed4422c8573f17266bb3797c91d4f9b769feeff12b0854ffc",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ProgramLinkedResources.o",
+    "before": "0d2ff09b91323613ea0b227d49e1a71bdde09a8b5dc4e1d890a38caa20d26857",
+    "after": "0d2ff09b91323613ea0b227d49e1a71bdde09a8b5dc4e1d890a38caa20d26857",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ProgramPipeline.o",
+    "before": "a275399edae5a136b947b94a64edcfda97e80ea7198eb36156828db22897848c",
+    "after": "a275399edae5a136b947b94a64edcfda97e80ea7198eb36156828db22897848c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ProgramPipelineImpl.o",
+    "before": "4c9eb63847eec84e1117ac10c8a161b05fc0e85261fb6979b3c8f07e3fd84609",
+    "after": "4c9eb63847eec84e1117ac10c8a161b05fc0e85261fb6979b3c8f07e3fd84609",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Query.o",
+    "before": "0b89bec75d9fadf6c0686ccf5e13e5f676352c042b72304887dc40bc41d46c8b",
+    "after": "0b89bec75d9fadf6c0686ccf5e13e5f676352c042b72304887dc40bc41d46c8b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/QueryImpl.o",
+    "before": "dd8c62a45362b67d3cb57e4715d6fa232071ffb459c03bd9adcdf43836360a35",
+    "after": "dd8c62a45362b67d3cb57e4715d6fa232071ffb459c03bd9adcdf43836360a35",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Renderbuffer.o",
+    "before": "7033eb6785402dd2aa2c46df2d779e447245eaa1fbdf649af26524613d00d125",
+    "after": "7033eb6785402dd2aa2c46df2d779e447245eaa1fbdf649af26524613d00d125",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/RenderbufferImpl.o",
+    "before": "eccfaa4af26e890c1d290356bc514e4a2178cf15c01f661f090b9307dae8d0d4",
+    "after": "eccfaa4af26e890c1d290356bc514e4a2178cf15c01f661f090b9307dae8d0d4",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ResourceManager.o",
+    "before": "6d57999a532b1a343a1aeee8923dbb39a42909927b467099c2d5a72c57115c24",
+    "after": "6d57999a532b1a343a1aeee8923dbb39a42909927b467099c2d5a72c57115c24",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Sampler.o",
+    "before": "183e9602e666f6d8da004523040c9381ed8d7b07d9889c738de0707917364dd1",
+    "after": "183e9602e666f6d8da004523040c9381ed8d7b07d9889c738de0707917364dd1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Semaphore.o",
+    "before": "42096bbb36a9ce73a52c1b7ae528c721af27de13e71de2c3985bf5509066fd2d",
+    "after": "42096bbb36a9ce73a52c1b7ae528c721af27de13e71de2c3985bf5509066fd2d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Shader.o",
+    "before": "15978e8a6695bc00375c849d31644f067a8eea966ba440edbd415e8027915618",
+    "after": "15978e8a6695bc00375c849d31644f067a8eea966ba440edbd415e8027915618",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ShaderImpl.o",
+    "before": "a7c02d00c85b23fcee66cdd29ef0c6f98b1bea1095c7d51d1b699ccf3300e300",
+    "after": "a7c02d00c85b23fcee66cdd29ef0c6f98b1bea1095c7d51d1b699ccf3300e300",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/ShareGroup.o",
+    "before": "9db03c2a4b3df91a53f4d714c6ad6477001476326264363d707bea12785b6eaa",
+    "after": "9db03c2a4b3df91a53f4d714c6ad6477001476326264363d707bea12785b6eaa",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/State.o",
+    "before": "a9788917c1a48b220e017e6792d38f0f5534412a57850a97e23597a8340c3472",
+    "after": "a9788917c1a48b220e017e6792d38f0f5534412a57850a97e23597a8340c3472",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Stream.o",
+    "before": "6261ea994a8ec979d0ab494dc24519a5ca897e5bca413754d12009e5c60f647d",
+    "after": "6261ea994a8ec979d0ab494dc24519a5ca897e5bca413754d12009e5c60f647d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Surface.o",
+    "before": "fafd30a701cf18cc4c5aec60161894d139a7d03b026acfb50eb4d2319ca55d14",
+    "after": "fafd30a701cf18cc4c5aec60161894d139a7d03b026acfb50eb4d2319ca55d14",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/SurfaceImpl.o",
+    "before": "ef29fc4416c98e8d9b806fa4c9a1d351ee28acf46fa4933cef5ab1d98e9cd3fd",
+    "after": "ef29fc4416c98e8d9b806fa4c9a1d351ee28acf46fa4933cef5ab1d98e9cd3fd",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Texture.o",
+    "before": "a6ced68ee1bc39cfc322acaaa07f3d206fce82399164aacdf881353f97425ddb",
+    "after": "a6ced68ee1bc39cfc322acaaa07f3d206fce82399164aacdf881353f97425ddb",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/TextureImpl.o",
+    "before": "102131d1ec0b4a7d2af18e1f61d219ba87b217cbd4b672ebb77ec75859b011f9",
+    "after": "102131d1ec0b4a7d2af18e1f61d219ba87b217cbd4b672ebb77ec75859b011f9",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Thread.o",
+    "before": "ff01127004daffe834272bd7f77e51666a2525878ccbea11bec4647a09dc47a2",
+    "after": "ff01127004daffe834272bd7f77e51666a2525878ccbea11bec4647a09dc47a2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/TransformFeedback.o",
+    "before": "8017df807b9abc9574e235cab7ddaa65d8b875a862b75555879530bcc40b0bc8",
+    "after": "8017df807b9abc9574e235cab7ddaa65d8b875a862b75555879530bcc40b0bc8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/TransformFeedbackImpl.o",
+    "before": "9dbf744f782741a4a493826367d06cb4f96fe8a11e6ddd16a446ab4e74ab8b29",
+    "after": "9dbf744f782741a4a493826367d06cb4f96fe8a11e6ddd16a446ab4e74ab8b29",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/Uniform.o",
+    "before": "04b276c5691c44a5024dd8010e7649211c5a88dd2d27e62c776e7045f082b1d0",
+    "after": "04b276c5691c44a5024dd8010e7649211c5a88dd2d27e62c776e7045f082b1d0",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/VaryingPacking.o",
+    "before": "a5b91f7bc7d1e75c1d937b915799253a1a8fe036ffd6cf98932752a8911efdc4",
+    "after": "a5b91f7bc7d1e75c1d937b915799253a1a8fe036ffd6cf98932752a8911efdc4",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/VertexArray.o",
+    "before": "0058cc3118d5b9b9b7a8f9ce2cbefc9588ff85f587cf1c58a475534702589c15",
+    "after": "0058cc3118d5b9b9b7a8f9ce2cbefc9588ff85f587cf1c58a475534702589c15",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/VertexArrayImpl.o",
+    "before": "d9dc4e2101683d048777c5fb1d167dd47c5bf0cced4487eae4291994ec480900",
+    "after": "d9dc4e2101683d048777c5fb1d167dd47c5bf0cced4487eae4291994ec480900",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/VertexAttribute.o",
+    "before": "bcc50721867548687f6e7391f4847453e21f5be0199952df0344d1ae40037e3b",
+    "after": "bcc50721867548687f6e7391f4847453e21f5be0199952df0344d1ae40037e3b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/angletypes.o",
+    "before": "4c9f9131d20b450192dee4b1366301614c3a5e9d650448153bffd227bda1d4ac",
+    "after": "4c9f9131d20b450192dee4b1366301614c3a5e9d650448153bffd227bda1d4ac",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/driver_utils.o",
+    "before": "e48df25b00a4812f0bbb944b5c402b89b0023bad211edf20e1d8ccad08ca1ff2",
+    "after": "e48df25b00a4812f0bbb944b5c402b89b0023bad211edf20e1d8ccad08ca1ff2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/driver_utils_ios.o",
+    "before": "3fc320de08b99f30189f48304cfbbac241ea827b4426e7c6feb5c770ce1442ab",
+    "after": "3fc320de08b99f30189f48304cfbbac241ea827b4426e7c6feb5c770ce1442ab",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/driver_utils_mac.o",
+    "before": "3ace5d4ef9371b73b537af53146eb33303ea5141c4fef10b213d576a09d237ea",
+    "after": "3ace5d4ef9371b73b537af53146eb33303ea5141c4fef10b213d576a09d237ea",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/es3_copy_conversion_table_autogen.o",
+    "before": "d0970cb905628f8a17844e53e9ad202777f4dffdfeb8bc1e3ba1de665787e568",
+    "after": "d0970cb905628f8a17844e53e9ad202777f4dffdfeb8bc1e3ba1de665787e568",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/format_map_autogen.o",
+    "before": "d52d93109a8aba4911e146ac83f785659f00f17c9371f09ecc2687d70434da9a",
+    "after": "d52d93109a8aba4911e146ac83f785659f00f17c9371f09ecc2687d70434da9a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/formatutils.o",
+    "before": "00881edf3d159b79a40ccec2ffd7589ad853e892dcb0b2001120ce49bb65aa8b",
+    "after": "00881edf3d159b79a40ccec2ffd7589ad853e892dcb0b2001120ce49bb65aa8b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/gles_extensions_autogen.o",
+    "before": "0ce3a9902decf7437c5ebad6218a775ca83d4c8d24dfec40d095c113f9322fc5",
+    "after": "0ce3a9902decf7437c5ebad6218a775ca83d4c8d24dfec40d095c113f9322fc5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/load_functions_table_autogen.o",
+    "before": "7f072cccce40a16489e5f99e8ac7059513086f02b66c85e7e838e786ec562099",
+    "after": "7f072cccce40a16489e5f99e8ac7059513086f02b66c85e7e838e786ec562099",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/queryconversions.o",
+    "before": "6e98f197cf21e54047c5007468e4c43896708cdee2dae2d368a75c478b112c2a",
+    "after": "6e98f197cf21e54047c5007468e4c43896708cdee2dae2d368a75c478b112c2a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/queryutils.o",
+    "before": "aea419e8db1bd008fcaa28a1aa518df017762acd20829518c9b4aa9b3fdff039",
+    "after": "aea419e8db1bd008fcaa28a1aa518df017762acd20829518c9b4aa9b3fdff039",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/renderer_utils.o",
+    "before": "2246732d3709775a3f21a2c444ff7f6a26bcf284c8312d017dfbc204a58bd1e0",
+    "after": "2246732d3709775a3f21a2c444ff7f6a26bcf284c8312d017dfbc204a58bd1e0",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/validationEGL.o",
+    "before": "813fbce2ecc3f685263d759a9e055e255dd06809be03aca7049e923cc7bf532a",
+    "after": "813fbce2ecc3f685263d759a9e055e255dd06809be03aca7049e923cc7bf532a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/validationES.o",
+    "before": "4077956b35e6f2697965165127a53dcd2d1ed047b04399b0a1c8a2088195b66b",
+    "after": "4077956b35e6f2697965165127a53dcd2d1ed047b04399b0a1c8a2088195b66b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/validationES1.o",
+    "before": "ecd61220d7c32d65d4e4d474f138a6673d40c10fa0eae6e771c16f459b3be92c",
+    "after": "ecd61220d7c32d65d4e4d474f138a6673d40c10fa0eae6e771c16f459b3be92c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/validationES2.o",
+    "before": "bcc944ea899094082655cea56010262173d71ad2e73321f310b350dca3f97fa7",
+    "after": "bcc944ea899094082655cea56010262173d71ad2e73321f310b350dca3f97fa7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/validationES3.o",
+    "before": "2f65748ebbe7174fee06caaa85e0bc4ed36a537420a5335877777ca514fb12a7",
+    "after": "2f65748ebbe7174fee06caaa85e0bc4ed36a537420a5335877777ca514fb12a7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/validationES31.o",
+    "before": "e905aeeafac5e46b89e794bc3befbc0ab2b8f858aae1fe1b22c3819710754339",
+    "after": "e905aeeafac5e46b89e794bc3befbc0ab2b8f858aae1fe1b22c3819710754339",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/validationES32.o",
+    "before": "f21cbe1fb3b02ab5e3f684d0ceab34cf38e05801397d97fc2a3137e9a373c0dc",
+    "after": "f21cbe1fb3b02ab5e3f684d0ceab34cf38e05801397d97fc2a3137e9a373c0dc",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libANGLE_no_vulkan/validationESEXT.o",
+    "before": "a548fbe1c4147b96865ea13b9c50fc92dcbe6d90db2da08b02f540a625127560",
+    "after": "a548fbe1c4147b96865ea13b9c50fc92dcbe6d90db2da08b02f540a625127560",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libEGL_egl_loader/egl_loader_autogen.o",
+    "before": "918339dae3f38338de8725eb1d80e20c93eb405be3209306f25a51f8d409a75b",
+    "after": "918339dae3f38338de8725eb1d80e20c93eb405be3209306f25a51f8d409a75b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libEGL_framework_shared_library/libEGL_autogen.o",
+    "before": "a1b8e2df68a805ae61164f27f2e8896db729279b7032705054a20391912c85d3",
+    "after": "a1b8e2df68a805ae61164f27f2e8896db729279b7032705054a20391912c85d3",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/egl_ext_stubs.o",
+    "before": "d1c2643826e4dc5042213a6102890cff41e9268487372d80903c17cbbe2a1520",
+    "after": "d1c2643826e4dc5042213a6102890cff41e9268487372d80903c17cbbe2a1520",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/egl_stubs.o",
+    "before": "09d5cd4927c7002538a86809f75532bef0b0504a12401f0bf272bf739b9d32a4",
+    "after": "09d5cd4927c7002538a86809f75532bef0b0504a12401f0bf272bf739b9d32a4",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/egl_stubs_getprocaddress_autogen.o",
+    "before": "1e0c287c4d3f6f375bf3ff338d623658c99f3502b6e4125bed130752e604e4db",
+    "after": "1e0c287c4d3f6f375bf3ff338d623658c99f3502b6e4125bed130752e604e4db",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/entry_points_egl_autogen.o",
+    "before": "7820e8f2148a8e205cef5fb7ffa352d4e97a11f2ab36d8e2f3883eccb474d57b",
+    "after": "7820e8f2148a8e205cef5fb7ffa352d4e97a11f2ab36d8e2f3883eccb474d57b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/entry_points_egl_ext_autogen.o",
+    "before": "cb0bc0bf287437312aedf080af4b053d520c1e80a6039ee327d609668ff51d81",
+    "after": "cb0bc0bf287437312aedf080af4b053d520c1e80a6039ee327d609668ff51d81",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/entry_points_gles_1_0_autogen.o",
+    "before": "2ce81368c502ed84e9d5e686cfaedc3141911ce5c6581a594024199b86073dce",
+    "after": "2ce81368c502ed84e9d5e686cfaedc3141911ce5c6581a594024199b86073dce",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/entry_points_gles_2_0_autogen.o",
+    "before": "99b7ea7197a12426be288a573de9cc493941b30a72fbd2c90839ed48c2f19bf1",
+    "after": "99b7ea7197a12426be288a573de9cc493941b30a72fbd2c90839ed48c2f19bf1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/entry_points_gles_3_0_autogen.o",
+    "before": "51f96e0af5d66fd086570e5555e8bc65865f5b96104fd19f925e062237952a84",
+    "after": "51f96e0af5d66fd086570e5555e8bc65865f5b96104fd19f925e062237952a84",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/entry_points_gles_3_1_autogen.o",
+    "before": "ef6c2890b629a2698402e03943e2aa56d0adfccfe334991b55e5b03fb507b95f",
+    "after": "ef6c2890b629a2698402e03943e2aa56d0adfccfe334991b55e5b03fb507b95f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/entry_points_gles_3_2_autogen.o",
+    "before": "5d4a103dbf30c9c42929d467c05e17c4a6faa57417e469d2e086f4ce6b357504",
+    "after": "5d4a103dbf30c9c42929d467c05e17c4a6faa57417e469d2e086f4ce6b357504",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/entry_points_gles_ext_autogen.o",
+    "before": "40646767ef9ed2692b0db391dacb444a0f16ece3da091ad1b6118b290ac8e457",
+    "after": "40646767ef9ed2692b0db391dacb444a0f16ece3da091ad1b6118b290ac8e457",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/global_state.o",
+    "before": "1d8a7a88a54fe09b1e85b84cb0f900f28d1191096bbf4f68bfc6f1533226367e",
+    "after": "1d8a7a88a54fe09b1e85b84cb0f900f28d1191096bbf4f68bfc6f1533226367e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/libGLESv2_framework_shared_library/libGLESv2_autogen.o",
+    "before": "ffd7912e51d7757b9cdb1c5ae7262a9d2cb20880318f1f4ac0bfa2d2d867a731",
+    "after": "ffd7912e51d7757b9cdb1c5ae7262a9d2cb20880318f1f4ac0bfa2d2d867a731",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/DiagnosticsBase.o",
+    "before": "d6fd201f02b5e498c38dad266a334143846f310ec8d2c99db7a5e34e4ac04c0c",
+    "after": "d6fd201f02b5e498c38dad266a334143846f310ec8d2c99db7a5e34e4ac04c0c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/DirectiveHandlerBase.o",
+    "before": "04b1393ea0ff09af398bcd9d50de981f7397f34b88357d2ae56aadb9cdf4a7d7",
+    "after": "04b1393ea0ff09af398bcd9d50de981f7397f34b88357d2ae56aadb9cdf4a7d7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/DirectiveParser.o",
+    "before": "d689dc6ba1a2981681b8719498fffa03bb30f50c7abeeec501ea26bfae2064bf",
+    "after": "d689dc6ba1a2981681b8719498fffa03bb30f50c7abeeec501ea26bfae2064bf",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/Input.o",
+    "before": "d52fa0a69e0625d6787b8a581d05ebbbec31945407bab3ae6fddd73ed2dd7b49",
+    "after": "d52fa0a69e0625d6787b8a581d05ebbbec31945407bab3ae6fddd73ed2dd7b49",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/Lexer.o",
+    "before": "9c24bf482bb05acf46efffb5a1a0859e4195c11a2ceef5e976af53bdac05f118",
+    "after": "9c24bf482bb05acf46efffb5a1a0859e4195c11a2ceef5e976af53bdac05f118",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/Macro.o",
+    "before": "0dd87fab22a7eb0933b6745c9b6996560882249b0fe9cc529f9f50aa4534d5fb",
+    "after": "0dd87fab22a7eb0933b6745c9b6996560882249b0fe9cc529f9f50aa4534d5fb",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/MacroExpander.o",
+    "before": "f43d9c4ee3635275fd57c4a6e92b601fb8268ebd752d46d4ef06a70fffdbaabf",
+    "after": "f43d9c4ee3635275fd57c4a6e92b601fb8268ebd752d46d4ef06a70fffdbaabf",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/Preprocessor.o",
+    "before": "5d73ba9a8ffb02c97a8da657b8ccf0ab2ed9be2183f8894cff703fbd3826ddbe",
+    "after": "5d73ba9a8ffb02c97a8da657b8ccf0ab2ed9be2183f8894cff703fbd3826ddbe",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/Token.o",
+    "before": "bad5b56992d9c8348bd3c82c2f3695315c5af747761dea71b04f62ad37e0ff16",
+    "after": "bad5b56992d9c8348bd3c82c2f3695315c5af747761dea71b04f62ad37e0ff16",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/preprocessor_lex_autogen.o",
+    "before": "a6c87fcd068408a1bda16b962b309d1e66fee65b3c9374ec6dd2442235894a4c",
+    "after": "a6c87fcd068408a1bda16b962b309d1e66fee65b3c9374ec6dd2442235894a4c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/preprocessor/preprocessor_tab_autogen.o",
+    "before": "481c9d08154f8b52e26ff4fca02d268b2b0c1ef72b08ccce15464f5f72abd95e",
+    "after": "481c9d08154f8b52e26ff4fca02d268b2b0c1ef72b08ccce15464f5f72abd95e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/common/vulkan/angle_libvulkan_loader/libvulkan_loader.o",
+    "before": "872c4301da0aa73525c42cbb1a88d0f29cd456d686fb0b1a4af7124c8bb40ff1",
+    "after": "872c4301da0aa73525c42cbb1a88d0f29cd456d686fb0b1a4af7124c8bb40ff1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/common/vulkan/angle_vulkan_icd/vulkan_icd.o",
+    "before": "677aa3ee462c88c0a137f5f5cf90392f1397dd5935399c3ad4470ec0cb9515b6",
+    "after": "677aa3ee462c88c0a137f5f5cf90392f1397dd5935399c3ad4470ec0cb9515b6",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/BufferMtl.o",
+    "before": "b63b6a2ed0ead25c88e73b93d66a70c46de0309cb3bee41b0c5ad719300f43bd",
+    "after": "b63b6a2ed0ead25c88e73b93d66a70c46de0309cb3bee41b0c5ad719300f43bd",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/CompilerMtl.o",
+    "before": "a45ce0cfca9874ed152c34a966e6bfd2ccb150ff3f4a48a12a82f3b436904b7a",
+    "after": "a45ce0cfca9874ed152c34a966e6bfd2ccb150ff3f4a48a12a82f3b436904b7a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/ContextMtl.o",
+    "before": "05ae3ee4a8aa4003d2dd7a29532de6b534eb18fb07a7fe1ab37e47e6675d5a0d",
+    "after": "05ae3ee4a8aa4003d2dd7a29532de6b534eb18fb07a7fe1ab37e47e6675d5a0d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/DeviceMtl.o",
+    "before": "6a42052ce34805dd39f34b7fa3f4f66b33bd5bce4cb9194a97c661ad62305a63",
+    "after": "6a42052ce34805dd39f34b7fa3f4f66b33bd5bce4cb9194a97c661ad62305a63",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/DisplayMtl.o",
+    "before": "e4962944a631f8554574be51dcfc487222039d3691c7f143422410efc6806408",
+    "after": "e4962944a631f8554574be51dcfc487222039d3691c7f143422410efc6806408",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/FrameBufferMtl.o",
+    "before": "b7f495a8dd25b3d948074799d352d47abc58f398958b94e45b35d33e9f689edb",
+    "after": "b7f495a8dd25b3d948074799d352d47abc58f398958b94e45b35d33e9f689edb",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/IOSurfaceSurfaceMtl.o",
+    "before": "e113754a336e9ea36043dc8d9cc58ca003b850350c94efda0ffec6dd40f2da4a",
+    "after": "e113754a336e9ea36043dc8d9cc58ca003b850350c94efda0ffec6dd40f2da4a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/ImageMtl.o",
+    "before": "d951c72b3e254ee87ad5d489a381d8875ca8497ccf9c1216e41a2db662d9a056",
+    "after": "d951c72b3e254ee87ad5d489a381d8875ca8497ccf9c1216e41a2db662d9a056",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/ProgramExecutableMtl.o",
+    "before": "14bd7dcc2448cbdd26a763b47ef85144d333b8c2f2518953c811098e4a21617b",
+    "after": "14bd7dcc2448cbdd26a763b47ef85144d333b8c2f2518953c811098e4a21617b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/ProgramMtl.o",
+    "before": "f416cd915eb9d2c44cf4445894a9627386a9dd653e1a77e2052d06e256a67abc",
+    "after": "f416cd915eb9d2c44cf4445894a9627386a9dd653e1a77e2052d06e256a67abc",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/ProvokingVertexHelper.o",
+    "before": "a8db11fbfbb25756888605792fe2add0031920a43ef78504188a3a9ebf3161c5",
+    "after": "a8db11fbfbb25756888605792fe2add0031920a43ef78504188a3a9ebf3161c5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/QueryMtl.o",
+    "before": "79bfbab9cc45159c69e1541d9c3ec5019e70197a1a8eb2237d7433a72bf89f5d",
+    "after": "79bfbab9cc45159c69e1541d9c3ec5019e70197a1a8eb2237d7433a72bf89f5d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/RenderBufferMtl.o",
+    "before": "efeb27e958152079d4d65008e6d629a669574d97f9e1347652c9c7a81294e6e6",
+    "after": "efeb27e958152079d4d65008e6d629a669574d97f9e1347652c9c7a81294e6e6",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/RenderTargetMtl.o",
+    "before": "3f2a56dc44486814bf01a5ea0f4dbc4cc435250e179bb625af0c48c4a30179c4",
+    "after": "3f2a56dc44486814bf01a5ea0f4dbc4cc435250e179bb625af0c48c4a30179c4",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/SamplerMtl.o",
+    "before": "9a39f09dcdbcdaf0d507ab2e0ec22df7ac6a3dcbc0e5ff1489fce5cb355994e7",
+    "after": "9a39f09dcdbcdaf0d507ab2e0ec22df7ac6a3dcbc0e5ff1489fce5cb355994e7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/ShaderMtl.o",
+    "before": "e2206f2cfc6f6cfa85a3f06abae0b745f51303981b1c61c09efb9dc984414364",
+    "after": "e2206f2cfc6f6cfa85a3f06abae0b745f51303981b1c61c09efb9dc984414364",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/SurfaceMtl.o",
+    "before": "e203566dfe7c36290c5c022861f8216aa417f6127d5cf5bc1bc916720969c982",
+    "after": "e203566dfe7c36290c5c022861f8216aa417f6127d5cf5bc1bc916720969c982",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/SyncMtl.o",
+    "before": "809cfc70bfa7f8b0ddc2b5f3d6b6b1a9d5e08a4362a3e8a8907871a3d134912a",
+    "after": "809cfc70bfa7f8b0ddc2b5f3d6b6b1a9d5e08a4362a3e8a8907871a3d134912a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/TextureMtl.o",
+    "before": "1d88bd0005c01c656a2582e52fad8bd710387f15229385b25a7a6ce416dba579",
+    "after": "0f771bc9308490cbb2b7fe778be0bed85f49c907650aeeadc0ec104675db06ae",
+    "reused_identical": false
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/TransformFeedbackMtl.o",
+    "before": "9b67d7cf71f96d5c593f873d5b324adf7de26f0baef9916da267d702b856666e",
+    "after": "9b67d7cf71f96d5c593f873d5b324adf7de26f0baef9916da267d702b856666e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/VertexArrayMtl.o",
+    "before": "864f798e76977ee3b2f426884d88ce7bcf6e01fe42fab21e3b6c55f5641e5aeb",
+    "after": "864f798e76977ee3b2f426884d88ce7bcf6e01fe42fab21e3b6c55f5641e5aeb",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/blocklayoutMetal.o",
+    "before": "85db45d20b737175d37e1b52c986bc1947564ba7475b8460615cc14a3cd19197",
+    "after": "85db45d20b737175d37e1b52c986bc1947564ba7475b8460615cc14a3cd19197",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_buffer_manager.o",
+    "before": "76ceb514791c2318365b4ef859eb6086410aa4cb30c9fd17ab5aec0c4cda1322",
+    "after": "76ceb514791c2318365b4ef859eb6086410aa4cb30c9fd17ab5aec0c4cda1322",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_buffer_pool.o",
+    "before": "a245e55158a9e025efa7e2aa088f255ada49d4279d161054250fc87bda5f580d",
+    "after": "a245e55158a9e025efa7e2aa088f255ada49d4279d161054250fc87bda5f580d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_command_buffer.o",
+    "before": "e4a4f0e1996f89a17c3536c49e576f21c2cd2ec51c2d08426fc76fa68fe681e1",
+    "after": "e4a4f0e1996f89a17c3536c49e576f21c2cd2ec51c2d08426fc76fa68fe681e1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_common.o",
+    "before": "ce81b53b56391cf01b3fe46a91f9348fecee63ef23def73e573dfeebbf60c4b7",
+    "after": "ce81b53b56391cf01b3fe46a91f9348fecee63ef23def73e573dfeebbf60c4b7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_context_device.o",
+    "before": "9f13f1c1b1324a4b23150c1d096661f47d7d3b535f747c91bda617eaa4f4be34",
+    "after": "9f13f1c1b1324a4b23150c1d096661f47d7d3b535f747c91bda617eaa4f4be34",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_format_table_autogen.o",
+    "before": "5e157b95ce73086351ab65ade79eeca2a53644ab5ea35c6776de888b35c4fc92",
+    "after": "5e157b95ce73086351ab65ade79eeca2a53644ab5ea35c6776de888b35c4fc92",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_format_utils.o",
+    "before": "660ec345771d18b9d31aff09023be7029374d9f972697924e3415a3b9a964081",
+    "after": "660ec345771d18b9d31aff09023be7029374d9f972697924e3415a3b9a964081",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_library_cache.o",
+    "before": "dc32569538e3e63567802f5433030aadb9af319c13b07bd17b16c8038049456a",
+    "after": "dc32569538e3e63567802f5433030aadb9af319c13b07bd17b16c8038049456a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_msl_utils.o",
+    "before": "8c7ac4b33ecb1b84b10a06e27763541d6140fafabc7e41a6998498ec07b5b2e0",
+    "after": "8c7ac4b33ecb1b84b10a06e27763541d6140fafabc7e41a6998498ec07b5b2e0",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_occlusion_query_pool.o",
+    "before": "1ba3afd86fab92fb5b898b15875f91587159dea8f105e5d4fb9667fc97f2467b",
+    "after": "1ba3afd86fab92fb5b898b15875f91587159dea8f105e5d4fb9667fc97f2467b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_pipeline_cache.o",
+    "before": "684c0ccbb206fc8a742fe97d0bf0704473a3ddb8e45b4f1df18fc532990981a7",
+    "after": "684c0ccbb206fc8a742fe97d0bf0704473a3ddb8e45b4f1df18fc532990981a7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_render_utils.o",
+    "before": "2f0eb0f005abada500dc68ba62fdffb544c8dc81aac28df520d5905cda373438",
+    "after": "2f0eb0f005abada500dc68ba62fdffb544c8dc81aac28df520d5905cda373438",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_resources.o",
+    "before": "2d40adb6d40e5e4738c81b8843c2caf986fd3f0c6e384e148a6a4c519bd15bf0",
+    "after": "2d40adb6d40e5e4738c81b8843c2caf986fd3f0c6e384e148a6a4c519bd15bf0",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_state_cache.o",
+    "before": "4ec0e830fcf6c2d24bdd1f9d36af7c6c12453cf5b2793ead88ad6f4778ca1da2",
+    "after": "4ec0e830fcf6c2d24bdd1f9d36af7c6c12453cf5b2793ead88ad6f4778ca1da2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/mtl_utils.o",
+    "before": "a15a5388a71b0beca4feb37d4b978202389da04cec2e8ea6c20d522611e78095",
+    "after": "a15a5388a71b0beca4feb37d4b978202389da04cec2e8ea6c20d522611e78095",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/libANGLE/renderer/metal/angle_metal_backend/renderermtl_utils.o",
+    "before": "dbd14f4ee79d1a51b146e1ceac26856ade8135820778f593cdf0bffc8b53c47f",
+    "after": "dbd14f4ee79d1a51b146e1ceac26856ade8135820778f593cdf0bffc8b53c47f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/src/third_party/volk/volk/volk.o",
+    "before": "f778adb252f29ac1da6e0de885ca2d65fd24e5d73156b6198d5aabc04e9bdaec",
+    "after": "f778adb252f29ac1da6e0de885ca2d65fd24e5d73156b6198d5aabc04e9bdaec",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/base/casts.o",
+    "before": "621e5e120917c3cbbd6f30062fca6e6625e6a8155fee69a46650469314f3eca3",
+    "after": "621e5e120917c3cbbd6f30062fca6e6625e6a8155fee69a46650469314f3eca3",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/base/cycleclock.o",
+    "before": "71d73b83af1f6f30afdbb339e3151f60465abb7b733e3a33e582299279deaae2",
+    "after": "71d73b83af1f6f30afdbb339e3151f60465abb7b733e3a33e582299279deaae2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/base/spinlock.o",
+    "before": "454ebcf53422120b0f6e46a27818d42bbea9e555cdfc6fa70cb625980909d10f",
+    "after": "454ebcf53422120b0f6e46a27818d42bbea9e555cdfc6fa70cb625980909d10f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/base/sysinfo.o",
+    "before": "25e5a729917c8545d94df913bf17f32ea6608c8366fae5aaef20cb953cddf139",
+    "after": "25e5a729917c8545d94df913bf17f32ea6608c8366fae5aaef20cb953cddf139",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/base/thread_identity.o",
+    "before": "55c462cb0be6adba0eef4fb565be57a58bb514b5fe78d2eeef7861c9a092b734",
+    "after": "55c462cb0be6adba0eef4fb565be57a58bb514b5fe78d2eeef7861c9a092b734",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/base/unscaledcycleclock.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/cpu_detect/cpu_detect.o",
+    "before": "b8c75eed1539c20b6db889d8a63f9522f64a9428d390177fced13ec63cb4c7c3",
+    "after": "b8c75eed1539c20b6db889d8a63f9522f64a9428d390177fced13ec63cb4c7c3",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/log_severity/log_severity.o",
+    "before": "b68ed7b772a6d1564d2c325d9af1df09db5ce27d44b122cf7f4d4f3d07f17d7a",
+    "after": "b68ed7b772a6d1564d2c325d9af1df09db5ce27d44b122cf7f4d4f3d07f17d7a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/malloc_internal/low_level_alloc.o",
+    "before": "1ae9fa5e6d882e179efb21e80473f217a221ac3e1610dfa5500e6a4c0e917bb7",
+    "after": "1ae9fa5e6d882e179efb21e80473f217a221ac3e1610dfa5500e6a4c0e917bb7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/raw_logging_internal/raw_logging.o",
+    "before": "985afc1197b587b7f8e7a696ee29cdff536752ad842f4abc9a89acdb5a8de4c0",
+    "after": "985afc1197b587b7f8e7a696ee29cdff536752ad842f4abc9a89acdb5a8de4c0",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/spinlock_wait/spinlock_wait.o",
+    "before": "542619f40bdd3daf2fe9df87ae731f0636f8d9fc9fd77a8509854b267b554626",
+    "after": "542619f40bdd3daf2fe9df87ae731f0636f8d9fc9fd77a8509854b267b554626",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/throw_delegate/throw_delegate.o",
+    "before": "8acd600819b46e4757a757f7901daf002450dbc362ee90906e5b6c83b64ac3ea",
+    "after": "8acd600819b46e4757a757f7901daf002450dbc362ee90906e5b6c83b64ac3ea",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/base/tracing_internal/tracing.o",
+    "before": "c0f12c9d83601ea9eafb132c5bf651b04fb61137809c0969a68658493c534fec",
+    "after": "c0f12c9d83601ea9eafb132c5bf651b04fb61137809c0969a68658493c534fec",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/container/hashtablez_sampler/hashtablez_sampler.o",
+    "before": "8614586e58f0219f78d18b340ad3f9a76f64d61de474f4b5ed7ede3ffac5b631",
+    "after": "8614586e58f0219f78d18b340ad3f9a76f64d61de474f4b5ed7ede3ffac5b631",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/container/hashtablez_sampler/hashtablez_sampler_force_weak_definition.o",
+    "before": "5311acdcf25162f1052fbf4340068ca39e607cf7a32497320eac9e9d28ac34c8",
+    "after": "5311acdcf25162f1052fbf4340068ca39e607cf7a32497320eac9e9d28ac34c8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/container/raw_hash_set/raw_hash_set.o",
+    "before": "5668a0b765b3b587155441ceda43c21b7c6061be7eefb4374b01b0ca481a51dd",
+    "after": "5668a0b765b3b587155441ceda43c21b7c6061be7eefb4374b01b0ca481a51dd",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/crc/crc32c/crc32c.o",
+    "before": "e1278a85adcb74586a27950f46a66e0963a197aa7efac02066b8a10223967f13",
+    "after": "e1278a85adcb74586a27950f46a66e0963a197aa7efac02066b8a10223967f13",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/crc/crc32c/crc_memcpy_fallback.o",
+    "before": "512f996c1af7f6a5bc4a506df775f580b9ec3678d0d7ed79f315e140f5fcd03f",
+    "after": "512f996c1af7f6a5bc4a506df775f580b9ec3678d0d7ed79f315e140f5fcd03f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/crc/crc32c/crc_memcpy_x86_arm_combined.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/crc/crc32c/crc_non_temporal_memcpy.o",
+    "before": "2b1ebcfe4991ad9d0a333b3d79a8d171fc83009db0ebc56c800ae8767eb3f38f",
+    "after": "2b1ebcfe4991ad9d0a333b3d79a8d171fc83009db0ebc56c800ae8767eb3f38f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/crc/crc_cord_state/crc_cord_state.o",
+    "before": "2ca03989c7fe2a5c1e3e71b267f3221c2e74f078829a05fe5d65d859f7dc5424",
+    "after": "2ca03989c7fe2a5c1e3e71b267f3221c2e74f078829a05fe5d65d859f7dc5424",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/crc/crc_internal/crc.o",
+    "before": "c2eaf04a068f3cc2b8fce015cc19b1f476b2302e924b39aaffd101230aa26469",
+    "after": "c2eaf04a068f3cc2b8fce015cc19b1f476b2302e924b39aaffd101230aa26469",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/crc/crc_internal/crc_x86_arm_combined.o",
+    "before": "97dc07bf0cc9eb501279fd27801e3994029dfceb7e7248f5ee25254d19258bba",
+    "after": "97dc07bf0cc9eb501279fd27801e3994029dfceb7e7248f5ee25254d19258bba",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/debugging/debugging_internal/address_is_readable.o",
+    "before": "a03b7b1b28ce4cd4c3dca165ae49469deef24f5985b9efa7852408d4c494507b",
+    "after": "a03b7b1b28ce4cd4c3dca165ae49469deef24f5985b9efa7852408d4c494507b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/debugging/debugging_internal/elf_mem_image.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/debugging/debugging_internal/vdso_support.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/debugging/decode_rust_punycode/decode_rust_punycode.o",
+    "before": "cdf5b384e34b94f450ff3dacc55b08a0c34e2d29d3e98bff444a67d88752c429",
+    "after": "cdf5b384e34b94f450ff3dacc55b08a0c34e2d29d3e98bff444a67d88752c429",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/debugging/demangle_internal/demangle.o",
+    "before": "56fe2b8d4f6ec939ce9d9c54a97827d60e5cdc90f59b1d63940c557b20911484",
+    "after": "56fe2b8d4f6ec939ce9d9c54a97827d60e5cdc90f59b1d63940c557b20911484",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/debugging/demangle_rust/demangle_rust.o",
+    "before": "ce75d8b8ac480a87d5e74f3f1a55f2d0b6c81b12e13245dbd7c35ea52e5126cc",
+    "after": "ce75d8b8ac480a87d5e74f3f1a55f2d0b6c81b12e13245dbd7c35ea52e5126cc",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/debugging/stacktrace/stacktrace.o",
+    "before": "4834f7c36ee8b6d9885f9bf0d64ed88da85f208b4ad13d1c4af7298630617d8d",
+    "after": "4834f7c36ee8b6d9885f9bf0d64ed88da85f208b4ad13d1c4af7298630617d8d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/debugging/symbolize/symbolize.o",
+    "before": "70d65d3e74166777e7209f8d7a2287aa26f6cd0f54a62087e9517cfb9e71cdd8",
+    "after": "70d65d3e74166777e7209f8d7a2287aa26f6cd0f54a62087e9517cfb9e71cdd8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/debugging/utf8_for_code_point/utf8_for_code_point.o",
+    "before": "51cb5f9a92b6b0400562fc83c657806f9e368a63f085175a0a5494198fcc5f46",
+    "after": "51cb5f9a92b6b0400562fc83c657806f9e368a63f085175a0a5494198fcc5f46",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/hash/city/city.o",
+    "before": "a11c3234f7c895e2f252a57364749d57194220b50e218b71ef728298c584524a",
+    "after": "a11c3234f7c895e2f252a57364749d57194220b50e218b71ef728298c584524a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/hash/hash/hash.o",
+    "before": "32d0a7067a411e6360079b203162d176b7f84233c72d0fbfae586457a389f7de",
+    "after": "32d0a7067a411e6360079b203162d176b7f84233c72d0fbfae586457a389f7de",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/numeric/int128/int128.o",
+    "before": "4dda4aed38c422733d3e81b4243038a12df2c82c7f66c25bddff3d1b9a9c9c3d",
+    "after": "4dda4aed38c422733d3e81b4243038a12df2c82c7f66c25bddff3d1b9a9c9c3d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/profiling/exponential_biased/exponential_biased.o",
+    "before": "0ae167fc0a9cc160498bb0fe502114bd5fec2d4defd3f63ddb6e748db2157a72",
+    "after": "0ae167fc0a9cc160498bb0fe502114bd5fec2d4defd3f63ddb6e748db2157a72",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cord/cord.o",
+    "before": "649bf5398d3503dfd4948847c85fe8f5032239cfdb6cd2c3877782caa6508c01",
+    "after": "649bf5398d3503dfd4948847c85fe8f5032239cfdb6cd2c3877782caa6508c01",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cord/cord_analysis.o",
+    "before": "de6f329be47a1d426fa62cf31136c845e546577c5bdbfb7bbc4d87011e9b360b",
+    "after": "de6f329be47a1d426fa62cf31136c845e546577c5bdbfb7bbc4d87011e9b360b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cord_internal/cord_internal.o",
+    "before": "577cd35d2b15da0fdfecf508b0e7b8fb597e140fa5ffb1ab524cb3f3709de3fe",
+    "after": "577cd35d2b15da0fdfecf508b0e7b8fb597e140fa5ffb1ab524cb3f3709de3fe",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cord_internal/cord_rep_btree.o",
+    "before": "c8de7996834a6215d63a93a7ea0369d85ea076fd8fe772c64c41e94eebf96b1c",
+    "after": "c8de7996834a6215d63a93a7ea0369d85ea076fd8fe772c64c41e94eebf96b1c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cord_internal/cord_rep_btree_navigator.o",
+    "before": "e0973560a853220fb45415e636eb4f84a9bd9e4376a09daa7f3ba41c29328869",
+    "after": "e0973560a853220fb45415e636eb4f84a9bd9e4376a09daa7f3ba41c29328869",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cord_internal/cord_rep_btree_reader.o",
+    "before": "c997057969e0d43c45073df0fadea4ba478e315e0fa956c3917880c345527552",
+    "after": "c997057969e0d43c45073df0fadea4ba478e315e0fa956c3917880c345527552",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cord_internal/cord_rep_consume.o",
+    "before": "c6cab51296a224c2420a28fe539f7488d8a4a7e37cac66b0934a7802f0d2d6d8",
+    "after": "c6cab51296a224c2420a28fe539f7488d8a4a7e37cac66b0934a7802f0d2d6d8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cord_internal/cord_rep_crc.o",
+    "before": "a0759097645265aa1f25226e5dbc4b7ed3c6e7430e9a947284b7bf9c6bf8e5e5",
+    "after": "a0759097645265aa1f25226e5dbc4b7ed3c6e7430e9a947284b7bf9c6bf8e5e5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cordz_functions/cordz_functions.o",
+    "before": "51c383d3d18c8a8837f9fdb17f31a4be7336fc0eb559046568c0bf891f4d6b8c",
+    "after": "51c383d3d18c8a8837f9fdb17f31a4be7336fc0eb559046568c0bf891f4d6b8c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cordz_handle/cordz_handle.o",
+    "before": "e78f42dd8260fb9909ab43ed1d1695ec4c55147521f24baf74626e4e67eb16dc",
+    "after": "e78f42dd8260fb9909ab43ed1d1695ec4c55147521f24baf74626e4e67eb16dc",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/cordz_info/cordz_info.o",
+    "before": "cb6ff9a229d5beda34c09798f73c643d36e07993490e3b3fbb9e905e5e31b0bb",
+    "after": "cb6ff9a229d5beda34c09798f73c643d36e07993490e3b3fbb9e905e5e31b0bb",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/internal/escaping.o",
+    "before": "b5717caf6c905222cb83840d6f0affce5c536e12926763c5a1cdb3f4f9b1961d",
+    "after": "b5717caf6c905222cb83840d6f0affce5c536e12926763c5a1cdb3f4f9b1961d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/internal/ostringstream.o",
+    "before": "f5df6c5c2d38fa0d2bf5fe40eaa21c8165debef6b09bafdd4f75cc0481af245a",
+    "after": "f5df6c5c2d38fa0d2bf5fe40eaa21c8165debef6b09bafdd4f75cc0481af245a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/internal/utf8.o",
+    "before": "4aee9a0f02021c96904c356e9fde467f6c08404b4cf49e37df9dda2d6d6694f7",
+    "after": "4aee9a0f02021c96904c356e9fde467f6c08404b4cf49e37df9dda2d6d6694f7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/str_format_internal/arg.o",
+    "before": "1cef750c6348f803a947082c19ffc4b1685afe2ac0cd47748ba425325e695014",
+    "after": "1cef750c6348f803a947082c19ffc4b1685afe2ac0cd47748ba425325e695014",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/str_format_internal/bind.o",
+    "before": "52a598f239c666477edff909bb70c0130d82e856353e9d6268f468e31c218279",
+    "after": "52a598f239c666477edff909bb70c0130d82e856353e9d6268f468e31c218279",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/str_format_internal/extension.o",
+    "before": "a4aae1c8005908199c76f8e5ccb67df556cdcccdf0a103c24f9c4e13c49e2698",
+    "after": "a4aae1c8005908199c76f8e5ccb67df556cdcccdf0a103c24f9c4e13c49e2698",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/str_format_internal/float_conversion.o",
+    "before": "65e2a62215fd1e6ccd7f34201478db27514c68619c50b04e2d51dfbdd883afe3",
+    "after": "65e2a62215fd1e6ccd7f34201478db27514c68619c50b04e2d51dfbdd883afe3",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/str_format_internal/output.o",
+    "before": "9ba35e20cfca29a877b4bd7cc740388d2696ca65e56b3182fb88dfb7251ebca1",
+    "after": "9ba35e20cfca29a877b4bd7cc740388d2696ca65e56b3182fb88dfb7251ebca1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/str_format_internal/parser.o",
+    "before": "36eebf1926db5edf2540e127c430a5fe1a942a7a3fe162cb9e970f0747d0e2e2",
+    "after": "36eebf1926db5edf2540e127c430a5fe1a942a7a3fe162cb9e970f0747d0e2e2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/ascii.o",
+    "before": "3bb8011faed1fba97ffadace373cfddab6fdbc3988d359e2a005c6647345ef98",
+    "after": "3bb8011faed1fba97ffadace373cfddab6fdbc3988d359e2a005c6647345ef98",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/charconv.o",
+    "before": "290a4741ac680931487adb96410d37928a1632fb3110a5619ffa143be8e0571b",
+    "after": "290a4741ac680931487adb96410d37928a1632fb3110a5619ffa143be8e0571b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/charconv_bigint.o",
+    "before": "65a1c60fbdd56d1bbd09712d7a07716c638c0065d8e57f21a5a065e5f0e6b0f8",
+    "after": "65a1c60fbdd56d1bbd09712d7a07716c638c0065d8e57f21a5a065e5f0e6b0f8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/charconv_parse.o",
+    "before": "7bdf60ffa4fcc6d05ec431260723f91b7a309fc410740b1adc78ffc477e3046e",
+    "after": "7bdf60ffa4fcc6d05ec431260723f91b7a309fc410740b1adc78ffc477e3046e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/damerau_levenshtein_distance.o",
+    "before": "7f64a6c1ba36beb357098f87859ddad10206e10f0bf19e83a61f564d8f6e5431",
+    "after": "7f64a6c1ba36beb357098f87859ddad10206e10f0bf19e83a61f564d8f6e5431",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/escaping.o",
+    "before": "95bb9c9c3a5d5813d4cc547eed1830e32fdaccdc830b894ced6456b79bfc9a8f",
+    "after": "95bb9c9c3a5d5813d4cc547eed1830e32fdaccdc830b894ced6456b79bfc9a8f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/match.o",
+    "before": "13f6802f9ca5292db20349c94d79d60792b9b4112e9cf5f2ea4030490f313d4e",
+    "after": "13f6802f9ca5292db20349c94d79d60792b9b4112e9cf5f2ea4030490f313d4e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/memutil.o",
+    "before": "7c6edf6589b4d142a6dd1453e079980c68223cd4ed006846a64622571f69ef1b",
+    "after": "7c6edf6589b4d142a6dd1453e079980c68223cd4ed006846a64622571f69ef1b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/numbers.o",
+    "before": "6893f3afa84e731fe30506e177441dc07b7c19e3e0f137a7e0267da663b82164",
+    "after": "6893f3afa84e731fe30506e177441dc07b7c19e3e0f137a7e0267da663b82164",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/str_cat.o",
+    "before": "018b025b8b6285da999098636043af585981aad0fd9b9ecd7b1615ff193ce3b0",
+    "after": "018b025b8b6285da999098636043af585981aad0fd9b9ecd7b1615ff193ce3b0",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/str_replace.o",
+    "before": "8c9fef12e6874397cb59d792d3e54fdb3a15c9cf5c01fe97c702c7baaacc6a13",
+    "after": "8c9fef12e6874397cb59d792d3e54fdb3a15c9cf5c01fe97c702c7baaacc6a13",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/str_split.o",
+    "before": "ceb56baaf12d21e74ae5a7586a3188798db5ef930106faf5aa302cdded2e6dfe",
+    "after": "ceb56baaf12d21e74ae5a7586a3188798db5ef930106faf5aa302cdded2e6dfe",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/stringify_sink.o",
+    "before": "743af164fd0cd18928592b2effd59a072244270d54a85fe847a30755b52259c4",
+    "after": "743af164fd0cd18928592b2effd59a072244270d54a85fe847a30755b52259c4",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/strings/strings/substitute.o",
+    "before": "67e82726a7580f762522a62a4f06cb1b0f42fa6a8a5f46db47cdc176c3077f60",
+    "after": "67e82726a7580f762522a62a4f06cb1b0f42fa6a8a5f46db47cdc176c3077f60",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/graphcycles_internal/graphcycles.o",
+    "before": "2f7cc107c8d4eae162850faae097b79e4fa59271981bb118e68681ee54ee8146",
+    "after": "2f7cc107c8d4eae162850faae097b79e4fa59271981bb118e68681ee54ee8146",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/kernel_timeout_internal/kernel_timeout.o",
+    "before": "4cc12a4767ea70380235763a95a393bdefde64c0b4545ccfffbce04bdba88235",
+    "after": "4cc12a4767ea70380235763a95a393bdefde64c0b4545ccfffbce04bdba88235",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/barrier.o",
+    "before": "d577ba5162bd0dd193aa3727d46cadbaff74396fa982aa94112e5d1d4b38077e",
+    "after": "d577ba5162bd0dd193aa3727d46cadbaff74396fa982aa94112e5d1d4b38077e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/blocking_counter.o",
+    "before": "23194f0415514834e02166d48f8544c8ff0e96e9cfea954bfd7b11310db842c6",
+    "after": "23194f0415514834e02166d48f8544c8ff0e96e9cfea954bfd7b11310db842c6",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/create_thread_identity.o",
+    "before": "a455f6482a649e8c21218f400f5d3925beb44fac7f5d8b8a70ee1a71c82ce6c1",
+    "after": "a455f6482a649e8c21218f400f5d3925beb44fac7f5d8b8a70ee1a71c82ce6c1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/futex_waiter.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/mutex.o",
+    "before": "89a272a5ebb1a0c0f01a01ac20c89f0554c4a04dd64355eef3c465d195670b8e",
+    "after": "89a272a5ebb1a0c0f01a01ac20c89f0554c4a04dd64355eef3c465d195670b8e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/notification.o",
+    "before": "2401c927c0b7a3331423907b30ad4556492a2d084490e4b38f46bd50f0e6bad1",
+    "after": "2401c927c0b7a3331423907b30ad4556492a2d084490e4b38f46bd50f0e6bad1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/per_thread_sem.o",
+    "before": "f7b4bac45f3c9aa1908e456c7c24de77c4a4eb839e3ccf3c896147fcfc7db824",
+    "after": "f7b4bac45f3c9aa1908e456c7c24de77c4a4eb839e3ccf3c896147fcfc7db824",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/pthread_waiter.o",
+    "before": "36c7a222c579fe2fbbac1c1f546aec108c368a79723e98c9b0855de80683f6a0",
+    "after": "36c7a222c579fe2fbbac1c1f546aec108c368a79723e98c9b0855de80683f6a0",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/sem_waiter.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/stdcpp_waiter.o",
+    "before": "be9010f4e03b083e0fe65f05df849b8adbadde929bc8a0a2925d978bb8f77fed",
+    "after": "be9010f4e03b083e0fe65f05df849b8adbadde929bc8a0a2925d978bb8f77fed",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/waiter_base.o",
+    "before": "152272375fe72916bd766db0a2d7b6afa5ec1161fb7ac22d7cbb196f54e2ea1a",
+    "after": "152272375fe72916bd766db0a2d7b6afa5ec1161fb7ac22d7cbb196f54e2ea1a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/synchronization/synchronization/win32_waiter.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/internal/cctz/civil_time/civil_time_detail.o",
+    "before": "37c349705c787bcb1767b1eddf2a2d47a2a433ca13895e29c7bd59a5cc1cc121",
+    "after": "37c349705c787bcb1767b1eddf2a2d47a2a433ca13895e29c7bd59a5cc1cc121",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/internal/cctz/time_zone/time_zone_fixed.o",
+    "before": "a89909c99ee06ff7990701e32efb7f19df9e511e7c47386646ce2757c0f6f02a",
+    "after": "a89909c99ee06ff7990701e32efb7f19df9e511e7c47386646ce2757c0f6f02a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/internal/cctz/time_zone/time_zone_format.o",
+    "before": "16b78ece7d566d9004d4f61667cdfc4620a77c87eb35d123112860fb3286ba4f",
+    "after": "16b78ece7d566d9004d4f61667cdfc4620a77c87eb35d123112860fb3286ba4f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/internal/cctz/time_zone/time_zone_if.o",
+    "before": "90b022713f410b3b4a4b8e3c25c32df7ddb4515ba0675cf04c8b4d734c0f4e2c",
+    "after": "90b022713f410b3b4a4b8e3c25c32df7ddb4515ba0675cf04c8b4d734c0f4e2c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/internal/cctz/time_zone/time_zone_impl.o",
+    "before": "231a1e785ae987dadb9a26d07c7a96fe0ad0909ad237e7f1676112db998b69a8",
+    "after": "231a1e785ae987dadb9a26d07c7a96fe0ad0909ad237e7f1676112db998b69a8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/internal/cctz/time_zone/time_zone_info.o",
+    "before": "5ef4e6a4035be760c9846c3b03bd256c39312901ed080b417e2392c8b4b027cb",
+    "after": "5ef4e6a4035be760c9846c3b03bd256c39312901ed080b417e2392c8b4b027cb",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/internal/cctz/time_zone/time_zone_libc.o",
+    "before": "b7feb89bdb270339f1361e9d52cabab706eb01828ae68859e42ca9997f84f069",
+    "after": "b7feb89bdb270339f1361e9d52cabab706eb01828ae68859e42ca9997f84f069",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/internal/cctz/time_zone/time_zone_lookup.o",
+    "before": "2d215602f8e0a73513af758ef74b46f576aba3bbc6e1fc18d088fe51550d3177",
+    "after": "2d215602f8e0a73513af758ef74b46f576aba3bbc6e1fc18d088fe51550d3177",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/internal/cctz/time_zone/time_zone_posix.o",
+    "before": "c4860c697983c092451af504dc0b97f1d599b20dd88f8123d20f6e562b6a8967",
+    "after": "c4860c697983c092451af504dc0b97f1d599b20dd88f8123d20f6e562b6a8967",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/internal/cctz/time_zone/zone_info_source.o",
+    "before": "1e62fc0061ad05515e4289b3e3df125bad92673fe8c6bb734baf79f1621e43b6",
+    "after": "1e62fc0061ad05515e4289b3e3df125bad92673fe8c6bb734baf79f1621e43b6",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/time/civil_time.o",
+    "before": "ab7bf98928d67d10616ac60d83b2a6e99a36966f74cc314eb40f6c271b21977c",
+    "after": "ab7bf98928d67d10616ac60d83b2a6e99a36966f74cc314eb40f6c271b21977c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/time/clock.o",
+    "before": "4f27186c665b0dab8a4972d4356806b9ddd8b3a78b96008fe6aa3205e954e59f",
+    "after": "4f27186c665b0dab8a4972d4356806b9ddd8b3a78b96008fe6aa3205e954e59f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/time/duration.o",
+    "before": "fb514be54d9b1c435b0564c1b2377e80027b0e47484ea7c76c93930953c10078",
+    "after": "fb514be54d9b1c435b0564c1b2377e80027b0e47484ea7c76c93930953c10078",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/time/format.o",
+    "before": "2b28c791d53892bd720bd84c41033f6bcf8e8a2df10c18c4f91059dc8be716d4",
+    "after": "2b28c791d53892bd720bd84c41033f6bcf8e8a2df10c18c4f91059dc8be716d4",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/time/time/time.o",
+    "before": "40e140fe0b6319cf9d56048cd8fe84937cdccdfc9add80875918ffdb46b638e3",
+    "after": "40e140fe0b6319cf9d56048cd8fe84937cdccdfc9add80875918ffdb46b638e3",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/abseil-cpp/absl/types/source_location/source_location.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_averages_and_directions.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_block_sizes.o",
+    "before": "0743e84853472f4a8e8d095f2a518cb1542f562bfdaf79b3bee99d9bf177dd4f",
+    "after": "0743e84853472f4a8e8d095f2a518cb1542f562bfdaf79b3bee99d9bf177dd4f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_color_quantize.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_color_unquantize.o",
+    "before": "5d8b581067a30d76d686bf5cc9bf45ff9d7fcad1ac938e8814db389582331187",
+    "after": "5d8b581067a30d76d686bf5cc9bf45ff9d7fcad1ac938e8814db389582331187",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_compress_symbolic.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_compute_variance.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_decompress_symbolic.o",
+    "before": "e66c7d690abdc711f6d5d4d5f263da9906a2d41441fc156ae784123e2cb1fd3f",
+    "after": "e66c7d690abdc711f6d5d4d5f263da9906a2d41441fc156ae784123e2cb1fd3f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_diagnostic_trace.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_entry.o",
+    "before": "488da2ef51250ed9b94692569ac7a4b011087ef566d793dead9013d5781b16de",
+    "after": "488da2ef51250ed9b94692569ac7a4b011087ef566d793dead9013d5781b16de",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_find_best_partitioning.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_ideal_endpoints_and_weights.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_image.o",
+    "before": "3ed0d87222b5acc6480199d6d5b7677fac3153bba90d0af3ea40ecdcc3669004",
+    "after": "3ed0d87222b5acc6480199d6d5b7677fac3153bba90d0af3ea40ecdcc3669004",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_integer_sequence.o",
+    "before": "c5f00ceb7fc4e53d4809fa4f1e28658fe506fe808817bc3f868678b22378b710",
+    "after": "c5f00ceb7fc4e53d4809fa4f1e28658fe506fe808817bc3f868678b22378b710",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_mathlib.o",
+    "before": "0561b4f64e4657708a1719ddd2767529a4713d35bc125b0770453ed09176a2fd",
+    "after": "0561b4f64e4657708a1719ddd2767529a4713d35bc125b0770453ed09176a2fd",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_mathlib_softfloat.o",
+    "before": "8453eb6e5b36f3d795886e6bae58fb360ae9e89de464d14f0224310a5393a006",
+    "after": "8453eb6e5b36f3d795886e6bae58fb360ae9e89de464d14f0224310a5393a006",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_partition_tables.o",
+    "before": "a765b05167ea9eb914a6954f46bdf5312eb81be30f9a70f7d560687206346a79",
+    "after": "a765b05167ea9eb914a6954f46bdf5312eb81be30f9a70f7d560687206346a79",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_percentile_tables.o",
+    "before": "abf958dfd605b18f9db581d231d841a185bcea4a4fe09a5c68c20048ef635cf7",
+    "after": "abf958dfd605b18f9db581d231d841a185bcea4a4fe09a5c68c20048ef635cf7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_pick_best_endpoint_format.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_quantization.o",
+    "before": "60e41a42f7ec0f1b333a4be458132d4cbcc5aabf40763f4b29dd15c0873a5ce8",
+    "after": "60e41a42f7ec0f1b333a4be458132d4cbcc5aabf40763f4b29dd15c0873a5ce8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_symbolic_physical.o",
+    "before": "ad2f9a336e89f92652deba793ec1e13ca5e1e4e92208a4abc4b2fd1583d8bf63",
+    "after": "ad2f9a336e89f92652deba793ec1e13ca5e1e4e92208a4abc4b2fd1583d8bf63",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_weight_align.o",
+    "before": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "after": "00fe1dfebf69b40e061ce4bd325461a4807236e25609972b262d4f6a403a04a1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/astc-encoder/astcenc/astcenc_weight_quant_xfer_tables.o",
+    "before": "2b07bfdfa496cd285f74f56ab7059814de90573ee1674b35a1d6348c482ca096",
+    "after": "2b07bfdfa496cd285f74f56ab7059814de90573ee1674b35a1d6348c482ca096",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/google/compression_utils_portable/compression_utils_portable.o",
+    "before": "423d436b96b11e4c56aa46f73ecc907fa22b959127f5a826bfbb2ef59dca69a9",
+    "after": "423d436b96b11e4c56aa46f73ecc907fa22b959127f5a826bfbb2ef59dca69a9",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/adler32.o",
+    "before": "37c521ee3522db173a84c6427c205cd3fba6163fd95114b406775308b91ae3d5",
+    "after": "37c521ee3522db173a84c6427c205cd3fba6163fd95114b406775308b91ae3d5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/compress.o",
+    "before": "078d90da03d64b51960279b6faf6e57cb4b85c7f66a8e5847a28ab1a6e47ba78",
+    "after": "078d90da03d64b51960279b6faf6e57cb4b85c7f66a8e5847a28ab1a6e47ba78",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/cpu_features.o",
+    "before": "11f096eaf3185ccb2c36fc94e172423aac985ef25998ea9ba9e1be7cad18be82",
+    "after": "11f096eaf3185ccb2c36fc94e172423aac985ef25998ea9ba9e1be7cad18be82",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/crc32.o",
+    "before": "5decaf0f17e99fa7808f1b8c7c4a0498917c9c47a4b3547a11bbc841b3b2def5",
+    "after": "5decaf0f17e99fa7808f1b8c7c4a0498917c9c47a4b3547a11bbc841b3b2def5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/deflate.o",
+    "before": "043884639017623747bd28f6067922bb3395ddb115e5946b04c7278332d7a4f8",
+    "after": "043884639017623747bd28f6067922bb3395ddb115e5946b04c7278332d7a4f8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/gzclose.o",
+    "before": "247d42a0237ba6a097c54c1ba868d81fd9c9364413bd682759d1a7ebc585344e",
+    "after": "247d42a0237ba6a097c54c1ba868d81fd9c9364413bd682759d1a7ebc585344e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/gzlib.o",
+    "before": "fd794d9896b8d4da383723f6dbae095020005a6fe209e10f82ee0435f165552b",
+    "after": "fd794d9896b8d4da383723f6dbae095020005a6fe209e10f82ee0435f165552b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/gzread.o",
+    "before": "5089d3b53ff393154985b0c46d8b31d998a4e73b94f82324c0f961bd11a97053",
+    "after": "5089d3b53ff393154985b0c46d8b31d998a4e73b94f82324c0f961bd11a97053",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/gzwrite.o",
+    "before": "7ac4fb89f7925d7d3c4bd992c1afe675ace56f9f68e5df8ffc511b13e1382469",
+    "after": "7ac4fb89f7925d7d3c4bd992c1afe675ace56f9f68e5df8ffc511b13e1382469",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/infback.o",
+    "before": "00f151c5b3b64e0edaadf195e6099220e2eeaf8cc271ec0321ef89127702503e",
+    "after": "00f151c5b3b64e0edaadf195e6099220e2eeaf8cc271ec0321ef89127702503e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/inffast.o",
+    "before": "aae76d6f07ea6e004a309abe74ee5b5bcb6fbdfaac2ae3c37d1083f42e13d9e6",
+    "after": "aae76d6f07ea6e004a309abe74ee5b5bcb6fbdfaac2ae3c37d1083f42e13d9e6",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/inftrees.o",
+    "before": "8ef2d339d9ea6b4c5c6e6c5337ee79fd105cb7abe5d7e5e536215554a494e915",
+    "after": "8ef2d339d9ea6b4c5c6e6c5337ee79fd105cb7abe5d7e5e536215554a494e915",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/trees.o",
+    "before": "6e39a39e1a35e84f736b48ebc589487138011f9a26cb0e3e3a329c446818c9e9",
+    "after": "6e39a39e1a35e84f736b48ebc589487138011f9a26cb0e3e3a329c446818c9e9",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/uncompr.o",
+    "before": "138285f49b60d8fa7baaa58fa8ab7f959fc0a96303daac40ae45103783429fff",
+    "after": "138285f49b60d8fa7baaa58fa8ab7f959fc0a96303daac40ae45103783429fff",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib/zutil.o",
+    "before": "94f770070c62aab9072b8f90dfe36ce52178f6a222a88df1c34861efdf1db6a2",
+    "after": "94f770070c62aab9072b8f90dfe36ce52178f6a222a88df1c34861efdf1db6a2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib_adler32_simd/adler32_simd.o",
+    "before": "153aa9606fc56d6352d88e7cbb5028623fb5578c25ade2378e4e499e2d6310e5",
+    "after": "153aa9606fc56d6352d88e7cbb5028623fb5578c25ade2378e4e499e2d6310e5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib_arm_crc32/crc32_simd.o",
+    "before": "0903044ede75ed071a7faa99132f92b676d43e8ebb0093b18537a20b0fca5707",
+    "after": "0903044ede75ed071a7faa99132f92b676d43e8ebb0093b18537a20b0fca5707",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib_data_chunk_simd/inffast_chunk.o",
+    "before": "12edc507191035e0f9725bfaaeca6b9c764640be1b39b2ff904926a1dee14554",
+    "after": "12edc507191035e0f9725bfaaeca6b9c764640be1b39b2ff904926a1dee14554",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/third_party/zlib/zlib_data_chunk_simd/inflate.o",
+    "before": "aef94211e8ca8cb0566831c098f3c4e6d7c3f0c61dd5baaa70c49088426f7b3d",
+    "after": "aef94211e8ca8cb0566831c098f3c4e6d7c3f0c61dd5baaa70c49088426f7b3d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/AddDefaultReturnStatements.o",
+    "before": "7baec1aa5abeda803d7f73a1b0ee113b56072ea2bc78f13b0a0e2863fae7f3e9",
+    "after": "7baec1aa5abeda803d7f73a1b0ee113b56072ea2bc78f13b0a0e2863fae7f3e9",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/AddExplicitTypeCasts.o",
+    "before": "0e55fa285699697f4af5e80fa09293bdb69db89ebe8bbfafd194af183afe2026",
+    "after": "0e55fa285699697f4af5e80fa09293bdb69db89ebe8bbfafd194af183afe2026",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/AstHelpers.o",
+    "before": "11ab1bf89ecc296456c741fe53b58325b613c8d12e71b2d8d7fcaf07e81b5102",
+    "after": "11ab1bf89ecc296456c741fe53b58325b613c8d12e71b2d8d7fcaf07e81b5102",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/BaseTypes.o",
+    "before": "0e0a8b74b50b36e3eb28cb781a53f47ee1e302bc01eb815649d28ed4ebab6163",
+    "after": "0e0a8b74b50b36e3eb28cb781a53f47ee1e302bc01eb815649d28ed4ebab6163",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/BuiltInFunctionEmulator.o",
+    "before": "e6e6206e2aa1c94110fe04651823ab64486fc3852e6edb6f830167961f740055",
+    "after": "e6e6206e2aa1c94110fe04651823ab64486fc3852e6edb6f830167961f740055",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/CallDAG.o",
+    "before": "e8c43ee6f35c1db7dd5f4fbf8f8006ad7e9e873da610dbf027a5267582f09956",
+    "after": "e8c43ee6f35c1db7dd5f4fbf8f8006ad7e9e873da610dbf027a5267582f09956",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ClampFragDepth.o",
+    "before": "305538f4393ea25588aecfe97434d9242e4b5615e3e0a0d924f6c868c7247247",
+    "after": "305538f4393ea25588aecfe97434d9242e4b5615e3e0a0d924f6c868c7247247",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ClampIndirectIndices.o",
+    "before": "1e333c14dbf882152f7d0471f5dea83c7ff2892106bdddfef9ff98c0a7590f71",
+    "after": "1e333c14dbf882152f7d0471f5dea83c7ff2892106bdddfef9ff98c0a7590f71",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ClampPointSize.o",
+    "before": "3f013b15c71e7fcb484a5cb7db7351cf326de4e4d0bf1f839de4701e8a19b696",
+    "after": "3f013b15c71e7fcb484a5cb7db7351cf326de4e4d0bf1f839de4701e8a19b696",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/CodeGen.o",
+    "before": "4831208fdb5e3704a062b36ac109bee91a1d2ea6bf95ae02fa5a812057e5bca8",
+    "after": "4831208fdb5e3704a062b36ac109bee91a1d2ea6bf95ae02fa5a812057e5bca8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/CollectVariables.o",
+    "before": "456f9918ab7d4331cd0a0c6bbd60e7ed0c17e4f2b4d72b1d8644eddcf512aed9",
+    "after": "456f9918ab7d4331cd0a0c6bbd60e7ed0c17e4f2b4d72b1d8644eddcf512aed9",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/Compiler.o",
+    "before": "b0cf580170de140c916eb61df9532e84c4de0b9baadc03edba3f994f90bdae98",
+    "after": "b0cf580170de140c916eb61df9532e84c4de0b9baadc03edba3f994f90bdae98",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ConstantNames.o",
+    "before": "528962fe861b94941b70f747f91fc8c619c96fee6c02e7c91edc15efe7d8f072",
+    "after": "528962fe861b94941b70f747f91fc8c619c96fee6c02e7c91edc15efe7d8f072",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ConstantUnion.o",
+    "before": "8d1a47876830696049266cfbe5f6719af97fbbe75d81a37f698c0da896a583a4",
+    "after": "8d1a47876830696049266cfbe5f6719af97fbbe75d81a37f698c0da896a583a4",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ConvertUnsupportedConstructorsToFunctionCalls.o",
+    "before": "28c3ec9b27e3583c261a3cd9df20f2f6bf3ca2516ff7d6c9dcfb8d7495ee00a7",
+    "after": "28c3ec9b27e3583c261a3cd9df20f2f6bf3ca2516ff7d6c9dcfb8d7495ee00a7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/Declarator.o",
+    "before": "e72aae206ecf2f9dafaf01ab7c4ba0deff6e894ca24e43715a8592e3f7add27b",
+    "after": "e72aae206ecf2f9dafaf01ab7c4ba0deff6e894ca24e43715a8592e3f7add27b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/DeclareAndInitBuiltinsForInstancedMultiview.o",
+    "before": "f18b546aeff24456a397cae5843ee9fa073e5386b9054c36f3e998da8831cd4d",
+    "after": "f18b546aeff24456a397cae5843ee9fa073e5386b9054c36f3e998da8831cd4d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/DeclarePerVertexBlocks.o",
+    "before": "070deab914468a36fcde50a955abe05216b357afc91c657d2b849cb1dadba605",
+    "after": "070deab914468a36fcde50a955abe05216b357afc91c657d2b849cb1dadba605",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/DeferGlobalInitializers.o",
+    "before": "8e00af5a2f9a35e0ca35605bfe13101ac217be00517c4442e6c14b551bcbee7f",
+    "after": "8e00af5a2f9a35e0ca35605bfe13101ac217be00517c4442e6c14b551bcbee7f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/Diagnostics.o",
+    "before": "e737b8f6a3ddf93ecbc0ae14aaf0b5f334845bf16b2f74633bb028a398269bab",
+    "after": "e737b8f6a3ddf93ecbc0ae14aaf0b5f334845bf16b2f74633bb028a398269bab",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/DirectiveHandler.o",
+    "before": "6eca02aa33263262a58fbc5546d9b8e8b9275666cfab4094dea94f7922f29009",
+    "after": "6eca02aa33263262a58fbc5546d9b8e8b9275666cfab4094dea94f7922f29009",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/DiscoverDependentFunctions.o",
+    "before": "53cf969a6360a85e17bccdee9977fc154c58701066c34098b0bb42719816d6ff",
+    "after": "53cf969a6360a85e17bccdee9977fc154c58701066c34098b0bb42719816d6ff",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/DiscoverEnclosingFunctionTraverser.o",
+    "before": "8889b55844d3e9bc517fac37c955b6c11e9408725ebe4a6f305a3e6179a0519a",
+    "after": "8889b55844d3e9bc517fac37c955b6c11e9408725ebe4a6f305a3e6179a0519a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/DriverUniform.o",
+    "before": "5278ca4fbf62a1da69b55fbe002ea84c57750e53bef1cba3dccbabea8023d828",
+    "after": "5278ca4fbf62a1da69b55fbe002ea84c57750e53bef1cba3dccbabea8023d828",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/DriverUniformMetal.o",
+    "before": "ad087e0fa5557470cd87bde9a0661dbb121cb92fec1e3f0fb037b4a5b8550d6b",
+    "after": "ad087e0fa5557470cd87bde9a0661dbb121cb92fec1e3f0fb037b4a5b8550d6b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/EmitMetal.o",
+    "before": "b256631ae4b40e65f0531bce016ee9d35b91e6d52cf55390bbe7268db228b3e8",
+    "after": "b256631ae4b40e65f0531bce016ee9d35b91e6d52cf55390bbe7268db228b3e8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/EmulateGLFragColorBroadcast.o",
+    "before": "9896d857cb9f5359435cdc3f1dbe14fb0e84db2a67ec7ea2682990e12d5c7db7",
+    "after": "9896d857cb9f5359435cdc3f1dbe14fb0e84db2a67ec7ea2682990e12d5c7db7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/EmulateMultiDrawShaderBuiltins.o",
+    "before": "5e40c0364cdf8c477906e32a682345bca03bf92133ba103a78394f67fcf6188a",
+    "after": "5e40c0364cdf8c477906e32a682345bca03bf92133ba103a78394f67fcf6188a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/EnsureLoopForwardProgress.o",
+    "before": "334352a9293df4561c98c582d62fac42fee3a5b8338a9ca0b3914f25598432c7",
+    "after": "334352a9293df4561c98c582d62fac42fee3a5b8338a9ca0b3914f25598432c7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ExpandFragmentOutputsToVec4.o",
+    "before": "af764c8ec5b24456cf94d368c2f68e806ddb6a688853a76fb3ef7830f3c08122",
+    "after": "af764c8ec5b24456cf94d368c2f68e806ddb6a688853a76fb3ef7830f3c08122",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ExtensionBehavior.o",
+    "before": "4be0d8f9fff8302842094b824b45370c63aa42ab83aedcfbdd7a3e9adc226efb",
+    "after": "4be0d8f9fff8302842094b824b45370c63aa42ab83aedcfbdd7a3e9adc226efb",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/FindFunction.o",
+    "before": "e0847374cf2322a4903e4f1482099044c920c8e2f257fc6a665dc993013415a2",
+    "after": "e0847374cf2322a4903e4f1482099044c920c8e2f257fc6a665dc993013415a2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/FindMain.o",
+    "before": "9f42485cbf12369dd3efd91cb82bacaf54ab79bc67c898a1e9c5036c770821d4",
+    "after": "9f42485cbf12369dd3efd91cb82bacaf54ab79bc67c898a1e9c5036c770821d4",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/FindPreciseNodes.o",
+    "before": "e4d1ebb6c16c67a222750144a9d6261874a8d26b0a1f0b80c0122953dafbf40a",
+    "after": "e4d1ebb6c16c67a222750144a9d6261874a8d26b0a1f0b80c0122953dafbf40a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/FindSymbolNode.o",
+    "before": "41e8105ebf0a5e752bde0aa8491546c91cddebee75304e45a65d1f4774d13585",
+    "after": "41e8105ebf0a5e752bde0aa8491546c91cddebee75304e45a65d1f4774d13585",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/FixTypeConstructors.o",
+    "before": "01034a86ad65ca63db17543bb90e1e00c58595b1cd7db9f394b71b5d4fd2dfb3",
+    "after": "01034a86ad65ca63db17543bb90e1e00c58595b1cd7db9f394b71b5d4fd2dfb3",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/FlagStd140Structs.o",
+    "before": "7a305685ee7e27398628404f78126fc9e799ef67a37fa86829e89c1c4e1bd42e",
+    "after": "7a305685ee7e27398628404f78126fc9e799ef67a37fa86829e89c1c4e1bd42e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/FoldConstantSwitch.o",
+    "before": "168df0c174fdfd09203c983f2a0a0061bf773ba5fec58e6e4c9bfaa1112c3d89",
+    "after": "168df0c174fdfd09203c983f2a0a0061bf773ba5fec58e6e4c9bfaa1112c3d89",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/FoldExpressions.o",
+    "before": "77125074db16a9796bcafa0b95db9b1382a9893357bbab69b7eae622284d6229",
+    "after": "77125074db16a9796bcafa0b95db9b1382a9893357bbab69b7eae622284d6229",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/FunctionLookup.o",
+    "before": "1aff254b71ea139d80ad0ab894c3a94a671b79bf1a5dcd41f01906c1418aa768",
+    "after": "1aff254b71ea139d80ad0ab894c3a94a671b79bf1a5dcd41f01906c1418aa768",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/GatherDefaultUniforms.o",
+    "before": "08d8efd6eb4cfbf7b597b12c27993e4772175f33e3113d1ea47ec2ea864cc1bc",
+    "after": "08d8efd6eb4cfbf7b597b12c27993e4772175f33e3113d1ea47ec2ea864cc1bc",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/GuardFragDepthWrite.o",
+    "before": "ffbf15d0405fb5ddbdeff7b6ac1b00afafd52f6c09e8274e8b18464d115d8c05",
+    "after": "ffbf15d0405fb5ddbdeff7b6ac1b00afafd52f6c09e8274e8b18464d115d8c05",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/HashNames.o",
+    "before": "7133000f8bb3a771f4c8494453bb9d0801fa13ecb0790616a3e889fa8149d281",
+    "after": "7133000f8bb3a771f4c8494453bb9d0801fa13ecb0790616a3e889fa8149d281",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/HoistConstants.o",
+    "before": "9447d12ef99d28392a940fe4e2e0241e8d90411799610b9131cfba2b1301f191",
+    "after": "9447d12ef99d28392a940fe4e2e0241e8d90411799610b9131cfba2b1301f191",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/IdGen.o",
+    "before": "c1ec0909f43413a6fe781b6d88cb7749d7109e832218baa85c776105e98ed55d",
+    "after": "c1ec0909f43413a6fe781b6d88cb7749d7109e832218baa85c776105e98ed55d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ImmutableStringBuilder.o",
+    "before": "64b758b71b7100d4206e1f5f0e9e0c6968a4612eb8df8a473a42f082fbdb6588",
+    "after": "64b758b71b7100d4206e1f5f0e9e0c6968a4612eb8df8a473a42f082fbdb6588",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ImmutableString_autogen.o",
+    "before": "a01b289531883e8dfffd23b499d4604b0f762bd73d36a9c0e1475ad69a0da7fa",
+    "after": "a01b289531883e8dfffd23b499d4604b0f762bd73d36a9c0e1475ad69a0da7fa",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/InfoSink.o",
+    "before": "f567fd64c7dc556e540fde519ffe16ae4a66bd7948c32652530559627aa64a2c",
+    "after": "f567fd64c7dc556e540fde519ffe16ae4a66bd7948c32652530559627aa64a2c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/Initialize.o",
+    "before": "6fbc851b754eafa9262d81db80e7d1833714f10c2e09ddd6d9d7d96f741bf232",
+    "after": "6fbc851b754eafa9262d81db80e7d1833714f10c2e09ddd6d9d7d96f741bf232",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/InitializeVariables.o",
+    "before": "cc267431c3c4e39d06569d40bc48b96b4173b480f0c6115dbd7e6d6a9daacad5",
+    "after": "cc267431c3c4e39d06569d40bc48b96b4173b480f0c6115dbd7e6d6a9daacad5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/IntermNode.o",
+    "before": "b319d4835139f27f20ed5cd591074efb7fb2b158ae18301827d69e774ba86cf0",
+    "after": "b319d4835139f27f20ed5cd591074efb7fb2b158ae18301827d69e774ba86cf0",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/IntermNodePatternMatcher.o",
+    "before": "1d629c55b9263d742f4c79be17a83bd56db19b0fff2ffe972cf391af47f6d3df",
+    "after": "1d629c55b9263d742f4c79be17a83bd56db19b0fff2ffe972cf391af47f6d3df",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/IntermNode_util.o",
+    "before": "d722cf09dd9f2aebc8e2a76d286cb8028af847f5a821bf537f0b523bedd2ce24",
+    "after": "d722cf09dd9f2aebc8e2a76d286cb8028af847f5a821bf537f0b523bedd2ce24",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/IntermRebuild.o",
+    "before": "42943692b0b74aae400b51e49bac0e4fcce60ca19c0b3dad300b63c5a5a32549",
+    "after": "42943692b0b74aae400b51e49bac0e4fcce60ca19c0b3dad300b63c5a5a32549",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/IntermTraverse.o",
+    "before": "71f5370ce8e5f9abdb0812b8fca9eade32ea5fb2a6c1c4ffd1800c8fb6a7481c",
+    "after": "71f5370ce8e5f9abdb0812b8fca9eade32ea5fb2a6c1c4ffd1800c8fb6a7481c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/IntroduceVertexIndexID.o",
+    "before": "fcd924d322429f5cb398cf45d3878699d7a0352e67fa4c1eac24dd89fd6022d2",
+    "after": "fcd924d322429f5cb398cf45d3878699d7a0352e67fa4c1eac24dd89fd6022d2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/IsASTDepthBelowLimit.o",
+    "before": "3bb01a6e0736fcbe7a6b2ce4e8ffeaca107082477100572d263c0d47b1474c36",
+    "after": "3bb01a6e0736fcbe7a6b2ce4e8ffeaca107082477100572d263c0d47b1474c36",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/Layout.o",
+    "before": "7e18a7c7e4453a631a0c2aaeb7015ef25a333761f98da83bd342073bcbd9fde2",
+    "after": "7e18a7c7e4453a631a0c2aaeb7015ef25a333761f98da83bd342073bcbd9fde2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/MapFunctionsToDefinitions.o",
+    "before": "3894f4c7f0ca9a4150183f610f613575a08e15b0cf8095ef158be848a5a7f4ea",
+    "after": "3894f4c7f0ca9a4150183f610f613575a08e15b0cf8095ef158be848a5a7f4ea",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/MapSymbols.o",
+    "before": "800c9962be07a010efdc2a47e45ef931b211072f3a56812442c0d301a8740e7d",
+    "after": "800c9962be07a010efdc2a47e45ef931b211072f3a56812442c0d301a8740e7d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ModifyStruct.o",
+    "before": "575e9e3dda7b59e070c3da18a794053b14c9b6e18679978e3c937b50e1d8e422",
+    "after": "575e9e3dda7b59e070c3da18a794053b14c9b6e18679978e3c937b50e1d8e422",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/MonomorphizeUnsupportedFunctions.o",
+    "before": "e33279ac2a1ed0097ca9d7a21376619aa0f08ec596ff26f2a6e122ef6ba00674",
+    "after": "e33279ac2a1ed0097ca9d7a21376619aa0f08ec596ff26f2a6e122ef6ba00674",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/Name.o",
+    "before": "77e29c067a6d54cc228b97564593aa6de53d03a8d264fe85bb4569749bdff79a",
+    "after": "77e29c067a6d54cc228b97564593aa6de53d03a8d264fe85bb4569749bdff79a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/Operator.o",
+    "before": "091ad0e03aee88d9666bf506975b8625ce1946e72c38124407af1a0d870746b5",
+    "after": "091ad0e03aee88d9666bf506975b8625ce1946e72c38124407af1a0d870746b5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/OutputTree.o",
+    "before": "7b3b8efe59f7480b0a60113d83841fc6d5691b5437df07df86e115cf4e3068df",
+    "after": "7b3b8efe59f7480b0a60113d83841fc6d5691b5437df07df86e115cf4e3068df",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ParseContext.o",
+    "before": "96745b4d0a7d4ef7d15f3fd76489a4596d65d1b95e758a05d85ed87504303be1",
+    "after": "96745b4d0a7d4ef7d15f3fd76489a4596d65d1b95e758a05d85ed87504303be1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/Pipeline.o",
+    "before": "c9c98c818fe2599ef442901ca94c78871682556a6835ab30bad36accda03683a",
+    "after": "c9c98c818fe2599ef442901ca94c78871682556a6835ab30bad36accda03683a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/PoolAlloc.o",
+    "before": "e64ffc75225db4dba4d43356d5fbaa58026a31566ce20af9413286c87c762dde",
+    "after": "e64ffc75225db4dba4d43356d5fbaa58026a31566ce20af9413286c87c762dde",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/PreTransformTextureCubeGradDerivatives.o",
+    "before": "93782228c71de2861262b587973c08a93e98649420092ce900bdd2c2403a697a",
+    "after": "93782228c71de2861262b587973c08a93e98649420092ce900bdd2c2403a697a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ProgramPrelude.o",
+    "before": "cea301d048f42afa25d03e1e921770eb38eccf65f3d10fb5243762155c20eae1",
+    "after": "cea301d048f42afa25d03e1e921770eb38eccf65f3d10fb5243762155c20eae1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/PruneEmptyCases.o",
+    "before": "84222c2f6b2e0f905a19d4627f780aa4e0f70af5d1c05cc731a3db6d3faa541b",
+    "after": "84222c2f6b2e0f905a19d4627f780aa4e0f70af5d1c05cc731a3db6d3faa541b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/PruneNoOps.o",
+    "before": "9e1c834fcac4350a4a2d1c66c6b6ef7e9b5b19bea69952a39b711b629a4715cd",
+    "after": "9e1c834fcac4350a4a2d1c66c6b6ef7e9b5b19bea69952a39b711b629a4715cd",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/QualifierTypes.o",
+    "before": "47b16d61dbb233d1b523604fcd02ee596046d8206f0ba54f611426cec954b3d9",
+    "after": "47b16d61dbb233d1b523604fcd02ee596046d8206f0ba54f611426cec954b3d9",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RecordConstantPrecision.o",
+    "before": "0ac90097f964e7e13e4543af58e0992901a38b62331bcd02f4b941a8bdae11c1",
+    "after": "0ac90097f964e7e13e4543af58e0992901a38b62331bcd02f4b941a8bdae11c1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ReduceInterfaceBlocks.o",
+    "before": "d719e78db31c7802d85516fdecb6848126e92b3367780322d225c1375b9efc30",
+    "after": "d719e78db31c7802d85516fdecb6848126e92b3367780322d225c1375b9efc30",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RemoveArrayLengthMethod.o",
+    "before": "8c28bfaff260981cf5f2cdb64a496b38da49076b7fd99979ebff5646dac71f01",
+    "after": "8c28bfaff260981cf5f2cdb64a496b38da49076b7fd99979ebff5646dac71f01",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RemoveAtomicCounterBuiltins.o",
+    "before": "3a751c1a704302c28fcf84db0975fbd5c76acf688d901f7357b1caf7e4f843c1",
+    "after": "3a751c1a704302c28fcf84db0975fbd5c76acf688d901f7357b1caf7e4f843c1",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RemoveDynamicIndexing.o",
+    "before": "986e09bcefef4c8a8481ee11264c5621caddfa34d6589ace2f4853ebd6474f18",
+    "after": "986e09bcefef4c8a8481ee11264c5621caddfa34d6589ace2f4853ebd6474f18",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RemoveInactiveInterfaceVariables.o",
+    "before": "ca8b4ebb816dd06aa732fff310cd66f1b0a7d73fee9cd46c4c0b61a8f78b2543",
+    "after": "ca8b4ebb816dd06aa732fff310cd66f1b0a7d73fee9cd46c4c0b61a8f78b2543",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RemoveInvariantDeclaration.o",
+    "before": "8d74ff2c4cb60746f860e95ad50291203dede0c8fb0b060292b77c3c7223b078",
+    "after": "8d74ff2c4cb60746f860e95ad50291203dede0c8fb0b060292b77c3c7223b078",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RemoveUnreferencedVariables.o",
+    "before": "50c45989c9beee863d88d2d102a0c593a6a0af8b8a21fef7c39ed1436551a55c",
+    "after": "50c45989c9beee863d88d2d102a0c593a6a0af8b8a21fef7c39ed1436551a55c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RemoveUnusedFramebufferFetch.o",
+    "before": "769cfb17ab48ffb81a95438f04c71eda4281086a4055789edd950ce20129986c",
+    "after": "769cfb17ab48ffb81a95438f04c71eda4281086a4055789edd950ce20129986c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ReplaceArrayOfMatrixVarying.o",
+    "before": "78a980297a20ac12ef30f1cd58a48bf5499fa3bd4018c67cc71515ba97257e35",
+    "after": "78a980297a20ac12ef30f1cd58a48bf5499fa3bd4018c67cc71515ba97257e35",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ReplaceClipCullDistanceVariable.o",
+    "before": "7bd8c7c8315930a3ba009ce8ef85394eef19308fee7db53d2a2b8b3dcef5741d",
+    "after": "7bd8c7c8315930a3ba009ce8ef85394eef19308fee7db53d2a2b8b3dcef5741d",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ReplaceShadowingVariables.o",
+    "before": "2242603163756797d62ae077928923ae61b1715ca104d98b96408bcf9e0137be",
+    "after": "2242603163756797d62ae077928923ae61b1715ca104d98b96408bcf9e0137be",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ReplaceVariable.o",
+    "before": "47bcb0485b5833d5bbf2646cbe89f453a9f595e35e5a5bf9f1a61d57d73d096a",
+    "after": "47bcb0485b5833d5bbf2646cbe89f453a9f595e35e5a5bf9f1a61d57d73d096a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RescopeGlobalVariables.o",
+    "before": "17989c544b2adb7f633e621b0885096ee434185700ea06126159b3ce6d4fb8a5",
+    "after": "17989c544b2adb7f633e621b0885096ee434185700ea06126159b3ce6d4fb8a5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewriteArrayOfArrayOfOpaqueUniforms.o",
+    "before": "7e4284ecc554aa8a21e3f156c17de1af56efd529ade978e9bb66c8d8bf03699a",
+    "after": "7e4284ecc554aa8a21e3f156c17de1af56efd529ade978e9bb66c8d8bf03699a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewriteAtomicCounters.o",
+    "before": "2ffe75c94030c4453a47c642854df47dfc71462ff40517b207570eb18bdd5587",
+    "after": "2ffe75c94030c4453a47c642854df47dfc71462ff40517b207570eb18bdd5587",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewriteCaseDeclarations.o",
+    "before": "2a58f86755b462a656fd4eabc901518a4ccfab9e825372348690c16a8b4c3126",
+    "after": "2a58f86755b462a656fd4eabc901518a4ccfab9e825372348690c16a8b4c3126",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewriteDfdy.o",
+    "before": "65482902806b7acdf56bec3043ff9852b026fd0455d7587fe6591263193087a3",
+    "after": "65482902806b7acdf56bec3043ff9852b026fd0455d7587fe6591263193087a3",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewriteInterpolants.o",
+    "before": "9b49807f2e0d6368dfa15733ab5422302fe676b3dd48d69b46bd0a43d92882b5",
+    "after": "9b49807f2e0d6368dfa15733ab5422302fe676b3dd48d69b46bd0a43d92882b5",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewriteOutArgs.o",
+    "before": "4c1ed864e13b154198d956286f4623584e7a195df663222fe410d1bb6c5bab66",
+    "after": "4c1ed864e13b154198d956286f4623584e7a195df663222fe410d1bb6c5bab66",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewritePipelines.o",
+    "before": "5d67f44bfdc941ed650ebc130c82d5e476948b6cf3e9551e329b3c277c62952a",
+    "after": "5d67f44bfdc941ed650ebc130c82d5e476948b6cf3e9551e329b3c277c62952a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewritePixelLocalStorage.o",
+    "before": "925a5bdfd346302a52cffdd8badcda9c9a0dd138b5b70def3d56e27a28795e75",
+    "after": "925a5bdfd346302a52cffdd8badcda9c9a0dd138b5b70def3d56e27a28795e75",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewriteSampleMaskVariable.o",
+    "before": "b06a44800b9c6be5a6fc58940dad8b83e639f366fd0571eb8538be2ed8535bbb",
+    "after": "b06a44800b9c6be5a6fc58940dad8b83e639f366fd0571eb8538be2ed8535bbb",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewriteStructSamplers.o",
+    "before": "f583942d728c1700c108d84efe8f08437527378c2c8de2c5b966f8f621ecc923",
+    "after": "f583942d728c1700c108d84efe8f08437527378c2c8de2c5b966f8f621ecc923",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewriteTexelFetchOffset.o",
+    "before": "4aed93ae388dc4a402dbe2faae025389fa00ce097800184d5073c800113c8025",
+    "after": "4aed93ae388dc4a402dbe2faae025389fa00ce097800184d5073c800113c8025",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RewriteUnaddressableReferences.o",
+    "before": "27d1e77d44d5da70aaf79159262c6783ae1fafabcea1f10dc8d3c887546299c0",
+    "after": "27d1e77d44d5da70aaf79159262c6783ae1fafabcea1f10dc8d3c887546299c0",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RunAtTheBeginningOfShader.o",
+    "before": "25d7b81a64016c880bd7b9bdcf3309b02f85bb24eb00d160af63c16908979b1f",
+    "after": "25d7b81a64016c880bd7b9bdcf3309b02f85bb24eb00d160af63c16908979b1f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/RunAtTheEndOfShader.o",
+    "before": "e213ec5fb551f1d4e8c2a6cfa4a5bd7b522ad86e2f058292af3a2d661e4b0b5a",
+    "after": "e213ec5fb551f1d4e8c2a6cfa4a5bd7b522ad86e2f058292af3a2d661e4b0b5a",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ScalarizeVecAndMatConstructorArgs.o",
+    "before": "7533b2690f1eac378316cd611d11f114b3ec7ee11a19a54e52145e8e8cc6331e",
+    "after": "7533b2690f1eac378316cd611d11f114b3ec7ee11a19a54e52145e8e8cc6331e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/SeparateCompoundExpressions.o",
+    "before": "2ac1e772d055d53c65dfb1cefb849f89cf95bb907a92f348bba3490ef25b62f9",
+    "after": "2ac1e772d055d53c65dfb1cefb849f89cf95bb907a92f348bba3490ef25b62f9",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/SeparateDeclarations.o",
+    "before": "022382ce8a67dee509a780b2d7388b1d8cc5b75d4d5024d5a0546e24b4e082a7",
+    "after": "022382ce8a67dee509a780b2d7388b1d8cc5b75d4d5024d5a0546e24b4e082a7",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ShaderLang.o",
+    "before": "ba7619a25d589629c39cffa1b42affc10fe35265b9403ecb2a5e5b31224212b8",
+    "after": "ba7619a25d589629c39cffa1b42affc10fe35265b9403ecb2a5e5b31224212b8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ShaderVars.o",
+    "before": "be694131465a10b864609d0506d58d3267d3a5e73a3a5f4cf33a33db43d199ec",
+    "after": "be694131465a10b864609d0506d58d3267d3a5e73a3a5f4cf33a33db43d199ec",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/SimplifyLoopConditions.o",
+    "before": "b7d5a05edbfc3bcfe2c83a8f528e7dee132eaa62e0d50583f0d6725a984bd498",
+    "after": "b7d5a05edbfc3bcfe2c83a8f528e7dee132eaa62e0d50583f0d6725a984bd498",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/SizeClipCullDistance.o",
+    "before": "37e5c0f354a35d7ecb5e8fa98c212ef8360f16059d2d8a94c231c1ecd9bc7815",
+    "after": "37e5c0f354a35d7ecb5e8fa98c212ef8360f16059d2d8a94c231c1ecd9bc7815",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/SplitSequenceOperator.o",
+    "before": "de2c50547b62d9b474fb8dae9e32aa642a96065cebd8a30f7c2b02cb9ed3006e",
+    "after": "de2c50547b62d9b474fb8dae9e32aa642a96065cebd8a30f7c2b02cb9ed3006e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/Symbol.o",
+    "before": "f73cef87d01fd23ae7377b7abe7cc986b57527e5a91e64ca27471389c5e92826",
+    "after": "f73cef87d01fd23ae7377b7abe7cc986b57527e5a91e64ca27471389c5e92826",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/SymbolEnv.o",
+    "before": "d728564bf23ad933a8068d045356d79660e34d6bd4f708eb1fb331d2717e2f17",
+    "after": "d728564bf23ad933a8068d045356d79660e34d6bd4f708eb1fb331d2717e2f17",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/SymbolTable.o",
+    "before": "97fb2b69be13833c783977a8722ed600950fc387ab98f40e8e97ae6354096290",
+    "after": "97fb2b69be13833c783977a8722ed600950fc387ab98f40e8e97ae6354096290",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/SymbolTable_autogen.o",
+    "before": "aef873bcd73bdf6d89bbb63ad49680b9e0c03e4ad288c3c3c46c0dd5bdaad6f4",
+    "after": "aef873bcd73bdf6d89bbb63ad49680b9e0c03e4ad288c3c3c46c0dd5bdaad6f4",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/SymbolUniqueId.o",
+    "before": "bdce7493e591d747a0e54921aacb6a4bb1398b933839a78fdf04a59978f81dcd",
+    "after": "bdce7493e591d747a0e54921aacb6a4bb1398b933839a78fdf04a59978f81dcd",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ToposortStructs.o",
+    "before": "d102c97563e8ab32ad0715f0a5ae0077749af51dfd5e6a0da35c4afcd2256d3c",
+    "after": "d102c97563e8ab32ad0715f0a5ae0077749af51dfd5e6a0da35c4afcd2256d3c",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/TranslatorMSL.o",
+    "before": "c48fdb0175bc77283f7fdce506c4e19090358a5a3197413aaba1119e00e61c80",
+    "after": "c48fdb0175bc77283f7fdce506c4e19090358a5a3197413aaba1119e00e61c80",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/TransposeRowMajorMatrices.o",
+    "before": "9ef43f57b4d6ed06bd48d12f93df89d0adbe8f47dcef2ddf65ab178c8e34e48b",
+    "after": "9ef43f57b4d6ed06bd48d12f93df89d0adbe8f47dcef2ddf65ab178c8e34e48b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/Types.o",
+    "before": "26b0796d3080542cd3920a8930d06e557a886854fa2c2fe74c4f7e2f3c2c7908",
+    "after": "26b0796d3080542cd3920a8930d06e557a886854fa2c2fe74c4f7e2f3c2c7908",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/UseGeneratedNamesForAnonymousStructs.o",
+    "before": "fc27acb29cbc2bc0c37688790d86eb3020fe56e29b47ffd4797b9e41c9a5f780",
+    "after": "fc27acb29cbc2bc0c37688790d86eb3020fe56e29b47ffd4797b9e41c9a5f780",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/UtilsMSL.o",
+    "before": "2a42fe20dffaa1e91f0cb7f3ddbc070a3237a7c42dc3c61a3fc1cece1b856f3b",
+    "after": "2a42fe20dffaa1e91f0cb7f3ddbc070a3237a7c42dc3c61a3fc1cece1b856f3b",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ValidateAST.o",
+    "before": "6d290724e2c9d13ff4eee7a3f0dd81cd7bfca7aa0ce91e7f480a7482ce4f9061",
+    "after": "6d290724e2c9d13ff4eee7a3f0dd81cd7bfca7aa0ce91e7f480a7482ce4f9061",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ValidateGlobalInitializer.o",
+    "before": "a117fb0113bd6b726a7a39f873a86bcd6e7e2cd52190444d0b323c665905cfb9",
+    "after": "a117fb0113bd6b726a7a39f873a86bcd6e7e2cd52190444d0b323c665905cfb9",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/ValidateVaryingLocations.o",
+    "before": "720d07487e589595699995a45d270489413a62319de24b9b0c5d13cceee32cc2",
+    "after": "720d07487e589595699995a45d270489413a62319de24b9b0c5d13cceee32cc2",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/VariablePacker.o",
+    "before": "082ae21b209b325a1bd32193ae556762c419acf9de8dec96c28195bdb469845e",
+    "after": "082ae21b209b325a1bd32193ae556762c419acf9de8dec96c28195bdb469845e",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/WrapMain.o",
+    "before": "ee55f2983c952d9a1dc85a5dcb42e6adaa71f617cb50d653c13b1ae9f9dcd1a8",
+    "after": "ee55f2983c952d9a1dc85a5dcb42e6adaa71f617cb50d653c13b1ae9f9dcd1a8",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/blocklayout.o",
+    "before": "9108885e42412d14b375f52b7bc4a1c06a402593f8cfb90ddd2cf04a94c04dfd",
+    "after": "9108885e42412d14b375f52b7bc4a1c06a402593f8cfb90ddd2cf04a94c04dfd",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/glslang_lex_autogen.o",
+    "before": "c9bf4a7737ce28ec25ba3418c37e5f98ce28417eb3b0d46364f004c13934334f",
+    "after": "c9bf4a7737ce28ec25ba3418c37e5f98ce28417eb3b0d46364f004c13934334f",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/glslang_tab_autogen.o",
+    "before": "63eed898684bedd3245d5a3a5cc80a255f9f1d093c2c6d8a0815d8f2be81f086",
+    "after": "63eed898684bedd3245d5a3a5cc80a255f9f1d093c2c6d8a0815d8f2be81f086",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/translator/util.o",
+    "before": "f9f6c0654de6c88db3a7679e867d377f6b55aa0afb8af84b282e2f4336ebdbca",
+    "after": "f9f6c0654de6c88db3a7679e867d377f6b55aa0afb8af84b282e2f4336ebdbca",
+    "reused_identical": true
+  },
+  {
+    "relative": "out/ios-arm64-release/obj/xxhash/xxhash.o",
+    "before": "e5aa26c9ad6200c518ec0456fe2ed34063682277a28f7a498906f9046b20bcca",
+    "after": "e5aa26c9ad6200c518ec0456fe2ed34063682277a28f7a498906f9046b20bcca",
+    "reused_identical": true
+  }
+]

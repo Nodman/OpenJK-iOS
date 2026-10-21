@@ -1,0 +1,41 @@
+diff --git a/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-5c5de020/scripts/ios/angle-recipe.py b/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-a31e14e9/scratch/playable-candidate-20261021-r1/recipe/scripts/ios/angle-recipe.py
+index cdeef30f..11bd00ad 100644
+--- a/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-5c5de020/scripts/ios/angle-recipe.py
++++ b/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-a31e14e9/scratch/playable-candidate-20261021-r1/recipe/scripts/ios/angle-recipe.py
+@@ -54,7 +54,8 @@ def inputs():
+     return {str(p.relative_to(REPO)): sha(p) for p in sorted(HERE.glob('angle-*')) if p.is_file()} | PINS['inputs'] | {
+         '.github/workflows/angle-apple.yml': sha(REPO / '.github/workflows/angle-apple.yml'),
+         'scripts/ios/build-angle-apple.sh': sha(HERE / 'build-angle-apple.sh'),
+-        'cmake/ios/patches/angle-rgb-batch.patch': sha(REPO / 'cmake/ios/patches/angle-rgb-batch.patch')}
++        'cmake/ios/patches/angle-rgb-batch.patch': sha(REPO / 'cmake/ios/patches/angle-rgb-batch.patch'),
++        'cmake/ios/patches/angle-rgb-direct-staging.patch': sha(REPO / 'cmake/ios/patches/angle-rgb-direct-staging.patch')}
+ 
+ 
+ def host():
+@@ -208,6 +209,7 @@ def build(root, variant):
+         provenance = verify_source(root)
+         run('git', '-C', source, 'apply', '--check', patch)
+         run('git', '-C', source, 'apply', patch)
++        run('git', '-C', source, 'apply', REPO / 'cmake/ios/patches/angle-rgb-direct-staging.patch')
+     else:
+         provenance = verify_source(root, patched=True)
+     for path, expected in PINS['patched_files'].items():
+diff --git a/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-5c5de020/scripts/ios/angle-pins.json b/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-a31e14e9/scratch/playable-candidate-20261021-r1/recipe/scripts/ios/angle-pins.json
+index 0f825a42..39de5a37 100644
+--- a/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-5c5de020/scripts/ios/angle-pins.json
++++ b/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-a31e14e9/scratch/playable-candidate-20261021-r1/recipe/scripts/ios/angle-pins.json
+@@ -21891,12 +21891,12 @@
+     "original_script_sha256": "d072bb3745e9b825391b237d2395a2207e6dfe994cd86c1d53f7d67baec526db"
+   },
+   "patched_files": {
+-    "src/libANGLE/renderer/metal/TextureMtl.mm": "459a8904952a70ede4f8fc7a023037bbac7e03b16b5ae36d2fb6dee4651fd637",
++    "src/libANGLE/renderer/metal/TextureMtl.mm": "284c230140095c490bac74cee0ea17e1fa1af1922499ade9fc92583ef96e6c13",
+     "src/tests/gl_tests/TextureTest.cpp": "5d8feac8b06e22415cacfacb067e7bae40ce15adfd767981c036331d39a81312"
+   },
+   "qualified_payload_device_testing": "Prior bytes only; new builds are not device qualified",
+   "qualified_provenance": "angle-3c3c1746733c-rgb-batch-1fcdd48e05b9-ios-arm64",
+-  "recipe_revision": "t101-r1",
++  "recipe_revision": "playable-direct-r1",
+   "schema": 1,
+   "tool_files": {
+     "buildtools/mac/gn": "8b50f57cfac9eba62f07ce5d9ad15d738c6bfeb6e58de33fe2b586800545bee6",

@@ -1,0 +1,10 @@
+{
+  "source": "/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-5c5de020/build-angle-t101-r3/angle",
+  "destination": "/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-a31e14e9/scratch/playable-candidate-20261021-r1/angle",
+  "identical_independent_inputs": 119971,
+  "excluded": [
+    ".git",
+    "out",
+    "__pycache__"
+  ]
+}

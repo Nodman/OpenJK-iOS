@@ -1,0 +1,76 @@
+{
+  "assembly_provenance": {
+    "copy_proof": "dependency-copy-proof.json",
+    "ordered_patches": [
+      "angle-rgb-batch.patch",
+      "angle-rgb-direct-staging.patch"
+    ],
+    "source": "/Users/spooner/.t3/worktrees/OpenJK-iOS/t3-a31e14e9/scratch/playable-candidate-20261021-r1/angle",
+    "upstream": "3c3c1746733c752cfe8cf1ff9c2524885d5bd28e"
+  },
+  "assets": {
+    "SHA256SUMS": "ed83f468549fd90897a2412e1e0bee31afc2aaa416f960a8c6b75c21887fce98",
+    "libEGL.xcframework.zip": "ce89db71fe3e44c28611a478aca01fe8c65c5e1b37b7843c909ebe54d639cecc",
+    "libGLESv2.xcframework.zip": "bf3268ed1b6363fd0a1ac4546ba55c99e66bd4deb128835854d6091d0f1ad91f",
+    "manifest.json": "4371321167ab6e4f1668db55e0d0671e43de03d92d2cd438e3e6727fb1d137c4"
+  },
+  "base_commit": "2f097489ba1d2914560237d41fc9eed75600b8f7",
+  "description": "Retained tested incremental ANGLE dependency package; no rebuild or repack for hosting.",
+  "frameworks": {
+    "libEGL": {
+      "bytes": 74336,
+      "sha256": "5fb91aa75488229e37e7dc5c098e798fef309478a856507b00f0969a65c9c823"
+    },
+    "libGLESv2": {
+      "bytes": 4037672,
+      "sha256": "5cdf4ca7a60ff9d804714df9f0979046cdfc0133471e62b9e1d391d2da23dabb"
+    }
+  },
+  "identity": "angle-3c3c1746733c-rgb-playable-direct-r1-415d50aa73e26917-b386b9e0a9eb3237-ios-arm64",
+  "incremental_objects": {
+    "changed": [
+      "TextureMtl object",
+      "generated version object"
+    ],
+    "total": 474,
+    "unchanged_reused": 472
+  },
+  "licenses": "Both unchanged XCFramework ZIPs include the original framework Licenses trees, as enforced by the original package verifier.",
+  "ordered_patches": [
+    {
+      "path": "cmake/ios/patches/angle-rgb-batch.patch",
+      "sha256": "1fcdd48e05b99a97ed8c49e754ea5d88bab718ef568bb1b23471c069a1632088"
+    },
+    {
+      "path": "cmake/ios/patches/angle-rgb-direct-staging.patch",
+      "sha256": "78b6388fa93980a9d793bac8c46d8e41592840de5b727c8f8fee5887ae89449e"
+    }
+  ],
+  "payload_sha256": "b386b9e0a9eb3237396151aa79d2c26c18629729a5b8ae39f1a03a81762498a2",
+  "publication_scope": "Four dependency assets only; original bundled recipe inputs plus release exclusion guards. No app integration source, app publication, default flip or full dependency build.",
+  "qualification": "Original package variant qualified identifies production arguments, not full P10 acceptance. Brief SP/MP human playtests accepted; sustained performance, thermal and broader device qualification remain open.",
+  "qualified_provenance": "angle-3c3c1746733c-rgb-batch-1fcdd48e05b9-ios-arm64",
+  "recipe_inputs": {
+    ".github/workflows/angle-apple.yml": "d33c8d873cdc186f11f1a3ed8360122d7cb48959bad123a6cc62c9de598a7aa7",
+    "cmake/ios/patches/angle-rgb-batch.patch": "1fcdd48e05b99a97ed8c49e754ea5d88bab718ef568bb1b23471c069a1632088",
+    "cmake/ios/patches/angle-rgb-direct-staging.patch": "78b6388fa93980a9d793bac8c46d8e41592840de5b727c8f8fee5887ae89449e",
+    "scripts/ios/angle-args.gn": "ccf34f6068ad389a9faee588e71c954f429319c74ab00a48881a9dea33863c09",
+    "scripts/ios/angle-package.py": "83d0b71c34e7b31d5845e00581366962bb693cb7f92110c570d6a05c44952af3",
+    "scripts/ios/angle-pins.json": "f92dae6d1edb49988d8c074d5fad3d88437518376b66ced618855516f0678d94",
+    "scripts/ios/angle-recipe.py": "eefac0940ecd101d5aec82bd9dc7b0771c9b9f67cfee2eccf56c650d6bc1151f",
+    "scripts/ios/angle-resolved-deps.json": "1ed2b7faa7e8f009f97117b0811cec63747b4fe88a06625dd5904318428db53a",
+    "scripts/ios/angle-tests.py": "0642f7dcadbe5a588951e5f3aaf7a373c9d563b6bd0981483eb14a4539d11d92",
+    "scripts/ios/angle.gclient": "b0694593a91d30b772e0d9faa3cc50de08c9320e97f6fa4a98e3c4891c281685",
+    "scripts/ios/build-angle-apple.sh": "654bf4358919da514071357cda08137079fe908a1f197e09941c63f569ae0bac"
+  },
+  "recipe_sha256": "415d50aa73e2691793bcdc7c4536a766b68399b0dd1cdfdf8676b7af3a687b69",
+  "reproduction_limit": "Normal recipe builds record timings, paths and ZIP timestamps; fresh archive/manifest bytes are not promised to match this retained incremental assembly.",
+  "retained_evidence": {
+    "angle-object-reuse.json": "18810d358cacbe031d1df41cb83041998dc823fe4bd9091089726ed6fc17f8b3",
+    "dependency-commands.jsonl": "12f4a3fc857468042ea2a77cfd2ec1b45079ae2a69d50b826452222311a3bc12",
+    "dependency-copy-proof.json": "6ac7f6a21a3e57e978f4e840db39689436b8a99afa51377f65e2a7e80537d415",
+    "local-recipe-changes.diff": "6060a6495476ebb3c8fdf52278fb070b268fdd1fe0e4ef39d4ad3ddf3c284bc2"
+  },
+  "schema": 1,
+  "upstream_angle_commit": "3c3c1746733c752cfe8cf1ff9c2524885d5bd28e"
+}
