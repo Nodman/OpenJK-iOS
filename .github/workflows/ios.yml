@@ -84,20 +84,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" build-ios/dist/*.ipa build-ios/dist/SHA256SUMS --title "OpenJK iOS ${GITHUB_REF_NAME#ios-v}" --notes-file docs/ios.md
 
-  pages:
+  altstore-source:
     if: startsWith(github.ref, 'refs/tags/ios-v')
     needs: release
     runs-on: ubuntu-22.04
     permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ios
           fetch-depth: 0
 
       - uses: actions/download-artifact@v4
@@ -105,12 +101,15 @@ jobs:
           name: ipas
           path: build-ios/dist
 
+      # Build number comes from the tagged commit, which the branch head may be past.
       - name: Create AltStore source
-        run: python3 scripts/ios/make-altstore-source.py --dist build-ios/dist --version "${GITHUB_REF_NAME#ios-v}" --repo "$GITHUB_REPOSITORY" --out site/altstore/source.json
+        run: python3 scripts/ios/make-altstore-source.py --dist build-ios/dist --version "${GITHUB_REF_NAME#ios-v}" --build-version "$(git rev-list --count "$GITHUB_REF_NAME")" --repo "$GITHUB_REPOSITORY" --out altstore/source.json
 
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-      - uses: actions/deploy-pages@v4
-        id: deployment
+      - name: Commit source to ios
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add altstore/source.json
+          git diff --cached --quiet && exit 0
+          git commit -m "[iOS] Update AltStore source for $GITHUB_REF_NAME"
+          git push origin ios
