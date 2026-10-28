@@ -256,16 +256,14 @@ static void ConsoleFlagRegressions( void ) {
 		ConsoleSet( "seta", name, "last" );
 		assert( !strcmp(var->string, "last") && Writes(name, "last") );
 	}
-	cvar_t *requested = Cvar_Get( "r_glesProvider", "eagl", CVAR_ARCHIVE | CVAR_LATCH );
+	cvar_t *requested = Cvar_Get( "r_glesProvider", "eagl", CVAR_ARCHIVE );
 	for ( int i = 0; i < 3; ++i ) {
 		ConsoleSet( "seta", "r_glesProvider", "angle" );
-		assert( !strcmp(requested->string, "eagl") );
-		assert( requested->latchedString && !strcmp(requested->latchedString, "angle") );
-		assert( (requested->flags & (CVAR_ARCHIVE | CVAR_LATCH)) == (CVAR_ARCHIVE | CVAR_LATCH) );
+		assert( !strcmp(requested->string, "angle") && !requested->latchedString );
+		assert( (requested->flags & (CVAR_ARCHIVE | CVAR_LATCH)) == CVAR_ARCHIVE );
 		assert( Writes("r_glesProvider", "angle") );
-		assert( !strcmp(requested->string, "eagl") && !strcmp(requested->latchedString, "angle") );
 	}
-	puts( "PASS: console writable/new/same/already-archived seta and repeated pending requested-provider serialization" );
+	puts( "PASS: console writable/new/same/already-archived seta and repeated requested-provider serialization" );
 
 	for ( const char *command : {"setu", "sets"} ) {
 		const int info = !strcmp(command, "setu") ? CVAR_USERINFO : CVAR_SERVERINFO;

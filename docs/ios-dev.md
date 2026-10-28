@@ -35,7 +35,8 @@ Companion to the [player guide](ios.md) and the [ANGLE dependency note](ios-angl
 - Thermal: the target is capped at the panel maximum, lowered to 60 at Serious and 30 at Critical. Scale and the saved rate are untouched.
 - `r_gl4esEnv` defaults to `LIBGL_USEVBO=3`. gl4es reads it once at renderer init, so changes need a full relaunch with `+set r_gl4esEnv ...`.
 - `r_aspectSafeLeft/Top/Right/Bottom` are read-only safe-area insets in drawable pixels. iPads below the 1.5 ratio get no extra 2D margins. JK2 mode is not built for iOS.
-- `r_glesProvider` is `CVAR_ARCHIVE | CVAR_LATCH`; `r_glesProviderActive` is `CVAR_ROM` and `seta` on it is refused.
+- `r_glesProvider` is `CVAR_ARCHIVE`, read once at the first video mode set; later changes wait for the next launch. `r_glesProviderActive` is `CVAR_ROM` and `seta` on it is refused.
+- The Video page `Graphics backend` row is the retail `video_sync` item rebound to `r_glesProvider` with a string list, like the other iOS rows in `UI_IOS_PatchVideoMenu`.
 
 ## Touch internals
 

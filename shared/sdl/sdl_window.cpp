@@ -721,7 +721,7 @@ void GLimp_IOS_CheckPresentSize( void ) {
 static void GLimp_IOS_ChooseProvider( void ) {
 	if ( providerChosen ) return;
 	providerChosen = true;
-	cvar_t *provider = Cvar_Get( "r_glesProvider", "eagl", CVAR_ARCHIVE | CVAR_LATCH );
+	cvar_t *provider = Cvar_Get( "r_glesProvider", "eagl", CVAR_ARCHIVE );
 	cvar_t *active = Cvar_Get( "r_glesProviderActive", "", CVAR_ROM );
 	active->flags = CVAR_ROM;
 	Cvar_Set( "r_glesProviderActive", "" );

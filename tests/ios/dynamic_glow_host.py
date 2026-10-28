@@ -37,7 +37,7 @@ enum { WINDOW_HASFOCUS=1, WINDOW_VISIBLE=2, WINDOW_DECORATION=4, WINDOW_INACTIVE
 typedef int sfxHandle_t;
 typedef struct { float x,y,w,h; } rectDef_t;
 typedef struct { const char *name; rectDef_t rect; int flags; } window_t;
-typedef struct { int strDef,count; float cvarValue[32]; const char *cvarList[32]; } multiDef_t;
+typedef struct { int strDef,count; float cvarValue[32]; const char *cvarList[32],*cvarStr[32]; } multiDef_t;
 typedef struct { window_t window; int type; const char *cvar,*text,*descText,*cvarTest,*enableCvar,*onFocus; int cvarFlags,disabled,focusSound; void *parent; TYPE_DATA float textalignx,textscale; int font,iMenuFont; rectDef_t textRect; } itemDef_t;
 typedef struct { window_t window; int itemCount,cursorItem; itemDef_t *items[1]; } menuDef_t;
 static menuDef_t Menus[4];
@@ -120,6 +120,26 @@ static void checkProviders(void) {
  UI_IOS_RefreshVideoMenus(qfalse);
  for(i=0;i<4;i++) checkProMotion(&items[i],&multis[i],unknown);
  items[0].descText="sentinel";UI_IOS_RefreshVideoMenus(qtrue);checkProMotion(&items[0],&multis[0],unknown);
+ /* The retail vsync row becomes the provider switch; help follows requested vs active. */
+ {
+  const char *pending="Takes effect after you fully close and reopen the app.";
+  const char *onAngle="Active now: ANGLE over Metal, needed for 120 Hz on iPhone.";
+  const char *onEagl="Active now: EAGL. ANGLE can reach 120 Hz on iPhone.";
+  const char *pair[4][3]={{"eagl","eagl",0},{"angle","angle",0},{"eagl","angle",0},{"angle","eagl",0}};
+  itemDef_t *item=&items[0];i=0;pair[0][2]=onEagl;pair[1][2]=onAngle;pair[2][2]=pending;pair[3][2]=pending;
+  item->window.name="video_sync";item->cvar="r_swapInterval";item->descText="sentinel";item->text="Video Sync";
+  for(j=0;j<4;j++) {
+   activeProvider=pair[j][0];requestedProvider=pair[j][1];
+   UI_IOS_RefreshVideoMenus(qtrue);
+   assert(!strcmp(item->cvar,"r_glesProvider") && !strcmp(item->text,"Graphics backend") && !strcmp(item->descText,pair[j][2]));
+   assert(multis[0].strDef && multis[0].count==2);
+   assert(!strcmp(multis[0].cvarList[0],"EAGL") && !strcmp(multis[0].cvarStr[0],"eagl"));
+   assert(!strcmp(multis[0].cvarList[1],"ANGLE") && !strcmp(multis[0].cvarStr[1],"angle"));
+   UI_IOS_RefreshVideoMenus(qfalse);assert(!strcmp(item->descText,pair[j][2]));
+  }
+  item->window.name="fullscreen";item->cvar="ui_r_fullscreen";activeProvider="unknown";requestedProvider="";
+  UI_IOS_RefreshVideoMenus(qtrue);checkProMotion(item,&multis[0],unknown);
+ }
  /* Invalid and unrelated controls keep their original text and binding. */
  for(j=0;j<7;j++) {
   itemDef_t item=items[0];menuDef_t menu=Menus[0];

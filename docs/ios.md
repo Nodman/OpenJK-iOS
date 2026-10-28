@@ -139,24 +139,17 @@ Enter commands in the console, or put `seta` lines in that app's autoexec (`base
 
 ### Choose a provider
 
-- In the app you want to change, tap Console and enter one command per line. To try ANGLE at 120 fps:
-
-```text
-seta r_glesProvider angle
-seta com_maxfps 120
-writeconfig openjk_sp.cfg
-```
-
-- In MP, use `writeconfig openjk.cfg` instead.
-- Fully close the app from the app switcher, then open it again. A provider change applies only at the next launch; `vid_restart` does not switch it.
+- Video → `Graphics backend` offers EAGL / ANGLE. The choice is saved at once; no Apply is needed.
+- Fully close the app from the app switcher, then open it again. A provider change applies only at the next launch; Apply and `vid_restart` do not switch it.
+- The help line under the row shows the provider in use and whether a relaunch is pending.
+- Console alternative: `seta r_glesProvider angle` (or `eagl`), then relaunch the same way. SP and MP keep separate choices.
 - To check, enter `r_glesProvider` (your choice) and `r_glesProviderActive` (read-only, the provider in use). The startup log also prints `iOS display: provider=<active> requested=<choice>`.
-- To return to EAGL, use `seta r_glesProvider eagl`, then `writeconfig` and relaunch the same way.
-- If the console is unreachable, put the `seta` lines in that app's autoexec in Files while it is closed.
+- If the console is unreachable, put the `seta` line in that app's autoexec in Files while it is closed.
 - If ANGLE fails during setup, the app tries EAGL in the same launch.
 
 ### Request 60 or 120 fps
 
-- Video → `120 Hz (ProMotion)` offers Off (60) / On (120) on 120 Hz panels. Apply restarts video. It does not change the provider.
+- Video → `120 Hz (ProMotion)` offers Off (60) / On (120) on 120 Hz panels. Apply restarts video. It does not change the provider; use `Graphics backend` for that.
 - Console: `seta com_maxfps 60|120` (choose one value).
 - Fresh configs default to 120 on 120 Hz panels, 60 elsewhere. Saved choices are kept. `reset com_maxfps` returns to the panel default.
 - A rate change applies at once. At Auto resolution (`r_renderScale 0`), run `vid_restart` so the scale matches.

@@ -136,6 +136,7 @@ static char iosProMotionLabels[2][4] = { "Off", "On" };
 static char iosProMotionCaption[] = "120 Hz (ProMotion)";
 static char iosDrawFPSCaption[] = "FPS counter";
 
+static char iosProviderCaption[] = "Graphics backend";
 static char iosProMotionHelp[64];
 
 static char *UI_IOS_ProMotionHelp( void )
@@ -150,6 +151,25 @@ static char *UI_IOS_ProMotionHelp( void )
 	}
 	Q_strncpyz( iosProMotionHelp, help, sizeof( iosProMotionHelp ) );
 	return iosProMotionHelp;
+}
+
+static char iosProviderLabels[2][6] = { "EAGL", "ANGLE" };
+static char iosProviderValues[2][6] = { "eagl", "angle" };
+static char iosProviderHelp[80];
+
+static char *UI_IOS_ProviderHelp( void )
+{
+	char active[32], requested[32];
+	const char *help = "Takes effect after you fully close and reopen the app.";
+	DC->getCVarString( "r_glesProviderActive", active, sizeof( active ) );
+	DC->getCVarString( "r_glesProvider", requested, sizeof( requested ) );
+	if ( !Q_stricmp( active, "angle" ) && !Q_stricmp( requested, "angle" ) ) {
+		help = "Active now: ANGLE over Metal, needed for 120 Hz on iPhone.";
+	} else if ( !Q_stricmp( active, "eagl" ) && !Q_stricmp( requested, "eagl" ) ) {
+		help = "Active now: EAGL. ANGLE can reach 120 Hz on iPhone.";
+	}
+	Q_strncpyz( iosProviderHelp, help, sizeof( iosProviderHelp ) );
+	return iosProviderHelp;
 }
 
 static qboolean UI_IOS_IsVideoMenu( const menuDef_t *menu )
@@ -221,6 +241,20 @@ static void UI_IOS_PatchVideoMenu( menuDef_t *menu )
 			item->textRect.w = item->textRect.h = 0;
 			continue;
 		}
+		if ( !Q_stricmp( item->window.name, "video_sync" ) &&
+			( !Q_stricmp( item->cvar, "r_swapInterval" ) || !Q_stricmp( item->cvar, "r_glesProvider" ) ) ) {
+			item->cvar = "r_glesProvider";
+			item->text = iosProviderCaption;
+			item->descText = UI_IOS_ProviderHelp();
+			multi->strDef = qtrue;
+			multi->count = 2;
+			for ( id = 0; id < 2; ++id ) {
+				multi->cvarList[id] = iosProviderLabels[id];
+				multi->cvarStr[id] = iosProviderValues[id];
+			}
+			item->textRect.w = item->textRect.h = 0;
+			continue;
+		}
 		if ( !UI_IOS_IsVideoItem( item ) ) {
 			continue;
 		}
@@ -254,6 +288,7 @@ void UI_IOS_RefreshVideoMenus( qboolean force )
 	int id, i;
 	// Existing items retain this buffer even when geometry and rate are unchanged.
 	UI_IOS_ProMotionHelp();
+	UI_IOS_ProviderHelp();
 	if ( !force && w == lastW && h == lastH && high == lastHigh && preset == lastPreset &&
 		base == lastBase && custom == lastCustom ) {
 		return;
