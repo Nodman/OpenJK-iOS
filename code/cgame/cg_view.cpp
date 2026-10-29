@@ -1308,12 +1308,6 @@ qboolean CG_CalcFOVFromX( float fov_x )
 	// set it
 	cg.refdef.fov_x = fov_x;
 	cg.refdef.fov_y = fov_y;
-#ifdef P11_FOV_DIAG
-	Com_Printf( "P11 FOV SP %s %dx%d adjust=%d fov_x=%.5f fov_y=%.5f\n",
-		in_camera ? "camera" : (cg.zoomMode && cg.zoomMode < 3 ? "zoom" : "normal"),
-		cg.refdef.width, cg.refdef.height, cg_fovAspectAdjust.integer, fov_x, fov_y );
-#endif
-
 	return (inwater);
 }
 

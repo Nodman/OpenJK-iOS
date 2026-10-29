@@ -2008,6 +2008,7 @@ void CG_DrawDataPadHUD( centity_t *cent )
 
 	cgi_R_SetColor( colorTable[CT_WHITE]);
 	CG_DrawPic( 0, 0, 640, 480, cgs.media.dataPadFrame );
+	CG_FillScreenGutters();
 
 }
 

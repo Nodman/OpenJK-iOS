@@ -3524,7 +3524,9 @@ static void UI_Update(const char *name)
 #ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_mode", 3 );
 #endif
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_texturebits", 0 );
+#endif
 				Cvar_SetValue( "ui_r_fastSky", 0 );
 				Cvar_SetValue( "ui_r_inGameVideo", 1 );
 				//Cvar_SetValue( "ui_cg_shadows", 2 );
@@ -3546,7 +3548,9 @@ static void UI_Update(const char *name)
 #ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_mode", 3 );
 #endif
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_texturebits", 0 );
+#endif
 				Cvar_SetValue( "ui_r_fastSky", 1 );
 				Cvar_SetValue( "ui_r_inGameVideo", 0 );
 				//Cvar_SetValue( "ui_cg_shadows", 1 );
@@ -3568,7 +3572,9 @@ static void UI_Update(const char *name)
 				Cvar_SetValue( "ui_r_mode", 3 );
 #endif
 				Cvar_SetValue( "ui_r_picmip", 3 );
+#ifndef OPENJK_IOS
 				Cvar_SetValue( "ui_r_texturebits", 16 );
+#endif
 				Cvar_SetValue( "ui_r_fastSky", 1 );
 				Cvar_SetValue( "ui_r_inGameVideo", 0 );
 				//Cvar_SetValue( "ui_cg_shadows", 0 );

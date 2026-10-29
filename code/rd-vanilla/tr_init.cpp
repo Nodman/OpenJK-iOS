@@ -69,7 +69,7 @@ static void R_GLES_ApplyEnv( void ) {
 			continue;
 		*eq = '\0';
 		setenv( tok, eq + 1, 1 );
-		ri.Printf( PRINT_ALL, "gl4es env %s=%s\n", tok, eq + 1 );
+		ri.Printf( PRINT_DEVELOPER, "gl4es env %s=%s\n", tok, eq + 1 );
 	}
 }
 qboolean R_GLES_ANGLE;
@@ -782,7 +782,7 @@ static void InitOpenGL( void )
 		}
 		R_NativeDiscardFramebuffer = R_GLES_NativeExtensionSupported( "GL_EXT_discard_framebuffer" ) ?
 			(void (*)( GLenum, GLsizei, const GLenum * ))R_NativeGetProcAddress( "glDiscardFramebufferEXT" ) : nullptr;
-		ri.Printf( PRINT_ALL, "iOS GLES: provider=%s native_discard=%d\n", r_glesProviderActive->string, R_NativeDiscardFramebuffer != nullptr );
+		ri.Printf( PRINT_DEVELOPER, "iOS GLES: provider=%s native_discard=%d\n", r_glesProviderActive->string, R_NativeDiscardFramebuffer != nullptr );
 		if ( !R_GLES_ANGLE ) gl4es_setBorrowedMainFramebuffer( (unsigned int)sdlFbo );
 #endif
 

@@ -1262,12 +1262,6 @@ static int CG_CalcFov( void ) {
 	// set it
 	cg.refdef.fov_x = fov_x;
 	cg.refdef.fov_y = fov_y;
-#ifdef P11_FOV_DIAG
-	trap->Print( "P11 FOV MP %s %dx%d adjust=%d fov_x=%.5f fov_y=%.5f\n",
-		cg.predictedPlayerState.zoomMode ? "zoom" : "normal",
-		cg.refdef.width, cg.refdef.height, cg_fovAspectAdjust.integer, fov_x, fov_y );
-#endif
-
 	if (cg.predictedPlayerState.zoomMode)
 	{
 		cg.zoomSensitivity = zoomFov/cgFov;
@@ -1789,11 +1783,6 @@ void CG_DrawSkyBoxPortal(const char *cstr)
 
 	cg.refdef.fov_x = fov_x;
 	cg.refdef.fov_y = fov_y;
-#ifdef P11_FOV_DIAG
-	trap->Print( "P11 FOV MP portal %dx%d adjust=%d fov_x=%.5f fov_y=%.5f\n",
-		cg.refdef.width, cg.refdef.height, cg_fovAspectAdjust.integer, fov_x, fov_y );
-#endif
-
 	cg.refdef.rdflags |= RDF_SKYBOXPORTAL;
 	cg.refdef.rdflags |= RDF_DRAWSKYBOX;
 
@@ -2173,8 +2162,6 @@ void CG_DrawAutoMap(void)
 	trace_t			tr;
 	vec3_t			fwd;
 	vec3_t			playerMins, playerMaxs;
-	int				vWidth, vHeight;
-	float			hScale, vScale;
 	float			x, y, w, h;
 
 	if (!r_autoMap.integer)
@@ -2256,22 +2243,21 @@ void CG_DrawAutoMap(void)
 	refdef.fov_x = 50;
 	refdef.fov_y = 50;
 
-	//guess this doesn't need to be done every frame, but eh
-	trap->R_GetRealRes(&vWidth, &vHeight);
-
-	//set scaling values so that the 640x480 will result at 1.0/1.0
-	hScale = vWidth/640.0f;
-	vScale = vHeight/480.0f;
-
 	x = r_autoMapX.value;
 	y = r_autoMapY.value;
 	w = r_autoMapW.value;
 	h = r_autoMapH.value;
 
-	refdef.x = x*hScale;
-	refdef.y = y*vScale;
-	refdef.width = w*hScale;
-	refdef.height = h*vScale;
+	// Same virtual-to-pixel mapping as the 2D frame around the map.
+	{
+		const aspectLayout_t *layout = CG_AspectLayout();
+		const aspectPoint_t origin = AspectLayout_ToPixels( layout, x, y );
+		const aspectPoint_t size = AspectLayout_SizeToPixels( layout, w, h );
+		refdef.x = (int)origin.x;
+		refdef.y = (int)origin.y;
+		refdef.width = (int)size.x;
+		refdef.height = (int)size.y;
+	}
 
 	CG_DrawPic(x-SIDEFRAME_WIDTH, y, SIDEFRAME_WIDTH, h, cgs.media.wireframeAutomapFrame_left);
 	CG_DrawPic(x+w, y, SIDEFRAME_WIDTH, h, cgs.media.wireframeAutomapFrame_right);

@@ -4778,7 +4778,9 @@ static void UI_Update(const char *name) {
 #ifndef OPENJK_IOS
 			trap->Cvar_SetValue( "ui_r_mode", 3 );
 #endif
+#ifndef OPENJK_IOS
 			trap->Cvar_SetValue( "ui_r_texturebits", 0 );
+#endif
 			trap->Cvar_SetValue( "ui_r_fastSky", 0 );
 			trap->Cvar_SetValue( "ui_r_inGameVideo", 1 );
 		//	trap->Cvar_SetValue( "ui_cg_shadows", 2 );
@@ -4800,7 +4802,9 @@ static void UI_Update(const char *name) {
 #ifndef OPENJK_IOS
 			trap->Cvar_SetValue( "ui_r_mode", 3 );
 #endif
+#ifndef OPENJK_IOS
 			trap->Cvar_SetValue( "ui_r_texturebits", 0 );
+#endif
 			trap->Cvar_SetValue( "ui_r_fastSky", 1 );
 			trap->Cvar_SetValue( "ui_r_inGameVideo", 0 );
 		//	trap->Cvar_SetValue( "ui_cg_shadows", 1 );
@@ -4822,7 +4826,9 @@ static void UI_Update(const char *name) {
 			trap->Cvar_SetValue( "ui_r_mode", 3 );
 #endif
 			trap->Cvar_SetValue( "ui_r_picmip", 3 );
+#ifndef OPENJK_IOS
 			trap->Cvar_SetValue( "ui_r_texturebits", 16 );
+#endif
 			trap->Cvar_SetValue( "ui_r_fastSky", 1 );
 			trap->Cvar_SetValue( "ui_r_inGameVideo", 0 );
 		//	trap->Cvar_SetValue( "ui_cg_shadows", 0 );
