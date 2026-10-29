@@ -1321,8 +1321,8 @@ void CGCam_DrawWideScreen( void )
 	const float x = layout->branch == ASPECT_CORRECTED ? full->x : cg.refdef.x;
 	const float y = layout->branch == ASPECT_CORRECTED ? full->y : cg.refdef.y;
 
-	//Only draw if visible
-	if ( client_camera.bar_alpha )
+	// Wide screens already frame like film; bars would hide the shot.
+	if ( client_camera.bar_alpha && layout->branch != ASPECT_CORRECTED )
 	{
 		CGCam_UpdateBarFade();
 

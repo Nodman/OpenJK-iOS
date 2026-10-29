@@ -65,6 +65,7 @@ Limits set by Apple, not by the tools:
 - Buttons hide when not useful: Saber when unowned, weapon arrows with one weapon, Force arrows when cycling has no effect, Style when no stance change is legal. Positions stay fixed. Death, spectator and intermission keep basic actions and sticks.
 - Tap or drag elsewhere in menus to use the cursor. Tap Console to open the console and keyboard; tap again to close. Hold Console for 500 ms to toggle the soft keyboard for menu fields.
 - Full-screen cinematics and SP in-game videos hide all controls; tap anywhere to skip.
+- SP in-game cutscenes draw no letterbox bars on screens wider than 1.5:1. iPads keep them.
 
 ### Force selection and quick slots
 
