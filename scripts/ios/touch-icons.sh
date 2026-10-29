@@ -20,7 +20,7 @@ args = parser.parse_args(sys.argv[2:])
 source = root / 'shared/ios/touch'
 names = ('menu', 'chat', 'pad', 'prev', 'saber', 'next', 'ring', 'force-use',
          'console', 'alt-attack', 'attack', 'jump', 'crouch', 'style-blue', 'use', 'plate',
-         'lock', 'gun-attack', 'style-red', 'rect-plate', 'both-attack')
+         'lock', 'gun-attack', 'style-red', 'rect-plate', 'both-attack', 'camera')
 # Fits use the source alpha bounds, the 8.5..247.5 UV crop, and a one-texel edge margin.
 transforms = {4: (0.776416612, 0), 7: (0.945172502, 0), 10: (0.755092724, 0), 11: (0.900929398, 0),
               13: (0.776416612, -35), 17: (0.858732719, 0), 18: (0.776416612, 45)}

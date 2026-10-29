@@ -476,7 +476,7 @@ BOOST_AUTO_TEST_CASE( decoded_button_mask_and_selective_capability_loss )
 	TouchGesture_Step( &state, Input( TOUCH_MOTION, 2, TOUCH_TARGET_AIM, 0, 100 ) );
 	facts.equipmentAllowed = 0;
 	const auto dead = TouchCaps_Visible( TouchCaps_Pack( &facts, 1 ), 1 );
-	const unsigned int basic = ( 1u << TB_ATTACK ) | ( 1u << TB_ALTATTACK ) | ( 1u << TB_BOTHATTACK ) | ( 1u << TB_JUMP ) | ( 1u << TB_CROUCH ) | ( 1u << TB_USE );
+	const unsigned int basic = ( 1u << TB_ATTACK ) | ( 1u << TB_ALTATTACK ) | ( 1u << TB_BOTHATTACK ) | ( 1u << TB_JUMP ) | ( 1u << TB_CROUCH ) | ( 1u << TB_USE ) | ( 1u << TB_CAMERA );
 	BOOST_CHECK_EQUAL( TouchCaps_ButtonMask( &dead ), basic | ( 1u << TB_MENU ) | ( 1u << TB_CONSOLE ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) );
 	auto in = Input( TOUCH_REFRESH );
 	in.visibleButtons = TouchCaps_ButtonMask( &dead );
@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE( missing_bridge_grace_recovery_priority_and_epoch )
 		v = TouchBridge_Step( &bridge, 0, mp, 1, 0, 0, 0, 1050 );
 		BOOST_CHECK( v.fallback && v.logMissing && v.basic && v.sticks && v.pad && v.saber && v.style && v.weapons && v.force && v.forceCycle );
 		BOOST_CHECK_EQUAL( v.chat, mp );
-		BOOST_CHECK_EQUAL( v.menu + v.console + 6 * v.basic + v.saber + v.style + v.force + v.forceCycle + 2 * v.weapons + v.pad + v.chat, mp ? 16 : 15 );
+		BOOST_CHECK_EQUAL( v.menu + v.console + 7 * v.basic + v.saber + v.style + v.force + v.forceCycle + 2 * v.weapons + v.pad + v.chat, mp ? 17 : 16 );
 		BOOST_CHECK_EQUAL( v.styleColor, TOUCH_STYLE_UNKNOWN );
 		BOOST_CHECK_EQUAL( TouchBridge_Step( &bridge, 0, mp, 1, 0, 0, 0, 1051 ).logMissing, 0 );
 		auto facts = Facts();

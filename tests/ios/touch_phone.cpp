@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(reference_matches_approved_cleanup_and_keeps_protected_cent
 		{793.689284f,58.444467f},{928.006806f,58.444467f},{112.013701f,33.283250f},{57.996424f,33.283250f},
 		{860.848045f,58.444467f},{220.048256f,33.283250f},{166.030979f,33.283250f},{34.135892f,296.779120f},
 		{793.689284f,139.422360f},{111.695933f,117.866540f},{192.302507f,117.866540f},
-		{172.908135f,181.033380f},{253.514709f,181.033380f},{627.935216f,399.039960f}};
+		{172.908135f,181.033380f},{253.514709f,181.033380f},{627.935216f,399.039960f},{34.135892f,350.796417f}};
 	touchRect_t phone[TB_COUNT],tablet[TB_COUNT];
 	TouchLayout_Build(2868,1320,132,0,132,102,3,phone,NULL,TOUCH_LAYOUT_PHONE);
 	TouchLayout_Build(2868,1320,132,0,132,102,3,tablet);
@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(reference_matches_approved_cleanup_and_keeps_protected_cent
 		BOOST_CHECK_EQUAL(editor.x,phone[i].x);BOOST_CHECK_EQUAL(editor.y,phone[i].y);
 	}
 	touchLayoutOverrides_t source;TouchEdit_Parse(touchPhoneLayoutFixture,&source);
-	const int fixed[8]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK,TB_BOTHATTACK};
+	const int fixed[9]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK,TB_BOTHATTACK,TB_CAMERA};
 	for(float p:{1.5f,2.25f,3.f}) for(float bottom:{0.f,21.f,34.f}) {
 		TouchLayout_Build(956*p,440*p,44*p,0,44*p,bottom*p,p,phone,NULL,TOUCH_LAYOUT_PHONE);
 		for(int i:fixed) {BOOST_CHECK_SMALL(X(phone[i])/p-source.cx[i]*956,.001f);BOOST_CHECK_SMALL(Y(phone[i])/p-source.cy[i]*440,.001f);}
@@ -105,6 +105,19 @@ BOOST_AUTO_TEST_CASE(older_layouts_keep_both_attacks_clear_of_edited_buttons) {
 	saved.mask|=1u<<TB_BOTHATTACK;saved.cx[TB_BOTHATTACK]=saved.cx[TB_ATTACK];saved.cy[TB_BOTHATTACK]=saved.cy[TB_ATTACK];
 	TouchLayout_Build(2868,1320,132,0,132,102,3,r,&saved,TOUCH_LAYOUT_PHONE);
 	BOOST_CHECK(!Disjoint(r[TB_BOTHATTACK],r[TB_ATTACK]));
+}
+
+BOOST_AUTO_TEST_CASE(older_layouts_keep_camera_clear_of_edited_buttons) {
+	for(auto profile:{TOUCH_LAYOUT_PHONE,TOUCH_LAYOUT_TABLET}) {
+		touchRect_t defaults[TB_COUNT];TouchLayout_Build(2868,1320,132,0,132,102,3,defaults,NULL,profile);
+		touchLayoutOverrides_t saved={};saved.version=2;saved.mask=1u<<TB_USE;
+		saved.cx[TB_USE]=X(defaults[TB_CAMERA])/2868;saved.cy[TB_USE]=Y(defaults[TB_CAMERA])/1320;
+		touchRect_t r[TB_COUNT];TouchLayout_Build(2868,1320,132,0,132,102,3,r,&saved,profile);
+		for(int i=0;i<TB_COUNT;++i) if(i!=TB_CAMERA) BOOST_CHECK_MESSAGE(Disjoint(r[TB_CAMERA],r[i]),"camera overlaps "<<i);
+		saved.mask|=1u<<TB_CAMERA;saved.cx[TB_CAMERA]=saved.cx[TB_USE];saved.cy[TB_CAMERA]=saved.cy[TB_USE];
+		TouchLayout_Build(2868,1320,132,0,132,102,3,r,&saved,profile);
+		BOOST_CHECK(!Disjoint(r[TB_CAMERA],r[TB_USE]));
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()

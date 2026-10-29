@@ -44,7 +44,8 @@ BOOST_AUTO_TEST_CASE( button_definitions )
 		{ "2", TOUCH_ANCHOR_TR, .96f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL },
 		{ "3", TOUCH_ANCHOR_TR, .88f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL },
 		{ "4", TOUCH_ANCHOR_TR, .80f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL },
-		{ "BOTH", TOUCH_ANCHOR_BR, .68f, .25f, .14f, TG_BOTH_ATTACK, 28, NULL }
+		{ "BOTH", TOUCH_ANCHOR_BR, .68f, .25f, .14f, TG_BOTH_ATTACK, 28, NULL },
+		{ "CAM", TOUCH_ANCHOR_TR, .11f, .48f, .12f, TG_CAMERA, 29, NULL }
 	};
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		BOOST_CHECK_EQUAL( touchButtonDefs[i].anchor, expected[i].anchor );
@@ -191,7 +192,7 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 {
 	const unsigned int small = ( 1u << TB_MENU ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) |
 		( 1u << TB_CONSOLE ) | ( 1u << TB_LOCK ) | ( 1u << TB_WEAPPREV ) | ( 1u << TB_WEAPNEXT ) |
-		( 1u << TB_FORCENEXT ) | ( 1u << TB_FORCEPREV );
+		( 1u << TB_FORCENEXT ) | ( 1u << TB_FORCEPREV ) | ( 1u << TB_CAMERA );
 	const float fixtures[][7] = {
 		{ 2868, 1320, 132, 0, 132, 102, 3 },
 		{ 1434, 660, 66, 0, 66, 51, 1.5f },
@@ -266,11 +267,11 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 BOOST_AUTO_TEST_CASE( explicit_key_map_and_paired_pad_chat_trace )
 {
 	const int expected[TB_COUNT] = { A_AUX16, A_AUX17, A_AUX18, A_AUX19, A_AUX20, A_AUX21, A_AUX22,
-		A_AUX23, A_AUX24, A_AUX25, A_ESCAPE, 0, A_AUX26, 'y', A_TAB, 0, A_AUX27, 0, 0, 0, 0, A_AUX28 };
+		A_AUX23, A_AUX24, A_AUX25, A_ESCAPE, 0, A_AUX26, 'y', A_TAB, 0, A_AUX27, 0, 0, 0, 0, A_AUX28, A_AUX29 };
 	const int expectedMP[TB_COUNT] = { mp_touch_keys::A_AUX16, mp_touch_keys::A_AUX17, mp_touch_keys::A_AUX18,
 		mp_touch_keys::A_AUX19, mp_touch_keys::A_AUX20, mp_touch_keys::A_AUX21, mp_touch_keys::A_AUX22,
 		mp_touch_keys::A_AUX23, mp_touch_keys::A_AUX24, mp_touch_keys::A_AUX25, mp_touch_keys::A_ESCAPE,
-		0, mp_touch_keys::A_AUX26, 'y', mp_touch_keys::A_TAB, 0, mp_touch_keys::A_AUX27, 0, 0, 0, 0, mp_touch_keys::A_AUX28 };
+		0, mp_touch_keys::A_AUX26, 'y', mp_touch_keys::A_TAB, 0, mp_touch_keys::A_AUX27, 0, 0, 0, 0, mp_touch_keys::A_AUX28, mp_touch_keys::A_AUX29 };
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		BOOST_CHECK_EQUAL( TouchLayout_Key( i, A_AUX16, A_ESCAPE, A_TAB ), expected[i] );
 		BOOST_CHECK_EQUAL( TouchLayout_Key( i, mp_touch_keys::A_AUX16, mp_touch_keys::A_ESCAPE, mp_touch_keys::A_TAB ), expectedMP[i] );
@@ -297,7 +298,7 @@ BOOST_AUTO_TEST_CASE( explicit_key_map_and_paired_pad_chat_trace )
 BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
 {
 	const char *commands[] = { "+attack", "+altattack", "+moveup", "+movedown", "+use", "+useforce",
-		"forcenext", "saberAttackCycle", "weapprev", "weapnext", "weapon 1", "forceprev", "+attack;+altattack" };
+		"forcenext", "saberAttackCycle", "weapprev", "weapnext", "weapon 1", "forceprev", "+attack;+altattack", "toggle cg_thirdPerson" };
 	const char *bindings[TB_COUNT] = {};
 	const auto restore = [&]() {
 		int count = 0;
@@ -310,10 +311,10 @@ BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
 		}
 		return count;
 	};
-	BOOST_CHECK_EQUAL( restore(), 13 );
+	BOOST_CHECK_EQUAL( restore(), 14 );
 	for ( int button = 0; button < TB_COUNT; ++button ) {
 		const int key = touchButtonDefs[button].key;
-		if ( key >= 16 && key <= 28 ) {
+		if ( key >= 16 && key <= 29 ) {
 			BOOST_REQUIRE( bindings[button] );
 			BOOST_CHECK_EQUAL( bindings[button], commands[key - 16] );
 			BOOST_CHECK( TouchLayout_DefaultBind( button, "custom action" ) == NULL );
@@ -340,7 +341,7 @@ BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
 	BOOST_CHECK_EQUAL( bindings[TB_PAD], "" );
 	BOOST_CHECK_EQUAL( bindings[TB_CHAT], "" );
 	for ( int button = 0; button < TB_COUNT; ++button ) bindings[button] = "";
-	BOOST_CHECK_EQUAL( restore(), 13 );
+	BOOST_CHECK_EQUAL( restore(), 14 );
 	BOOST_CHECK( TouchLayout_DefaultBind( -1, NULL ) == NULL );
 	BOOST_CHECK( TouchLayout_DefaultBind( TB_COUNT, NULL ) == NULL );
 }
@@ -579,14 +580,14 @@ BOOST_AUTO_TEST_SUITE(touch_tablet)
 
 BOOST_AUTO_TEST_CASE(reference_fixed_centers_and_current_console_size) {
 	touchLayoutOverrides_t source;TouchEdit_Parse(touchTabletLayoutFixture,&source);
-	const int fixed[]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK,TB_CONSOLE,TB_BOTHATTACK};
+	const int fixed[]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK,TB_CONSOLE,TB_BOTHATTACK,TB_CAMERA};
 	for(float p:{1.f,1.5f,2.f}) for(float bottom:{0.f,20.f}) {
 		touchRect_t r[TB_COUNT];TouchLayout_Build(1194*p,834*p,0,0,0,bottom*p,p,r,NULL,TOUCH_LAYOUT_TABLET);
 		for(int i:fixed) {
 			BOOST_CHECK_SMALL((r[i].x+r[i].w/2)/p-source.cx[i]*1194,.001f);
 			BOOST_CHECK_SMALL((r[i].y+r[i].h/2)/p-source.cy[i]*834,.001f);
 		}
-		for(int i:{TB_MENU,TB_PAD,TB_CHAT,TB_LOCK}) {
+		for(int i:{TB_MENU,TB_PAD,TB_CHAT,TB_LOCK,TB_CAMERA}) {
 			BOOST_CHECK_EQUAL(r[TB_CONSOLE].w,r[i].w);BOOST_CHECK_EQUAL(r[TB_CONSOLE].h,r[i].h);
 		}
 		const int groups[][6]={{TB_MENU,TB_CHAT,TB_PAD,-1,-1,-1},{TB_WEAPPREV,TB_SABER_SELECT,TB_WEAPNEXT,TB_FORCEPREV,TB_FORCE,TB_FORCENEXT},{TB_FORCE_SLOT1,TB_FORCE_SLOT2,TB_FORCE_SLOT3,TB_FORCE_SLOT4,-1,-1}};

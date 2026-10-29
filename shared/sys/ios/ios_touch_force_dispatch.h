@@ -2,7 +2,7 @@
 #include <string.h>
 
 #define IOS_TOUCH_FORCE_SOURCE_BASE 65536
-#define TOUCH_AUX_SOURCE_COUNT 13
+#define TOUCH_AUX_SOURCE_COUNT 14
 #define TOUCH_FORCE_SOURCE_COUNT (TOUCH_AUX_SOURCE_COUNT+4)
 
 typedef struct {
