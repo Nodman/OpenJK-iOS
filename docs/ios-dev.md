@@ -1,9 +1,13 @@
 # iOS developer notes
 
-Companion to the [player guide](ios.md) and the [ANGLE dependency note](ios-angle.md).
+Companion to the [player guide](ios.md), the [advanced settings](ios-advanced.md) and the [ANGLE dependency note](ios-angle.md).
 
 ## Build
 
+- Use macOS, Xcode 26.x and CMake 3.28 or later. From a checkout of the `ios` branch, run `scripts/build-ios.sh`. A clean configure downloads the pinned ANGLE package.
+- Without a team ID it makes unsigned IPAs for a sideloader to sign. For a signed build: `OPENJK_IOS_TEAM_ID=<your team> scripts/build-ios.sh`.
+- IPAs: `build-ios/dist/OpenJK-SP-<version>.ipa` and `OpenJK-MP-<version>.ipa`, with `SHA256SUMS`. `OPENJK_IOS_VERSION` sets the version (default `0.1.0`).
+- CI uploads the `ipas` artifact on every push. Tags named `ios-v*` publish both IPAs and checksums to a GitHub Release and refresh `altstore/source.json`.
 - `scripts/build-ios.sh` uses the `ios` configure preset and `ios-release` build preset. It builds both apps in Release mode.
 - Apps: `build-ios/apps/Release-iphoneos/OpenJK-SP.app` and `OpenJK-MP.app`.
 - The script refuses iOS SDK 27 or later (SDL2 needs the UIScene work first). Select an Xcode 26.x install with `DEVELOPER_DIR` if needed.

@@ -63,7 +63,7 @@ If you have the Mac App Store Version of Jedi Academy, follow these steps to get
 ### iOS / iPadOS
 
 - OpenJK SP and OpenJK MP run Jedi Academy on iOS / iPadOS 17.0 or later, on A12 and newer devices.
-- See the [iOS guide](docs/ios.md) for sideloading, game files, builds, controls, and settings.
+- See the [iOS guide](docs/ios.md) for installing, game files, controls and settings, and the [advanced settings](docs/ios-advanced.md) and [developer notes](docs/ios-dev.md).
 - OpenJK is not affiliated with Disney, Lucasfilm or Raven Software. You need your own copy of the game.
 
 ## For Developers

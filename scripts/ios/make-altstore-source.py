@@ -31,7 +31,7 @@ def main():
 
     date = datetime.now(timezone.utc).isoformat(timespec="seconds")
     apps = []
-    for flavor, description in (("MP", "multiplayer"), ("SP", "single-player")):
+    for flavor, description in (("SP", "Play the Jedi Academy story on iPhone and iPad."), ("MP", "Play Jedi Academy online on iPhone and iPad.")):
         filename = f"OpenJK-{flavor}-{args.version}.ipa"
         ipa = os.path.join(args.dist, filename)
         try:
@@ -49,9 +49,10 @@ def main():
             "developerName": "OpenJK contributors",
             "category": "games",
             "localizedDescription": (
-                f"OpenJK {description} client. Requires your own retail game files "
-                "(assets0-3.pk3). OpenJK is not affiliated with Disney, Lucasfilm "
-                "or Raven Software. You need your own copy of the game."
+                f"{description} Needs the game files from your own PC copy (Steam, GOG or disc): "
+                "assets0.pk3 to assets3.pk3. Setup guide: "
+                f"https://github.com/{args.repo}/blob/ios/docs/ios.md. "
+                "Not affiliated with Disney, Lucasfilm or Raven Software."
             ),
             "iconURL": (
                 f"https://raw.githubusercontent.com/{args.repo}/ios/"
@@ -85,7 +86,14 @@ def main():
         "subtitle": "Open source Jedi Academy engine. Bring your own game files.",
         "website": f"https://github.com/{args.repo}",
         "apps": apps,
-        "news": [],
+        "news": [{
+            "title": f"OpenJK iOS {args.version}",
+            "identifier": f"org.openjk.ios.release.{args.version}",
+            "caption": "Release notes and setup guide on GitHub.",
+            "date": date,
+            "url": f"https://github.com/{args.repo}/releases/tag/ios-v{args.version}",
+            "notify": True,
+        }],
     }
     try:
         os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)

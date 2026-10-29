@@ -1,6 +1,6 @@
 # ANGLE dependency
 
-- ANGLE over Metal is an opt-in GLES provider. EAGL stays the default. See [Choose a provider](ios.md#choose-a-provider).
+- ANGLE over Metal is an opt-in GLES provider. EAGL stays the default. See [Graphics backend](ios-advanced.md#graphics-backend).
 - Both apps always embed ANGLE, even when EAGL runs.
 
 ## Delivery
