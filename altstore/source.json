@@ -13,12 +13,12 @@
       "iconURL": "https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/shared/icons/PNG/sp512.png",
       "versions": [
         {
-          "version": "0.1.0",
-          "buildVersion": "4845",
-          "date": "2026-10-29T17:49:00+00:00",
-          "downloadURL": "https://github.com/Nodman/OpenJK-iOS/releases/download/ios-v0.1.0/OpenJK-SP-0.1.0.ipa",
-          "size": 5560696,
-          "sha256": "8afc2b0b46389a3d0dad6c05446de905ec10f33a04aa97e00229eb4fcffad2eb",
+          "version": "0.2.0",
+          "buildVersion": "4876",
+          "date": "2026-10-29T21:34:00+00:00",
+          "downloadURL": "https://github.com/Nodman/OpenJK-iOS/releases/download/ios-v0.2.0/OpenJK-SP-0.2.0.ipa",
+          "size": 5565206,
+          "sha256": "44d9e98a7451d9ce960d92c8c1ce95c0214e789722938f010401486cfe4b37f9",
           "minOSVersion": "17.0"
         }
       ],
@@ -38,12 +38,12 @@
       "iconURL": "https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/shared/icons/PNG/mp512.png",
       "versions": [
         {
-          "version": "0.1.0",
-          "buildVersion": "4845",
-          "date": "2026-10-29T17:49:00+00:00",
-          "downloadURL": "https://github.com/Nodman/OpenJK-iOS/releases/download/ios-v0.1.0/OpenJK-MP-0.1.0.ipa",
-          "size": 6224843,
-          "sha256": "68451d6dae52227102861122cb144017a961838354ff1a0b7a495b92222ec8f0",
+          "version": "0.2.0",
+          "buildVersion": "4876",
+          "date": "2026-10-29T21:34:00+00:00",
+          "downloadURL": "https://github.com/Nodman/OpenJK-iOS/releases/download/ios-v0.2.0/OpenJK-MP-0.2.0.ipa",
+          "size": 6228396,
+          "sha256": "c8fe28825f6d769cc5b674d68e661abcc435b080e78ba6936e49bdf6231cb989",
           "minOSVersion": "17.0"
         }
       ],
@@ -57,11 +57,11 @@
   ],
   "news": [
     {
-      "title": "OpenJK iOS 0.1.0",
-      "identifier": "org.openjk.ios.release.0.1.0",
+      "title": "OpenJK iOS 0.2.0",
+      "identifier": "org.openjk.ios.release.0.2.0",
       "caption": "Release notes and setup guide on GitHub.",
-      "date": "2026-10-29T17:49:00+00:00",
-      "url": "https://github.com/Nodman/OpenJK-iOS/releases/tag/ios-v0.1.0",
+      "date": "2026-10-29T21:34:00+00:00",
+      "url": "https://github.com/Nodman/OpenJK-iOS/releases/tag/ios-v0.2.0",
       "notify": true
     }
   ]
