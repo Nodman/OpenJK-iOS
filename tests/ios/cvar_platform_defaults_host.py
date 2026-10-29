@@ -25,6 +25,8 @@ def function(source, signature):
 
 device = (root / 'shared/sys/ios/sys_ios_device.mm').read_text()
 (out / 'device_defaults.inc').write_text(function(device, 'const char *Sys_IOS_DeviceDefaults('))
+config = (root / 'shared/sys/ios/sys_ios_config.cpp').read_text()
+(out / 'config_migration.inc').write_text(function(config, 'void Sys_IOS_MigrateConfig('))
 failures = 0
 for tree in ('code', 'codemp'):
     common = (root / tree / 'qcommon/common.cpp').read_text()

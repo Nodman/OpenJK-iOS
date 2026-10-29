@@ -88,7 +88,8 @@ static std::string hostSaved, hostAutoexec;
 static int com_numConsoleLines;
 static char hostConsoleLine[] = "set com_maxfps 120";
 static char *com_consoleLines[] = {hostConsoleLine};
-qboolean Com_SafeMode() { return qfalse; }
+static bool hostSafeMode;
+qboolean Com_SafeMode() { return hostSafeMode ? qtrue : qfalse; }
 void IN_TouchRestoreDefaultBinds() {}
 void Cbuf_Execute() {}
 void Cbuf_ExecuteText(int, const char *text) {
@@ -108,6 +109,7 @@ void Cmd_TokenizeString(const char *text) {
 	std::istringstream input(text);
 	for(auto &token : commandArgs) input >> token;
 }
+#include "config_migration.inc"
 #include "startup_defaults.inc"
 #include "rate_registration.inc"
 
@@ -171,10 +173,34 @@ static void CameraPlatformDefaults() {
 		Expect("cg_thirdPersonRange","100",want[0]);
 		Cvar_Reset("cg_thirdPersonRange");
 		Expect("cg_thirdPersonRange",want[0],want[0]);
+		// 0.1.0 saved every archived cvar, also ones at the old engine default.
+		const char *exact[]={"80","0","0"}, *decimal[]={"80.0","0.0","0"};
+		for(const char **old : {exact,decimal}) {
+			std::string saved;
+			for(int i=0;i<3;++i) saved+=std::string("seta ")+names[i]+" "+old[i]+"\n";
+			startup(saved);
+			for(int i=0;i<3;++i) Expect(names[i],isPhone ? phone[i] : old[i],want[i]);
+			Expect("ios_configVersion","1","0");
+			savedConfig.clear(); Cvar_WriteVariables(1);
+			assert(savedConfig.find("seta ios_configVersion \"1\"\n")!=std::string::npos);
+		}
+		startup("seta cg_thirdPersonRange 100\nseta cg_fovViewmodel 0\n");
+		Expect("cg_thirdPersonRange","100",want[0]);
+		Expect("cg_fovViewmodel",want[1],want[1]);
+		startup("seta ios_configVersion 1\nseta cg_thirdPersonRange 80\nseta cg_gunX 0\n");
+		Expect("cg_thirdPersonRange","80",want[0]);
+		Expect("cg_gunX","0",want[2]);
+		Expect("ios_configVersion","1","0");
+		hostSafeMode=true;
+		startup("seta cg_thirdPersonRange 80\n");
+		Expect("cg_thirdPersonRange",want[0],want[0]);
+		assert((unsigned)Cvar_Flags("ios_configVersion")==CVAR_NONEXISTENT);
+		hostSafeMode=false;
 	}
 	hostPhone=false;
 	while(cvar_vars) Cvar_Unset(cvar_vars);
 	puts("PASS: camera defaults phone 130/100/5, tablet engine 80/0/0, cvar_restart, saved 100 then reset");
+	puts("PASS: config migration saved 80/0/0 and 80.0/0.0 phone->130/100/5 tablet kept, changed kept, version 1 kept, safe mode skipped");
 }
 
 #endif
