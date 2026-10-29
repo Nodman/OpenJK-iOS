@@ -1,12 +1,13 @@
 OpenJK for iOS and iPadOS: Jedi Academy single player (OpenJK SP) and multiplayer (OpenJK MP). You need your own copy of the game files.
 
-## What's new
+## What's new in 0.2.0
 
-- First public build.
-- Touch controls with a floating move stick, free-drag or joystick aim, editable button layout, Force quick slots and a Both attacks button.
-- Gamepad, keyboard and mouse support.
-- Aspect-correct menus and HUD on wide screens; scope, Force Sight and cutscenes use the full screen.
-- 120 fps on ProMotion screens with the ANGLE graphics backend (Video menu, Graphics backend).
+- Camera button under Lock: switch between first and third person with one tap.
+- Haptic click on touch buttons (iPhone). Turn it off in Lock → Haptics, or with `in_touchHaptics 0`.
+- Settings panel: drag its tab bar to move it anywhere; the spot is saved. Done is a button at the bottom of the panel. New Haptics tab.
+- Weapon and Force arrows accept taps a little outside their drawn edge.
+- iPhone defaults: third-person camera sits further back (`cg_thirdPersonRange 130`), the weapon model is smaller and further away (`cg_fovViewmodel 100`, `cg_gunX 5`). iPad keeps the engine values.
+- Upgrading from 0.1.0: values still at the old default move to the new iPhone defaults once, on first launch. Values you changed are kept. Your button layout is kept; Camera is placed clear of moved buttons.
 
 ## Install
 
