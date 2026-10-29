@@ -91,14 +91,12 @@ IOS_TOUCH_INLINE void TouchLayout_AnchorRect( float W, float H,
 IOS_TOUCH_INLINE int TouchLayout_Zone( float W, float H, float L, float T, float R, float B, float x, float y )
 {
 	const float safeW = W - L - R, safeH = H - T - B;
-	float nx, ny;
 	if ( !( safeW > 0 && safeH > 0 ) )
 		return TOUCH_ZONE_NONE;
-	nx = ( x - L ) / safeW;
-	ny = ( y - T ) / safeH;
-	if ( !( nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1 ) )
+	// Insets only place the split; the zones reach the physical screen edges.
+	if ( !( x >= 0 && x <= W && y >= 0 && y <= H ) )
 		return TOUCH_ZONE_NONE;
-	if ( nx >= .5f )
+	if ( x >= L + safeW * .5f )
 		return TOUCH_ZONE_AIM;
-	return ny >= .32f ? TOUCH_ZONE_MOVE : TOUCH_ZONE_NONE;
+	return y >= T + safeH * .32f ? TOUCH_ZONE_MOVE : TOUCH_ZONE_NONE;
 }
