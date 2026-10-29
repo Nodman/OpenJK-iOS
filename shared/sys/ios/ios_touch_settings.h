@@ -76,13 +76,14 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 	float W, float H, float L, float T, float R, float B, float p, touchSettingsLayout_t *out )
 {
 	static const char *tabs[4] = { "Appearance", "Aim", "Force", "Haptics" };
-	float content, panelH, gap, groupH, scroll, scrollH, bottom;
+	float content, panelH, gap, groupH, scroll, scrollH, bottom, mx, my;
 	int i;
 	memset( out, 0, sizeof(*out) );
 	out->p = p; out->W = W; out->H = H;
-	out->area.x = L; out->area.y = T; out->area.w = W-L-R; out->area.h = H-T-B;
 	out->bar = TouchSettings_BarRect( W,H,L,T,R,B,p );
 	if ( out->bar.w <= 0 ) return;
+	mx = fminf( 8*p, fmaxf( 0,(W-L-R-out->bar.w)/2 ) ); my = fminf( 8*p, fmaxf( 0,(H-T-B-out->bar.h)/2 ) );
+	out->area.x = L+mx; out->area.y = T+my; out->area.w = W-L-R-2*mx; out->area.h = H-T-B-2*my;
 	gap = fminf( 4*p, fmaxf( 0,H-T-B-out->bar.h ) );
 	content = state->tab ? 52*p : 4*p;
 	if(state->tab==TOUCH_SETTINGS_APPEARANCE) content=100*p;
@@ -96,12 +97,13 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 		for(id=1;id<=12;++id) if(state->learned & (1u<<id)) ++choices;
 		content=(8+4*44+(state->picker?((choices+2)/3)*44+4:0))*p;
 	}
-	panelH = fminf( content+48*p, fmaxf( 0,H-T-B-out->bar.h-gap ) );
+	panelH = fminf( content+48*p, fmaxf( 0,out->area.h-out->bar.h-gap ) );
 	groupH = out->bar.h + gap + panelH;
-	out->bar.y = T;
+	out->bar.x = fmaxf( out->area.x, fminf( (W-out->bar.w)/2, out->area.x+out->area.w-out->bar.w ) );
+	out->bar.y = out->area.y;
 	if ( state->panelPlaced ) {
-		out->bar.x = fmaxf( L, fminf( state->panelX*W-out->bar.w/2, W-R-out->bar.w ) );
-		out->bar.y = fmaxf( T, fminf( state->panelY*H-out->bar.h/2, H-B-groupH ) );
+		out->bar.x = fmaxf( out->area.x, fminf( state->panelX*W-out->bar.w/2, out->area.x+out->area.w-out->bar.w ) );
+		out->bar.y = fmaxf( out->area.y, fminf( state->panelY*H-out->bar.h/2, out->area.y+out->area.h-groupH ) );
 	}
 	out->panel.x = out->bar.x; out->panel.y = out->bar.y + out->bar.h + gap;
 	out->panel.w = out->bar.w; out->panel.h = panelH;
