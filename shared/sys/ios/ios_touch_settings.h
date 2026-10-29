@@ -2,6 +2,7 @@
 #include "ios_touch_layout.h"
 #include "ios_touch_force_slots.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define IOS_TOUCH_SETTINGS_ITEMS 40
@@ -19,9 +20,11 @@ typedef struct {
 	long long fingers[IOS_TOUCH_SETTINGS_FINGERS];
 	float startX, startY, lastY, scroll;
 	int slider, sliderMode, sliderAxis, sliderTab; touchRect_t sliderRect;
+	float panelX, panelY; int panelPlaced;
+	int barDrag; float barStartX, barStartY;
 } touchSettingsState_t;
-typedef struct { touchRect_t bar, panel; touchSettingsItem_t items[IOS_TOUCH_SETTINGS_ITEMS]; int count; float maxScroll, p; } touchSettingsLayout_t;
-typedef struct { int consumed, cancelDrag, done, setOpacity, assign, slot, power, aimSetting, aimMode, aimAxis, resetLayout;float opacity, aimValue; } touchSettingsAction_t;
+typedef struct { touchRect_t bar, panel, area; touchSettingsItem_t items[IOS_TOUCH_SETTINGS_ITEMS]; int count; float maxScroll, p, W, H; } touchSettingsLayout_t;
+typedef struct { int consumed, cancelDrag, done, setOpacity, assign, slot, power, aimSetting, aimMode, aimAxis, resetLayout, movePanel, savePanel;float opacity, aimValue; } touchSettingsAction_t;
 
 static const char *const touchAimCurves[6]={"Default","Quick","Precise","Steady","Digital","Dynamic"};
 
@@ -38,6 +41,24 @@ IOS_TOUCH_INLINE touchRect_t TouchSettings_BarRect( float W, float H, float L, f
 	r.x = fmaxf( L, fminf( (W-r.w)/2, W-R-r.w ) );
 	r.y = fmaxf( T, fminf( (H-r.h)/2, H-B-r.h ) );
 	return r;
+}
+
+IOS_TOUCH_INLINE int TouchSettings_ParsePos( const char *text, float *x, float *y )
+{
+	char *end;
+	double a, b;
+	if ( !text || !*text ) return 0;
+	a = strtod( text, &end );
+	if ( end == text || *end != ',' ) return 0;
+	text = end+1; b = strtod( text, &end );
+	if ( end == text || *end || !(a >= 0 && a <= 1 && b >= 0 && b <= 1) ) return 0;
+	*x = (float)a; *y = (float)b;
+	return 1;
+}
+
+IOS_TOUCH_INLINE void TouchSettings_FormatPos( const touchSettingsState_t *state, char *text, size_t size )
+{
+	snprintf( text, size, "%.4f,%.4f", state->panelX, state->panelY );
 }
 
 IOS_TOUCH_INLINE void TouchSettings_Add( touchSettingsLayout_t *layout, touchRect_t rect, int control, int selected, const char *label )
@@ -57,7 +78,8 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 	float content, panelH, gap, groupH, scroll;
 	int i;
 	memset( out, 0, sizeof(*out) );
-	out->p = p;
+	out->p = p; out->W = W; out->H = H;
+	out->area.x = L; out->area.y = T; out->area.w = W-L-R; out->area.h = H-T-B;
 	out->bar = TouchSettings_BarRect( W,H,L,T,R,B,p );
 	if ( out->bar.w <= 0 ) return;
 	gap = state->tab ? fminf( 4*p, fmaxf( 0,H-T-B-out->bar.h ) ) : 0;
@@ -75,7 +97,11 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 	}
 	panelH = fminf( content, fmaxf( 0,H-T-B-out->bar.h-gap ) );
 	groupH = out->bar.h + gap + panelH;
-	out->bar.y = fmaxf( T, fminf( (H-groupH)/2, H-B-groupH ) );
+	out->bar.y = T;
+	if ( state->panelPlaced ) {
+		out->bar.x = fmaxf( L, fminf( state->panelX*W-out->bar.w/2, W-R-out->bar.w ) );
+		out->bar.y = fmaxf( T, fminf( state->panelY*H-out->bar.h/2, H-B-groupH ) );
+	}
 	out->panel.x = out->bar.x; out->panel.y = out->bar.y + out->bar.h + gap;
 	out->panel.w = out->bar.w; out->panel.h = panelH;
 	out->maxScroll = fmaxf( 0,content-panelH );
@@ -188,6 +214,8 @@ IOS_TOUCH_INLINE touchSettingsAction_t TouchSettings_Step( touchSettingsState_t 
 		state->capture[freeSlot]=owned?2:1; state->fingers[freeSlot]=finger;
 		if(owned) return action;
 		state->control=TouchSettings_Hit(layout,x,y);state->startX=x;state->startY=state->lastY=y;state->moved=0;
+		state->barDrag=TouchSettings_Contains(&layout->bar,x,y);
+		state->barStartX=layout->bar.x+layout->bar.w/2;state->barStartY=layout->bar.y+layout->bar.h/2;
 		state->slider=0;
 		for(i=0;i<layout->count;++i) if(layout->items[i].control==state->control && layout->items[i].fill>=0) {
 			state->slider=state->control;state->sliderRect=layout->items[i].rect;
@@ -215,7 +243,13 @@ IOS_TOUCH_INLINE touchSettingsAction_t TouchSettings_Step( touchSettingsState_t 
 		if(event==TOUCH_SETTINGS_MOVE) {
 			const float dx=x-state->startX,dy=y-state->startY;
 			if(dx*dx+dy*dy>36*layout->p*layout->p) state->moved=1;
-			if(state->moved && !TouchSettings_Contains(&layout->bar,state->startX,state->startY))
+			if(state->moved && state->barDrag && layout->W>0 && layout->H>0) {
+				const touchRect_t *a=&layout->area,*bar=&layout->bar;
+				const float groupH=layout->panel.h>0?layout->panel.y+layout->panel.h-bar->y:bar->h;
+				const float cx=fmaxf(a->x+bar->w/2,fminf(state->barStartX+dx,a->x+a->w-bar->w/2));
+				const float cy=fmaxf(a->y+bar->h/2,fminf(state->barStartY+dy,a->y+a->h-groupH+bar->h/2));
+				state->panelX=cx/layout->W;state->panelY=cy/layout->H;state->panelPlaced=1;action.movePanel=1;
+			} else if(state->moved)
 				state->scroll=fmaxf(0,fminf(state->scroll+state->lastY-y,layout->maxScroll));
 			state->lastY=y;
 		} else if(event==TOUCH_SETTINGS_UP && !state->moved && TouchSettings_Hit(layout,x,y)==state->control) {
@@ -235,6 +269,9 @@ IOS_TOUCH_INLINE touchSettingsAction_t TouchSettings_Step( touchSettingsState_t 
 			else if(state->control==TOUCH_SETTINGS_RESET_LAYOUT) action.resetLayout=1;
 		}
 	}
-	if(event==TOUCH_SETTINGS_UP) state->capture[found]=0;
+	if(event==TOUCH_SETTINGS_UP) {
+		if(state->capture[found]==1 && state->barDrag && state->moved) action.savePanel=1;
+		state->capture[found]=0;
+	}
 	return action;
 }

@@ -41,7 +41,7 @@ static qboolean layoutReady;
 static qboolean lastUIMode, lastHidden, lastCinematic;
 static int softKeyboardTarget;
 static qboolean lastHwKeyboard, lastTextDemand;
-static cvar_t *in_touchControls, *in_touchOpacity, *in_touchHaptics, *ui_touchState, *in_touchLayout;
+static cvar_t *in_touchControls, *in_touchOpacity, *in_touchHaptics, *ui_touchState, *in_touchLayout, *in_touchSettingsPos;
 static touchBridgeState_t bridgeState;
 static touchVisibility_t visibility;
 static touchForceBridge_t forceBridge;
@@ -382,6 +382,8 @@ static void IN_TouchResetPositions( void ) {
 	layoutOverrides.version=2;
 	Cvar_Set( "in_touchLayout", "" );
 	layoutModification=in_touchLayout->modificationCount;
+	Cvar_Set( "in_touchSettingsPos", "" );
+	settingsState.panelPlaced=0;
 	if(layoutReady) TouchLayout_Build((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,rects,&layoutOverrides,layoutProfile);
 }
 
@@ -403,6 +405,7 @@ void IN_TouchInit( SDL_Window *window ) {
 	touchDragScaleY=Cvar_Get("in_touchDragScaleY","1.8",CVAR_ARCHIVE);
 	IN_TouchSyncAim();
 	in_touchLayout = Cvar_Get( "in_touchLayout", "", CVAR_ARCHIVE );
+	in_touchSettingsPos = Cvar_Get( "in_touchSettingsPos", "", CVAR_ARCHIVE );
 	Cmd_RemoveCommand( "touchLayoutReset" );
 	Cmd_AddCommand( "touchLayoutReset", IN_TouchLayoutReset );
 	in_touchControls = Cvar_Get( "in_touchControls", "1", CVAR_ARCHIVE );
@@ -573,6 +576,11 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 		IN_TouchSyncAim();
 	}
 	if(action.setOpacity) Cvar_SetValue("in_touchOpacity",action.opacity);
+	if(action.savePanel) {
+		char text[32];
+		TouchSettings_FormatPos(&settingsState,text,sizeof(text));
+		Cvar_Set("in_touchSettingsPos",text);
+	}
 	if(action.resetLayout) {
 		editState.dragging=0;editState.button=-1;
 		CL_TouchCancelAllSources();
@@ -638,6 +646,7 @@ void IN_TouchHandleEvent( const SDL_Event *e ) {
 				IN_TouchReleaseAll(); IN_GamepadZeroTouchAxes();
 				touchEditInput_t input = {}; input.event=TOUCH_EDIT_ENTER;
 				TouchEdit_State(&editState,input);
+				settingsState.panelPlaced=TouchSettings_ParsePos(in_touchSettingsPos?in_touchSettingsPos->string:"",&settingsState.panelX,&settingsState.panelY);
 			}
 			if ( f->role == ROLE_CINEMATIC_TAP && !f->cancelled && e->tfinger.timestamp - f->downTime < CONSOLE_HOLD_MS ) {
 				float dx = e->tfinger.x * viewW - f->ox, dy = e->tfinger.y * viewH - f->oy;
