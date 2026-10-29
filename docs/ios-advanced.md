@@ -154,7 +154,8 @@ Button behaviour:
 ### Camera and weapon view
 
 - iPhone only: `cg_thirdPersonRange 130`, `cg_fovViewmodel 100`, `cg_gunX 5`. iPad keeps the engine values `80`, `0`, `0`.
-- `reset <name>` returns to the device default. A saved value from older console testing wins until then, for example `reset cg_thirdPersonRange`.
+- Upgrade from 0.1.0: on first launch, values still at the old default move to the new iPhone default once. A value you changed is kept.
+- `ios_configVersion` (archived) records that this ran. `1` = done.
 
 ## Other behaviour
 
