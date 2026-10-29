@@ -14,7 +14,7 @@ Everything here uses the in-game console. Players who stick to the menus can ski
 - Each touch button presses a key. Rebind the key to change what the button does, for example `bind AUX16 +altattack`.
 - Pad presses TAB and Chat presses Y, so they follow your rebinds. Restore Pad with `bind TAB datapad` (SP) or `bind TAB +scores` (MP); restore Chat with `bind y messagemode`.
 - Empty AUX16–29 bindings regain their defaults at startup. Rebinds are kept.
-- `touchLayoutReset` restores the default button positions. Phones and tablets have different defaults.
+- `touchLayoutReset` restores the default button positions and the settings panel spot. Phones and tablets have different defaults.
 
 | Button | Key | Default bind | Action |
 | --- | --- | --- | --- |
@@ -44,7 +44,7 @@ Button behaviour:
 - Buttons hide when not useful: Saber when unowned, weapon arrows with one weapon, Force arrows when cycling has no effect, Style when no stance change is legal. Death, spectator and intermission keep the basic actions and sticks.
 - Both attacks sits lower-left of Alt attack on iPhone and below it on iPad.
 - Console sits at the top left on iPhone and the top right on iPad. Lock sits on the left edge on iPhone and the top right on iPad. Camera sits under Lock.
-- Camera shows with the basic actions. Menus, the console and cutscenes hide it.
+- Camera shows exactly when Lock shows. Menus, the console and cutscenes hide both.
 - Hold Console for half a second to show or hide the soft keyboard for menu fields. With a hardware keyboard attached, the same hold shows or hides it.
 - Full-screen videos and SP cutscenes hide all controls. SP cutscenes draw no letterbox bars on screens 1.5:1 or wider; iPads keep them.
 
@@ -61,9 +61,11 @@ Button behaviour:
 - Tap Lock to edit. Held actions release and the game view dims.
 - Drag a button, including Console or Lock, to move it. Sizes are fixed. Buttons may reach the screen edges.
 - Tap a quick slot without dragging to open its picker.
-- Appearance: opacity 0–100% and Reset layout. Aim: Joystick or Free drag, horizontal and vertical sensitivity from .25 to 4, and a joystick response curve. Drag across a slider to change it live.
-- Tap Done, or Lock without dragging, to save. Opening a menu, changing maps or backgrounding also saves.
+- The settings panel starts at the top centre. Drag its tab bar to move it; the spot is saved. Drag inside the panel to scroll.
+- Appearance: opacity 0–100% and Reset layout. Reset layout also moves the panel back. Aim: Joystick or Free drag, horizontal and vertical sensitivity from .25 to 4, and a joystick response curve. Drag across a slider to change it live. Haptics: tap feel on or off.
+- Tap Done at the bottom of the panel, or Lock without dragging, to save. Opening a menu, changing maps or backgrounding also saves.
 - `in_touchLayout` holds the saved positions; empty means defaults.
+- `in_touchSettingsPos` holds the panel spot as `x,y`, the tab bar centre from 0 to 1. Empty means the default spot.
 
 ### Touch settings
 
@@ -82,7 +84,7 @@ Button behaviour:
 
 - `in_touchLookScale 1.0` / `in_touchLookScaleY 0.6`: Joystick horizontal / vertical sensitivity. `in_touchDragScale 3.0` / `in_touchDragScaleY 1.8`: Free drag horizontal / vertical sensitivity. Range `.1`–`10`.
 - `in_touchOpacity 1.0`: button opacity, `0`–`1`. `0` hides the drawing but keeps input active.
-- `in_touchHaptics 1`: short tap feel on each button press (iPhone only). `0` turns it off.
+- `in_touchHaptics 1`: short tap feel on each button press and settings panel tap (iPhone only). `0` turns it off. Also in Lock → Haptics.
 - Example autoexec lines: `seta in_touchControls 2`, `seta in_touchAimMode 1`, `seta in_touchDragScale 1.25`, `seta in_touchOpacity 0.5`.
 
 ## Gamepad, keyboard and mouse

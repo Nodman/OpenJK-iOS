@@ -59,18 +59,19 @@ Left thumb moves. Right thumb aims. Buttons sit around the edges.
 - **Crouch** and **Style** (saber stance) sit near the bottom right. **Use** sits at the bottom left.
 - **Weapons**: Previous, Saber and Next along the top right. **Force**: Previous, Use and Next below them, with four quick slots on the upper left.
 - **Menu**, **Chat** (multiplayer) and **Pad** (datapad, or the scoreboard in multiplayer) sit at the top left.
-- **Camera** switches between first and third person. It sits under **Lock**.
+- **Camera** switches between first and third person. It sits under **Lock** and shows when Lock shows.
 - Buttons you cannot use right now are hidden. The hidden spots stay empty.
 - Attack buttons fire at once. Keep holding to keep attacking. Drag an attack button to aim while holding.
 - In cutscenes and videos, tap anywhere to skip.
 
-**Edit the layout**: tap the **Lock** button. Drag any button to move it. Tap a tab in the middle for more:
+**Edit the layout**: tap the **Lock** button. Drag any button to move it. The settings panel sits at the top. Drag its tab bar to move it. Tap a tab for more:
 
 - **Appearance**: button opacity and Reset layout.
 - **Aim**: Free drag (default) or Joystick, and sensitivity.
 - **Force**: choose which Force powers the four quick slots hold.
+- **Haptics**: turn the tap feel on or off.
 
-Tap **Done** or **Lock** again to save. SP and MP keep separate layouts.
+Tap **Done** (bottom of the panel) or **Lock** again to save. SP and MP keep separate layouts.
 
 **Gamepad**: left stick moves, right stick looks, A jumps, B crouches, X uses, Y uses the selected Force power, triggers attack, bumpers change weapons, D-pad changes Force powers and saber style. In menus, A selects and B goes back. Touch buttons hide while a pad is connected.
 
