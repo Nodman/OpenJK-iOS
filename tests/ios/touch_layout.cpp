@@ -580,14 +580,19 @@ BOOST_AUTO_TEST_CASE( arrow_hit_padding )
 				BOOST_CHECK_NE( neighbour, arrow );
 				BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, p[0], p[1], ~0u ), neighbour >= 0 ? neighbour : arrow );
 				BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, p[0], p[1], ~0u & ~( 1u << arrow ) ), neighbour );
+				BOOST_CHECK_EQUAL( TouchLayout_PaddedHit( r, p[0], p[1], ~0u ), neighbour >= 0 ? -1 : arrow );
 				padded += neighbour < 0;
 			}
 			BOOST_CHECK_GE( padded, 3 );
+			BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, a.x + a.w / 2, cy, ~0u ), arrow );
+			BOOST_CHECK_EQUAL( TouchLayout_PaddedHit( r, a.x + a.w / 2, cy, ~0u ), -1 );
+			BOOST_CHECK_EQUAL( TouchLayout_PaddedHit( r, a.x + a.w / 2, a.y - pad * 1.2f, ~0u ), -1 );
 			BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, a.x + a.w / 2, a.y - pad * 1.2f, ~0u ), TouchLayout_Hit( r, a.x + a.w / 2, a.y - pad * 1.2f, ~0u ) );
 		}
 		BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, r[TB_SABER_SELECT].x + 1, r[TB_SABER_SELECT].y + r[TB_SABER_SELECT].h / 2, ~0u ), TB_SABER_SELECT );
 		BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 1434, 660, ~0u ), -1 );
 		BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 0.0f / 0.0f, 0.0f / 0.0f, ~0u ), -1 );
+		BOOST_CHECK_EQUAL( TouchLayout_PaddedHit( r, 0.0f / 0.0f, 0.0f / 0.0f, ~0u ), -1 );
 	}
 	// A padded arrow never steals a tap that lands exactly on a neighbour.
 	touchRect_t r[TB_COUNT] = {};
@@ -597,6 +602,11 @@ BOOST_AUTO_TEST_CASE( arrow_hit_padding )
 	BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 123, 110, ~0u ), TB_WEAPNEXT );
 	BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 125, 110, ~0u & ~( 1u << TB_SABER_SELECT ) ), TB_WEAPNEXT );
 	BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 300, 300, ~0u ), -1 );
+	BOOST_CHECK_EQUAL( TouchLayout_PaddedHit( r, 125, 110, ~0u ), -1 );
+	BOOST_CHECK_EQUAL( TouchLayout_PaddedHit( r, 123, 110, ~0u ), TB_WEAPNEXT );
+	BOOST_CHECK_EQUAL( TouchLayout_PaddedHit( r, 110, 110, ~0u ), -1 );
+	BOOST_CHECK_EQUAL( TouchLayout_PaddedHit( r, 125, 110, ~0u & ~( 1u << TB_SABER_SELECT ) ), TB_WEAPNEXT );
+	BOOST_CHECK_EQUAL( TouchLayout_PaddedHit( r, 300, 300, ~0u ), -1 );
 }
 
 BOOST_AUTO_TEST_CASE( nan_virtual )

@@ -745,6 +745,62 @@ static void SDLHeldActionAim(void) {
 	CommandFrame();assert(!in_buttons[centralButton].active && gestures.lookOwner<0 && !dragX);
 	IN_TouchReleaseAll();Drain();touchWindow=NULL;
 }
+static int KeyEvents(int key,int down) {
+	int count=0;
+	for(const auto &e:events) if(e.evType==SE_KEY && e.evValue==key && !!e.evValue2==!!down) ++count;
+	return count;
+}
+static bool PaddedPoint(int arrow,int zone,float *x,float *y) {
+	const touchRect_t a=rects[arrow];const float pad=IOS_TOUCH_ARROW_HIT_PAD*a.w,cx=a.x+a.w/2,cy=a.y+a.h/2;
+	const float points[][2]={{a.x+a.w+pad*.5f,cy},{a.x-pad*.5f,cy},{cx,a.y-pad*.5f},{cx,a.y+a.h+pad*.5f}};
+	const unsigned int visible=IN_TouchVisibleButtons();
+	for(const auto &p:points)
+		if(TouchLayout_Hit(rects,p[0],p[1],visible)<0 && TouchLayout_PaddedHit(rects,p[0],p[1],visible)==arrow &&
+			(zone<0 || TouchLayout_Zone(viewW,viewH,0,0,0,0,p[0],p[1])==zone)) {*x=p[0];*y=p[1];return true;}
+	return false;
+}
+static void SDLArrowPadding(void) {
+	const struct {touchLayoutProfile_t profile;int w,h;} screens[]={{TOUCH_LAYOUT_PHONE,956,440},{TOUCH_LAYOUT_TABLET,1194,834}};
+	for(const auto &screen:screens) {
+		const auto setup=[&]{
+			AimFixture();testCapsVar.integer|=TOUCH_CAP_WEAPONS;IN_TouchSyncVisibility();testProfile=screen.profile;testPointWidth=screen.w;testPointHeight=screen.h;IN_TouchUpdateLayout();Drain();
+			assert(layoutProfile==screen.profile && viewW==screen.w);hapticClicks=0;
+		};
+		const int weapnext=IN_TouchButtonKey(TB_WEAPNEXT);float x,y;
+		setup();assert(PaddedPoint(TB_WEAPNEXT,TOUCH_ZONE_AIM,&x,&y));
+		SDLEvent(SDL_FINGERDOWN,130,x,y);SDLEvent(SDL_FINGERMOTION,130,x-3,y);
+		assert(IN_TouchFind(130)->role==ROLE_ARROW_PENDING && gestures.lookOwner<0 && events.empty());
+		for(int i=1;i<=4;++i) SDLEvent(SDL_FINGERMOTION,130,x-25*i,y);
+		assert(IN_TouchFind(130)->role==ROLE_GAMEPLAY && gestures.lookOwner>=0 && dragX<0);
+		assert(!KeyEvents(weapnext,1) && !KeyEvents(weapnext,0) && !hapticClicks);
+		SDLEvent(SDL_FINGERUP,130,x-100,y);CommandFrame();assert(cl.viewangles[YAW]>0 && gestures.lookOwner<0 && !hapticClicks);
+		for(int moved:{0,1}) {
+			setup();assert(PaddedPoint(TB_WEAPNEXT,-1,&x,&y));
+			SDLEvent(SDL_FINGERDOWN,131,x,y);if(moved) SDLEvent(SDL_FINGERMOTION,131,x+2,y-2);
+			assert(events.empty() && !hapticClicks);
+			SDLEvent(SDL_FINGERUP,131,x+2*moved,y-2*moved);
+			assert(KeyEvents(weapnext,1)==1 && KeyEvents(weapnext,0)==1 && events.size()==2 && hapticClicks==1);
+			assert(events.front().evValue2 && !IN_TouchFind(131));Drain();
+		}
+		setup();SDLButton(SDL_FINGERDOWN,132,TB_WEAPNEXT);assert(KeyEvents(weapnext,1)==1 && !KeyEvents(weapnext,0) && hapticClicks==1);
+		SDLButton(SDL_FINGERUP,132,TB_WEAPNEXT);assert(KeyEvents(weapnext,0)==1 && hapticClicks==1);Drain();
+		setup();assert(PaddedPoint(TB_WEAPNEXT,-1,&x,&y));SDLEvent(SDL_FINGERDOWN,133,x,y);IN_TouchReleaseAll();
+		SDLEvent(SDL_FINGERUP,133,x,y);assert(!KeyEvents(weapnext,1) && !KeyEvents(weapnext,0) && !hapticClicks);Drain();
+		for(int arrow:{TB_FORCEPREV,TB_FORCENEXT}) for(int busyAtDown:{0,1}) {
+			setup();assert(IN_TouchVisibleButtons() & (1u<<arrow));assert(PaddedPoint(arrow,-1,&x,&y));
+			if(busyAtDown) assert(CL_TouchForceReserve(1,0) && CL_TouchForceBusy());
+			SDLEvent(SDL_FINGERDOWN,134,x,y);
+			if(!busyAtDown) assert(CL_TouchForceReserve(1,0) && CL_TouchForceBusy());
+			SDLEvent(SDL_FINGERUP,134,x,y);
+			assert(!KeyEvents(IN_TouchButtonKey(arrow),1) && !KeyEvents(IN_TouchButtonKey(arrow),0) && !hapticClicks);
+			CL_TouchForceCancel();Drain();assert(!CL_TouchForceBusy());
+			SDLEvent(SDL_FINGERDOWN,135,x,y);SDLEvent(SDL_FINGERUP,135,x,y);
+			assert(KeyEvents(IN_TouchButtonKey(arrow),1)==1 && hapticClicks==1);Drain();
+		}
+		IN_TouchReleaseAll();Drain();
+	}
+	touchWindow=NULL;
+}
 static void SDLPhoneProfileDefaults(void) {
 	SDLFixture();const touchRect_t oldConsole=rects[TB_CONSOLE];
 	const int revision=testLayoutVar.modificationCount;
@@ -1017,6 +1073,6 @@ int main(int argc,char **argv) {
 #ifdef TEST_MP
 	DemoForceRecovery();PacketTiming();
 #endif
-	SDLNormalLiftAndCancellation();SDLHapticClicks();SDLPanelHapticClicks();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();SDLHeldActionAim();SDLPhoneProfileDefaults();SDLResetLayoutRouting();SDLTabletProfileDefaults();SDLPerAxisAim();SDLPerAxisSettings();
+	SDLNormalLiftAndCancellation();SDLHapticClicks();SDLPanelHapticClicks();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();SDLHeldActionAim();SDLPhoneProfileDefaults();SDLArrowPadding();SDLResetLayoutRouting();SDLTabletProfileDefaults();SDLPerAxisAim();SDLPerAxisSettings();
 	puts("PASS: zoom 1/.25, bounded 256-event fence recovery, demo reserve/dispatch and custom-bind limits; actual phone/tablet SP/MP per-axis drag/joystick/timing/scales/fire and captured mode/axis settings; tablet current Console draw/hit/drag/native migration/saved center/reset; actual Appearance Reset layout and held-finger cancellation; native profile cache/Console/editor/saved v2; late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel, haptic clicks and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
 }
