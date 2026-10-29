@@ -13,7 +13,7 @@ Everything here uses the in-game console. Players who stick to the menus can ski
 
 - Each touch button presses a key. Rebind the key to change what the button does, for example `bind AUX16 +altattack`.
 - Pad presses TAB and Chat presses Y, so they follow your rebinds. Restore Pad with `bind TAB datapad` (SP) or `bind TAB +scores` (MP); restore Chat with `bind y messagemode`.
-- Empty AUX16–28 bindings regain their defaults at startup. Rebinds are kept.
+- Empty AUX16–29 bindings regain their defaults at startup. Rebinds are kept.
 - `touchLayoutReset` restores the default button positions. Phones and tablets have different defaults.
 
 | Button | Key | Default bind | Action |
@@ -31,6 +31,7 @@ Everything here uses the in-game console. Players who stick to the menus can ski
 | Next weapon | `AUX25` | `weapnext` | Next weapon |
 | Saber | `AUX26` | `weapon 1` | Select saber or toggle its blade |
 | Force previous | `AUX27` | `forceprev` | Previous Force power |
+| Camera | `AUX29` | `toggle cg_thirdPerson` | Switch first / third person |
 | Pad | TAB | `datapad` (SP), `+scores` (MP) | Datapad / held scoreboard |
 | Chat | Y | `messagemode` (MP) | Chat |
 
@@ -41,7 +42,8 @@ Button behaviour:
 - Attack shows a swing glyph for sabers and a trigger glyph for guns. Style shows the stance colour: blue fast, yellow medium, red strong.
 - Buttons hide when not useful: Saber when unowned, weapon arrows with one weapon, Force arrows when cycling has no effect, Style when no stance change is legal. Death, spectator and intermission keep the basic actions and sticks.
 - Both attacks sits lower-left of Alt attack on iPhone and below it on iPad.
-- Console sits at the top left on iPhone and the top right on iPad. Lock sits on the left edge on iPhone and the top right on iPad.
+- Console sits at the top left on iPhone and the top right on iPad. Lock sits on the left edge on iPhone and the top right on iPad. Camera sits under Lock.
+- Camera shows with the basic actions. Menus, the console and cutscenes hide it.
 - Hold Console for half a second to show or hide the soft keyboard for menu fields. With a hardware keyboard attached, the same hold shows or hides it.
 - Full-screen videos and SP cutscenes hide all controls. SP cutscenes draw no letterbox bars on screens 1.5:1 or wider; iPads keep them.
 

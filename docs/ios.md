@@ -59,6 +59,7 @@ Left thumb moves. Right thumb aims. Buttons sit around the edges.
 - **Crouch** and **Style** (saber stance) sit near the bottom right. **Use** sits at the bottom left.
 - **Weapons**: Previous, Saber and Next along the top right. **Force**: Previous, Use and Next below them, with four quick slots on the upper left.
 - **Menu**, **Chat** (multiplayer) and **Pad** (datapad, or the scoreboard in multiplayer) sit at the top left.
+- **Camera** switches between first and third person. It sits under **Lock**.
 - Buttons you cannot use right now are hidden. The hidden spots stay empty.
 - Attack buttons fire at once. Keep holding to keep attacking. Drag an attack button to aim while holding.
 - In cutscenes and videos, tap anywhere to skip.
