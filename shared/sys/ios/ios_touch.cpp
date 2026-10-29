@@ -10,7 +10,8 @@
 #include "client/client.h"
 #include <SDL.h>
 
-enum { ROLE_NONE, ROLE_GAMEPLAY, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP, ROLE_EDIT_LOCK };
+// ROLE_ARROW_PENDING: down in an arrow's padding band; a lift taps the arrow, a drag becomes ROLE_GAMEPLAY.
+enum { ROLE_NONE, ROLE_GAMEPLAY, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP, ROLE_EDIT_LOCK, ROLE_ARROW_PENDING };
 #define MAX_TOUCH_FINGERS 10
 #define CONSOLE_HOLD_MS 500
 
@@ -181,6 +182,10 @@ static unsigned int IN_TouchVisibleButtons( void ) {
 	return mask;
 }
 
+static int IN_TouchArrowBlocked( int button ) {
+	return (button==TB_FORCEPREV || button==TB_FORCENEXT) && CL_TouchForceBusy();
+}
+
 static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, float x, float y ) {
 	touchGestureInput_t input = {};
 	input.event = event;
@@ -199,7 +204,7 @@ static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, fl
 	const int force=button==TB_FORCE || (button>=TB_FORCE_SLOT1 && button<=TB_FORCE_SLOT4);
 	int reserved=0;
 	if(event==TOUCH_DOWN && (input.target==TOUCH_TARGET_BUTTON || input.target==TOUCH_TARGET_FIRE)) {
-		if((button==TB_FORCEPREV || button==TB_FORCENEXT) && CL_TouchForceBusy()) input.target=TOUCH_TARGET_IGNORE;
+		if(IN_TouchArrowBlocked(button)) input.target=TOUCH_TARGET_IGNORE;
 		if(force) {
 			const int slot=button==TB_FORCE?-1:button-TB_FORCE_SLOT1;
 			const touchForceReport_t report=IN_TouchGetForceReport();
@@ -467,6 +472,30 @@ static void IN_TouchKeyboardAction( void ) {
 	IN_TouchTextInput();
 }
 
+static int IN_TouchTarget( int hit, float x, float y ) {
+	if ( hit >= 0 )
+		return hit == TB_ATTACK || hit == TB_ALTATTACK || hit == TB_BOTHATTACK || hit == TB_FORCE || hit == TB_CROUCH || hit == TB_JUMP ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
+	const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
+	return zone == TOUCH_ZONE_MOVE ? TOUCH_TARGET_MOVE : zone == TOUCH_ZONE_AIM ? TOUCH_TARGET_AIM : TOUCH_TARGET_IGNORE;
+}
+
+static int IN_TouchInSlop( const touchFinger_t *f, float x, float y ) {
+	const float dx = x - f->ox, dy = y - f->oy, slop = TouchLayout_FireSlop( touchUnit, pixelsPerPoint );
+	return dx * dx + dy * dy <= slop * slop;
+}
+
+static void IN_TouchArrowTap( const touchFinger_t *f, float x, float y ) {
+	if ( !IN_TouchInSlop( f, x, y ) || !( IN_TouchVisibleButtons() & ( 1u << f->button ) ) || IN_TouchArrowBlocked( f->button ) )
+		return;
+	for ( int i = 0; i < MAX_TOUCH_FINGERS; ++i )
+		if ( fingers[i].role == ROLE_GAMEPLAY && TouchGesture_HoldsButton( &gestures, fingers[i].id, f->button ) )
+			return;
+	const int key = IN_TouchButtonKey( f->button );
+	IN_TouchHaptic( f->button );
+	Sys_QueEvent( 0, SE_KEY, key, qtrue, 0, NULL );
+	Sys_QueEvent( 0, SE_KEY, key, qfalse, 0, NULL );
+}
+
 static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 	if ( !layoutReady )
 		return;
@@ -513,17 +542,16 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 	} else if ( lastHidden ) {
 		return;
 	} else {
-		int hit = TouchLayout_GameplayHit( rects, x, y, IN_TouchVisibleButtons() );
-		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
-		int target = TOUCH_TARGET_IGNORE;
-		if ( hit >= 0 )
-			target = hit == TB_ATTACK || hit == TB_ALTATTACK || hit == TB_BOTHATTACK || hit == TB_FORCE || hit == TB_CROUCH || hit == TB_JUMP ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
-		else if ( zone == TOUCH_ZONE_MOVE )
-			target = TOUCH_TARGET_MOVE;
-		else if ( zone == TOUCH_ZONE_AIM )
-			target = TOUCH_TARGET_AIM;
-		f->role = ROLE_GAMEPLAY;
-		IN_TouchStep( TOUCH_DOWN, tf->fingerId, target, hit, x, y );
+		const unsigned int visible = IN_TouchVisibleButtons();
+		const int hit = TouchLayout_Hit( rects, x, y, visible );
+		const int padded = hit < 0 ? TouchLayout_PaddedHit( rects, x, y, visible ) : -1;
+		if ( padded >= 0 && !IN_TouchArrowBlocked( padded ) ) {
+			f->role = ROLE_ARROW_PENDING;
+			f->button = padded;
+		} else {
+			f->role = ROLE_GAMEPLAY;
+			IN_TouchStep( TOUCH_DOWN, tf->fingerId, IN_TouchTarget( hit, x, y ), hit, x, y );
+		}
 	}
 	f->id = tf->fingerId;
 	f->ox = f->x = x;
@@ -551,6 +579,12 @@ static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
 		int vx, vy;
 		TouchLayout_ToVirtual( &touchLayout, tf->x, tf->y, &vx, &vy );
 		Sys_QueEvent( 0, SE_MOUSE_ABS, vx, vy, 0, NULL );
+	} else if ( f->role == ROLE_ARROW_PENDING ) {
+		if ( !IN_TouchInSlop( f, f->x, f->y ) ) {
+			f->role = ROLE_GAMEPLAY;
+			IN_TouchStep( TOUCH_DOWN, f->id, IN_TouchTarget( -1, f->ox, f->oy ), -1, f->ox, f->oy );
+			IN_TouchStep( TOUCH_MOTION, f->id, TOUCH_TARGET_IGNORE, 0, f->x, f->y );
+		}
 	} else if ( f->role == ROLE_GAMEPLAY ) {
 		IN_TouchStep( TOUCH_MOTION, f->id, TOUCH_TARGET_IGNORE, 0, f->x, f->y );
 	}
@@ -651,6 +685,8 @@ void IN_TouchHandleEvent( const SDL_Event *e ) {
 	case SDL_FINGERUP: {
 		touchFinger_t *f = IN_TouchFind( e->tfinger.fingerId );
 		if ( f ) {
+			if ( f->role == ROLE_ARROW_PENDING )
+				IN_TouchArrowTap( f, e->tfinger.x * viewW, e->tfinger.y * viewH );
 			if ( f->role==ROLE_EDIT_LOCK && !f->cancelled &&
 				TouchLayout_Hit(rects,e->tfinger.x*viewW,e->tfinger.y*viewH,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK ) {
 				IN_TouchReleaseAll(); IN_GamepadZeroTouchAxes();
