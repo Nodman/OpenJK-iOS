@@ -286,6 +286,24 @@ BOOST_AUTO_TEST_CASE( sharp_text_scale )
 	BOOST_CHECK_EQUAL( AspectLayout_SharpTextScale( NULL, 16, 22 ), 1 );
 }
 
+BOOST_AUTO_TEST_CASE( cover_rect )
+{
+	const aspectLayout_t wide = AspectLayout_Build( 2868, 1320, 1, 1.5f, 0, 0, 0, 0 );
+	const aspectRect_t cover = AspectLayout_CoverRect( &wide );
+	BOOST_CHECK_SMALL( cover.x - wide.fullRect.x, 1e-9 );
+	BOOST_CHECK_SMALL( cover.w - wide.fullRect.w, 1e-9 );
+	BOOST_CHECK_SMALL( cover.h - wide.fullRect.w * 0.75, 1e-9 );
+	BOOST_CHECK_SMALL( cover.y + cover.h / 2 - 240, 1e-9 );
+	BOOST_CHECK_LT( cover.y, 0 );
+
+	const aspectLayout_t legacy = AspectLayout_Build( 2868, 1320, 0, 1.5f, 0, 0, 0, 0 );
+	const aspectRect_t same = AspectLayout_CoverRect( &legacy );
+	BOOST_CHECK_EQUAL( same.x, 0 );
+	BOOST_CHECK_EQUAL( same.y, 0 );
+	BOOST_CHECK_EQUAL( same.w, 640 );
+	BOOST_CHECK_EQUAL( same.h, 480 );
+}
+
 BOOST_AUTO_TEST_CASE( fov_conversion )
 {
 	const double pi = acos( -1.0 );

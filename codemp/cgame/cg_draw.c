@@ -278,6 +278,8 @@ static void CG_DrawZoomMask( void )
 		trap->R_SetColor( color1 );
 
 		CG_DrawPic( 0, 0, 640, 480, cgs.media.binocularMask );
+		CG_FillScreenGutters();
+		trap->R_SetColor( color1 );
 
 		CG_DrawPic( 4, 282 - level, 16, 16, cgs.media.binocularArrow );
 
@@ -315,6 +317,7 @@ static void CG_DrawZoomMask( void )
 		level *= 103.0f;
 
 		// Draw target mask
+		CG_FillScreenGutters();
 		trap->R_SetColor( colorTable[CT_WHITE] );
 		CG_DrawPic( 0, 0, 640, 480, cgs.media.disruptorMask );
 

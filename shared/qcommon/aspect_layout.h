@@ -123,6 +123,21 @@ ASPECT_INLINE int AspectLayout_GutterRects( const aspectLayout_t *layout, aspect
 	return count;
 }
 
+// Smallest 4:3 rect that covers the whole screen, centered. Legacy layouts return 0,0,640,480.
+ASPECT_INLINE aspectRect_t AspectLayout_CoverRect( const aspectLayout_t *layout )
+{
+	const aspectRect_t *full = &layout->fullRect;
+	aspectRect_t rect = *full;
+	if ( full->w * 3 > full->h * 4 ) {
+		rect.h = full->w * 3 / 4;
+		rect.y = full->y + ( full->h - rect.h ) / 2;
+	} else if ( full->h * 4 > full->w * 3 ) {
+		rect.w = full->h * 4 / 3;
+		rect.x = full->x + ( full->w - rect.w ) / 2;
+	}
+	return rect;
+}
+
 ASPECT_INLINE aspectPoint_t AspectLayout_ToPixels( const aspectLayout_t *layout, double x, double y )
 {
 	aspectPoint_t point;

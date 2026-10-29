@@ -1723,6 +1723,8 @@ void CG_ResetTouchState( void );
 #endif
 
 const aspectLayout_t *CG_AspectLayout( void );
+void CG_FillScreenGutters( void );
+void CG_DrawScreenPic( qhandle_t hShader, qboolean cover );
 int CG_Text_CharBytes( const char *text );
 
 void CG_FillRect( float x, float y, float width, float height, const float *color );

@@ -712,6 +712,8 @@ void cgi_TouchForceReport(int version,int mask,int selected,int equipment);
 #endif
 
 const aspectLayout_t *CG_AspectLayout( void );
+void CG_FillScreenGutters( void );
+void CG_DrawScreenPic( qhandle_t hShader, qboolean cover );
 
 
 #define CG_LEFT			0x00000000	// default

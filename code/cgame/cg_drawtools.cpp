@@ -103,6 +103,22 @@ void CG_FillRect( float x, float y, float width, float height, const float *colo
 }
 
 
+// Black out the side gutters of a 4:3 overlay. Resets the draw color.
+void CG_FillScreenGutters( void ) {
+	aspectRect_t gutters[4];
+	const int count = AspectLayout_GutterRects( CG_AspectLayout(), gutters );
+	for ( int i = 0; i < count; ++i ) {
+		CG_FillRect( gutters[i].x, gutters[i].y, gutters[i].w, gutters[i].h, colorTable[CT_BLACK] );
+	}
+}
+
+// Draw a 4:3 overlay over the whole screen: stretched, or scaled to cover and cropped.
+void CG_DrawScreenPic( qhandle_t hShader, qboolean cover ) {
+	const aspectLayout_t *layout = CG_AspectLayout();
+	const aspectRect_t rect = cover ? AspectLayout_CoverRect( layout ) : layout->fullRect;
+	CG_DrawPic( rect.x, rect.y, rect.w, rect.h, hShader );
+}
+
 /*
 ================
 CG_Scissor

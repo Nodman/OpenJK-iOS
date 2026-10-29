@@ -2131,6 +2131,7 @@ static void CG_DrawZoomMask( void )
 		}
 
 		CG_DrawPic( 0, 0, 640, 480, cgs.media.binocularMask );
+		CG_FillScreenGutters();
 
 		if ( power )
 		{
@@ -2200,6 +2201,7 @@ static void CG_DrawZoomMask( void )
 		level *= 103.0f;
 
 		// Draw target mask
+		CG_FillScreenGutters();
 		cgi_R_SetColor( colorTable[CT_WHITE] );
 		CG_DrawPic( 0, 0, 640, 480, cgs.media.disruptorMask );
 
@@ -2340,6 +2342,7 @@ static void CG_DrawZoomMask( void )
 		}
 
 		CG_DrawPic( 0, 0, 640, 480, cgs.media.laGogglesMask );
+		CG_FillScreenGutters();
 	}
 }
 
@@ -3569,11 +3572,11 @@ static qboolean CG_RenderingFromMiscCamera()
 			// Only doing a misc_camera, so check health.
 			if ( g_entities[cg.snap->ps.viewEntity].health > 0 )
 			{
-				CG_DrawPic( 0, 0, 640, 480, cgi_R_RegisterShader( "gfx/2d/workingCamera" ));
+				CG_DrawScreenPic( cgi_R_RegisterShader( "gfx/2d/workingCamera" ), qfalse );
 			}
 			else
 			{
-				CG_DrawPic( 0, 0, 640, 480, cgi_R_RegisterShader( "gfx/2d/brokenCamera" ));
+				CG_DrawScreenPic( cgi_R_RegisterShader( "gfx/2d/brokenCamera" ), qfalse );
 			}
 			// don't render other 2d stuff
 			return qtrue;
@@ -3587,7 +3590,7 @@ static qboolean CG_RenderingFromMiscCamera()
 		else
 		{
 			// FIXME: make sure that this assumption is correct...because I'm assuming that I must be a droid.
-			CG_DrawPic( 0, 0, 640, 480, cgi_R_RegisterShader( "gfx/2d/droid_view" ));
+			CG_DrawScreenPic( cgi_R_RegisterShader( "gfx/2d/droid_view" ), qfalse );
 		}
 	}
 
@@ -4024,7 +4027,7 @@ static void CG_Draw2D( void )
 	if ( (cg.snap->ps.forcePowersActive&(1<<FP_SEE)) )
 	{//force sight is on
 		//indicate this with sight cone thingy
-		CG_DrawPic( 0, 0, 640, 480, cgi_R_RegisterShader( "gfx/2d/jsense" ));
+		CG_DrawScreenPic( cgi_R_RegisterShader( "gfx/2d/jsense" ), qtrue );
 		CG_DrawHealthBars();
 	}
 	else if ( cg_debugHealthBars.integer )

@@ -55,7 +55,7 @@ Limits set by Apple, not by the tools:
 
 ## Controls
 
-- Put a finger on the lower left to move, or on free space on the right to aim. The move stick appears where you touch.
+- Put a finger on the lower left to move, or on free space on the right to aim. Both zones reach the physical screen edges. The move stick appears where you touch.
 - Aim defaults to Free drag: move a finger to turn, stop moving to stop. The Aim tab also offers Joystick: a small deflection turns slowly, a larger one faster; return to center or lift to stop.
 - Attack, alternate attack and jump form an arc on the right. Attack, alternate attack, Force Use, Jump and Crouch press immediately; hold to keep the action. Drag any of them past a small threshold to aim while holding.
 - The first aiming finger keeps aim until it lifts. A deflected physical right stick takes priority over touch aim.
@@ -201,6 +201,7 @@ Enter commands in the console, or put `seta` lines in that app's autoexec (`base
 - `r_aspectCorrect 1`: iOS default. `0` restores the old stretched 2D for mods or menus that already compensate.
 - `r_aspectCorrectMinRatio 1.5`: minimum screen ratio for aspect-correct 2D.
 - `r_aspectStretchBackdrops 0`: loading art and menu backgrounds fit 4:3 with black gutters. `1` stretches them.
+- Scope, binocular and goggle masks keep their 4:3 shape and black out the side gutters. Force Sight, camera and droid overlays cover the whole screen.
 - `cg_fovAspectAdjust 1`: keeps the 4:3 vertical field of view on wide screens. `0` restores the old crop. `cg_fov` stays `80`.
 - Console text, chat and default touch positions keep clear of the camera cutout and home indicator. Edited touch buttons may reach the physical edges.
 
