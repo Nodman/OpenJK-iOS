@@ -38,7 +38,7 @@ IOS_TOUCH_INLINE touchRect_t TouchSettings_BarRect( float W, float H, float L, f
 {
 	touchRect_t r = { 0, 0, 0, 0 };
 	if ( TouchLayout_Unit(W-L-R,H-T-B,p)<=0 ) return r;
-	r.w = fminf( 288*p, W-L-R ); r.h = fminf( 32*p, H-T-B );
+	r.w = fminf( 288*p, W-L-R ); r.h = fminf( 44*p, H-T-B );
 	r.x = fmaxf( L, fminf( (W-r.w)/2, W-R-r.w ) );
 	r.y = fmaxf( T, fminf( (H-r.h)/2, H-B-r.h ) );
 	return r;
@@ -76,7 +76,7 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 	float W, float H, float L, float T, float R, float B, float p, touchSettingsLayout_t *out )
 {
 	static const char *tabs[4] = { "Appearance", "Aim", "Force", "Haptics" };
-	float content, panelH, gap, groupH, scroll, scrollH, bottom, mx, my;
+	float content, panelH, gap, groupH, scroll, scrollH, bottom, mx, my, strip;
 	int i;
 	memset( out, 0, sizeof(*out) );
 	out->p = p; out->W = W; out->H = H;
@@ -112,9 +112,16 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 	out->maxScroll = fmaxf( 0,content-scrollH );
 	scroll = fmaxf( 0,fminf( state->scroll,out->maxScroll ) );
 	TouchSettings_Add( out, out->panel, TOUCH_SETTINGS_NONE, 0, "" );
+	strip = fminf( 12*p, out->bar.h );
 	for ( i=0;i<4;++i ) {
-		touchRect_t r = { out->bar.x + i*out->bar.w/4, out->bar.y, out->bar.w/4, out->bar.h };
+		touchRect_t r = { out->bar.x + i*out->bar.w/4, out->bar.y+strip, out->bar.w/4, out->bar.h-strip };
 		TouchSettings_Add( out,r,i+1,state->tab==i+1,tabs[i] );
+	}
+	{
+		const touchRect_t back = { out->bar.x, out->bar.y, out->bar.w, strip };
+		const touchRect_t grab = { out->bar.x+(out->bar.w-fminf(36*p,out->bar.w))/2, out->bar.y+(strip-fminf(4*p,strip))/2, fminf(36*p,out->bar.w), fminf(4*p,strip) };
+		TouchSettings_Add( out,back,TOUCH_SETTINGS_NONE,0,"" );
+		TouchSettings_Add( out,grab,TOUCH_SETTINGS_NONE,1,"" );
 	}
 	if ( state->tab == TOUCH_SETTINGS_APPEARANCE ) {
 		char label[32];
