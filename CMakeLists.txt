@@ -371,6 +371,10 @@ if(GIT_TAG_ERROR AND NOT GIT_TAG_ERROR EQUAL 0)
 	message(WARNING "Unable to determine Git tag")
 	set(GIT_TAG vUNKNOWN)
 endif()
+# iOS builds carry the app version; CI checkouts and the fork's tags give git describe nothing useful.
+if(OPENJK_IOS_VERSION)
+	set(GIT_TAG "v${OPENJK_IOS_VERSION}")
+endif()
 message(STATUS "Git tag is ${GIT_TAG}")
 
 configure_file(shared/qcommon/q_version.h.in shared/qcommon/q_version.h @ONLY)
