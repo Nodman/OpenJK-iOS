@@ -245,7 +245,12 @@ int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, unsign
 int TouchLayout_GameplayHit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons )
 {
 	const int exact=TouchLayout_Hit(rects,x,y,visibleButtons);
-	if(exact>=0 || !IOS_TouchFinite(x) || !IOS_TouchFinite(y)) return exact;
+	return exact>=0?exact:TouchLayout_PaddedHit(rects,x,y,visibleButtons);
+}
+
+int TouchLayout_PaddedHit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons )
+{
+	if(TouchLayout_Hit(rects,x,y,visibleButtons)>=0 || !IOS_TouchFinite(x) || !IOS_TouchFinite(y)) return -1;
 	const int arrows[4]={TB_WEAPPREV,TB_WEAPNEXT,TB_FORCEPREV,TB_FORCENEXT};
 	int best=-1;
 	float bestDistance=0;

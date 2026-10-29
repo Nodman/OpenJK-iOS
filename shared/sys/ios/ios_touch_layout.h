@@ -82,6 +82,8 @@ void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, floa
 int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons );
 #define IOS_TOUCH_ARROW_HIT_PAD .3f	// per side, as a fraction of the arrow width
 int TouchLayout_GameplayHit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons );
+// Arrow hit only in the padding band; -1 on an exact hit or a miss.
+int TouchLayout_PaddedHit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons );
 IOS_TOUCH_INLINE int TouchLayout_Key( int button, int aux16, int escape, int tab )
 {
 	int key;
