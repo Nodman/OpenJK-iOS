@@ -440,6 +440,7 @@ void CL_ShutdownCGame( void );
 qboolean CL_GameCommand( void );
 #ifdef OPENJK_IOS
 qboolean CL_TouchCinematic( void );
+qboolean CL_KeyBindPending( void );
 #endif
 void CL_CGameRendering( stereoFrame_t stereo );
 void CL_SetCGameTime( void );

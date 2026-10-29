@@ -26,6 +26,7 @@ void		UIVM_KeyEvent			( int key, qboolean down );
 void		UIVM_MouseEvent			( int dx, int dy );
 void		UIVM_Refresh			( int realtime );
 qboolean	UIVM_IsFullscreen		( void );
+qboolean	UIVM_KeyBindPending		( void );
 void		UIVM_SetActiveMenu		( uiMenuCommand_t menu );
 qboolean	UIVM_ConsoleCommand		( int realTime );
 void		UIVM_DrawConnectScreen	( qboolean overlay );

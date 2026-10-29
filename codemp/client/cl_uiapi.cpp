@@ -101,6 +101,16 @@ qboolean UIVM_IsFullscreen( void ) {
 	return uie->IsFullscreen();
 }
 
+// Legacy QVMs and older modules have no such export.
+qboolean UIVM_KeyBindPending( void ) {
+	if ( uivm->isLegacy || !uie->KeyBindPending ) {
+		return qfalse;
+	}
+	VMSwap v( uivm );
+
+	return uie->KeyBindPending();
+}
+
 void UIVM_SetActiveMenu( uiMenuCommand_t menu ) {
 	if ( uivm->isLegacy ) {
 		VM_Call( uivm, UI_SET_ACTIVE_MENU, menu );

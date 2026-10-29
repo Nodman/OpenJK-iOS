@@ -109,7 +109,7 @@ Limits set by Apple, not by the tools:
 
 ### Gamepad, keyboard and mouse
 
-- Gamepad: left stick moves; right stick looks. In menus, left stick moves the cursor, A / Cross selects, and B / Circle goes back.
+- Gamepad: left stick moves; right stick looks. In menus, left stick moves the cursor, A / Cross selects, and B / Circle goes back. While a Controls item waits for a key, A and B send `JOY0` and `JOY1` so they can be bound. Start cannot be bound.
 - SDL button `n` maps to `A_JOY0+n`. Console bind names are `JOY0`, `JOY1`, and so on. Start sends `A_ESCAPE`. LT sends `A_JOY21`; RT sends `A_JOY22`.
 - Default gamepad binds. Face labels use Xbox / PlayStation names:
 

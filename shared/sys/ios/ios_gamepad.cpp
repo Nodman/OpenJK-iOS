@@ -122,7 +122,8 @@ qboolean IN_GamepadActive( void ) {
 static int IN_GamepadButtonKey( int button ) {
 	if ( button == SDL_CONTROLLER_BUTTON_START )
 		return A_ESCAPE;
-	if ( CL_TouchUIMode() ) {
+	// Raw JOY keys while a Controls item waits for a key, so A and B can be bound.
+	if ( CL_TouchUIMode() && !CL_KeyBindPending() ) {
 		if ( button == SDL_CONTROLLER_BUTTON_A )
 			return A_MOUSE1;
 		if ( button == SDL_CONTROLLER_BUTTON_B )
