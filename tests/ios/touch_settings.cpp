@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE( group_starts_top_centre_and_done_remains_safe_when_expande
 {
 	for(const auto &f:{touchRect_t{2868,1320,3,0},touchRect_t{1434,660,1.5f,0},touchRect_t{2048,1536,2,0},touchRect_t{200,120,1,0}}) {
 		touchSettingsState_t state={};
-		for(int tab=0;tab<=3;++tab) {
+		for(int tab=0;tab<=4;++tab) {
 			state.tab=tab; state.dropdown=1;
 			const auto layout=Build(state,f.x,f.y,f.w);
 			BOOST_CHECK_GE(layout.bar.x,20); BOOST_CHECK_GE(layout.bar.y,10);
@@ -160,6 +160,58 @@ BOOST_AUTO_TEST_CASE( sideways_drag_cancels_tap_and_secondary_never_promotes )
 	BOOST_CHECK_EQUAL(state.scroll,0);
 }
 
+BOOST_AUTO_TEST_CASE( done_row_sits_below_content_and_never_scrolls )
+{
+	const float p=2;
+	touchSettingsState_t state={};
+	auto layout=Build(state);
+	BOOST_CHECK_SMALL(layout.panel.h-52*p,.001f);BOOST_CHECK_EQUAL(layout.maxScroll,0);
+	for(int i=0;i<4;++i) BOOST_CHECK_EQUAL(layout.items[i+1].control,i+1);
+	BOOST_CHECK_EQUAL(layout.items[4].label,"Haptics");
+	for(int tab=0;tab<=4;++tab) {
+		state.tab=tab;layout=Build(state);
+		const auto done=Control(layout,TOUCH_SETTINGS_DONE);
+		BOOST_CHECK_EQUAL(layout.items[layout.count-1].control,TOUCH_SETTINGS_DONE);
+		BOOST_CHECK_EQUAL(layout.items[layout.count-1].label,"Done");BOOST_CHECK(!layout.items[layout.count-1].selected);
+		BOOST_CHECK_SMALL(done.x-layout.panel.x-4*p,.001f);BOOST_CHECK_SMALL(done.w-layout.panel.w+8*p,.001f);
+		BOOST_CHECK_SMALL(done.h-44*p,.001f);BOOST_CHECK_SMALL(layout.panel.y+layout.panel.h-done.y-done.h-4*p,.001f);
+		for(int i=0;i<layout.count-1;++i) if(layout.items[i].control) {
+			const auto &r=layout.items[i].rect;
+			BOOST_CHECK(r.y+r.h<=done.y+.001f || r.y>=done.y+done.h || layout.items[i].control<=TOUCH_SETTINGS_HAPTICS);
+		}
+	}
+	state.tab=TOUCH_SETTINGS_APPEARANCE;layout=Build(state);
+	BOOST_CHECK_SMALL(Control(layout,TOUCH_SETTINGS_DONE).y-Control(layout,TOUCH_SETTINGS_RESET_LAYOUT).y-48*p,.001f);
+	BOOST_CHECK(Tap(state,TOUCH_SETTINGS_DONE).done);
+	touchSettingsState_t small={};small.tab=TOUCH_SETTINGS_FORCE;small.picker=1;small.learned=0x1ffe;
+	auto tiny=Build(small,400,180,1);const auto before=Control(tiny,TOUCH_SETTINGS_DONE);
+	small.scroll=tiny.maxScroll;tiny=Build(small,400,180,1);const auto after=Control(tiny,TOUCH_SETTINGS_DONE);
+	BOOST_CHECK_EQUAL(before.y,after.y);BOOST_CHECK_EQUAL(after.h,44);
+	for(int i=0;i<tiny.count;++i) if(tiny.items[i].control>=TOUCH_SETTINGS_SLOT && tiny.items[i].control!=TOUCH_SETTINGS_DONE)
+		BOOST_CHECK_LE(tiny.items[i].rect.y+tiny.items[i].rect.h,after.y+.001f);
+}
+
+BOOST_AUTO_TEST_CASE( haptics_tab_toggle_row )
+{
+	touchSettingsState_t state={};state.haptics=1;
+	Tap(state,TOUCH_SETTINGS_HAPTICS);BOOST_CHECK_EQUAL(state.tab,TOUCH_SETTINGS_HAPTICS);
+	auto layout=Build(state);
+	const auto row=Control(layout,TOUCH_SETTINGS_HAPTICS_TOGGLE);
+	BOOST_CHECK_SMALL(row.h-88,.001f);BOOST_CHECK_SMALL(row.y-layout.panel.y-8,.001f);
+	for(int i=0;i<layout.count;++i) if(layout.items[i].control==TOUCH_SETTINGS_HAPTICS_TOGGLE) {
+		BOOST_CHECK_EQUAL(layout.items[i].label,"Haptics on");BOOST_CHECK(layout.items[i].selected);BOOST_CHECK_LT(layout.items[i].fill,0);
+	}
+	auto action=Tap(state,TOUCH_SETTINGS_HAPTICS_TOGGLE);
+	BOOST_CHECK(action.setHaptics && !action.haptics && !action.done);
+	state.haptics=0;layout=Build(state);
+	for(int i=0;i<layout.count;++i) if(layout.items[i].control==TOUCH_SETTINGS_HAPTICS_TOGGLE) {
+		BOOST_CHECK_EQUAL(layout.items[i].label,"Haptics off");BOOST_CHECK(!layout.items[i].selected);
+	}
+	action=Tap(state,TOUCH_SETTINGS_HAPTICS_TOGGLE);BOOST_CHECK(action.setHaptics && action.haptics);
+	BOOST_CHECK_EQUAL(state.tab,TOUCH_SETTINGS_HAPTICS);
+	Tap(state,TOUCH_SETTINGS_HAPTICS);BOOST_CHECK_EQUAL(state.tab,0);
+}
+
 BOOST_AUTO_TEST_CASE( bar_drag_moves_group_and_saves_on_lift )
 {
 	touchSettingsState_t state={};state.tab=TOUCH_SETTINGS_APPEARANCE;
@@ -211,7 +263,7 @@ BOOST_AUTO_TEST_CASE( bar_drag_clamps_inside_safe_area )
 			BOOST_CHECK_LE(layout.panel.y+layout.panel.h,1536-30+.01f);
 			if(end[0]<0) BOOST_CHECK_SMALL(layout.bar.x-20,.01f); else BOOST_CHECK_SMALL(layout.bar.x+layout.bar.w-(2048-40),.01f);
 			if(end[1]<0) BOOST_CHECK_SMALL(layout.bar.y-10,.01f);
-			else BOOST_CHECK_SMALL((tab?layout.panel.y+layout.panel.h:layout.bar.y+layout.bar.h)-(1536-30),.01f);
+			else BOOST_CHECK_SMALL(layout.panel.y+layout.panel.h-(1536-30),.01f);
 		}
 	}
 	touchSettingsState_t tall={};tall.tab=TOUCH_SETTINGS_FORCE;tall.picker=1;tall.learned=0x1ffe;tall.panelPlaced=1;tall.panelX=.5f;tall.panelY=1;

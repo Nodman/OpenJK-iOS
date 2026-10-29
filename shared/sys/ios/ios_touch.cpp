@@ -166,6 +166,7 @@ static void IN_TouchSettingsForce(void) {
 	settingsState.dragScale=TouchAim_Sensitivity(touchDragScale?touchDragScale->value:3);
 	settingsState.lookScaleY=TouchAim_Sensitivity(touchLookScaleY?touchLookScaleY->value:.6f);
 	settingsState.dragScaleY=TouchAim_Sensitivity(touchDragScaleY?touchDragScaleY->value:1.8f);
+	settingsState.haptics=in_touchHaptics?in_touchHaptics->integer!=0:1;
 	IN_TouchSyncForceSlots();
 	settingsState.learned=IN_TouchGetForceReport().learned;
 	for(int i=0;i<4;++i) settingsState.slots[i]=TouchForceSlots_Visible(&forceSlots,i,settingsState.learned);
@@ -576,6 +577,10 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 		IN_TouchSyncAim();
 	}
 	if(action.setOpacity) Cvar_SetValue("in_touchOpacity",action.opacity);
+	if(action.setHaptics) {
+		Cvar_Set("in_touchHaptics",action.haptics?"1":"0");
+		settingsState.haptics=action.haptics;
+	}
 	if(action.savePanel) {
 		char text[32];
 		TouchSettings_FormatPos(&settingsState,text,sizeof(text));
