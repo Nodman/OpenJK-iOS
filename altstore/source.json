@@ -5,17 +5,20 @@
   "website": "https://github.com/Nodman/OpenJK-iOS",
   "apps": [
     {
-      "name": "OpenJK MP",
-      "bundleIdentifier": "org.openjk.ios.mp",
+      "name": "OpenJK SP",
+      "bundleIdentifier": "org.openjk.ios.sp",
       "developerName": "OpenJK contributors",
-      "localizedDescription": "OpenJK multiplayer client. Requires your own retail game files (assets0-3.pk3). OpenJK is not affiliated with Disney, Lucasfilm or Raven Software. You need your own copy of the game.",
-      "iconURL": "https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/shared/icons/PNG/mp512.png",
+      "category": "games",
+      "localizedDescription": "Play the Jedi Academy story on iPhone and iPad. Needs the game files from your own PC copy (Steam, GOG or disc): assets0.pk3 to assets3.pk3. Setup guide: https://github.com/Nodman/OpenJK-iOS/blob/ios/docs/ios.md. Not affiliated with Disney, Lucasfilm or Raven Software.",
+      "iconURL": "https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/shared/icons/PNG/sp512.png",
       "versions": [
         {
           "version": "0.1.0",
-          "date": "2026-10-13T00:00:00Z",
-          "downloadURL": "https://github.com/Nodman/OpenJK-iOS/releases/download/ios-v0.1.0/OpenJK-MP-0.1.0.ipa",
-          "size": 0,
+          "buildVersion": "4845",
+          "date": "2026-10-29T17:49:00+00:00",
+          "downloadURL": "https://github.com/Nodman/OpenJK-iOS/releases/download/ios-v0.1.0/OpenJK-SP-0.1.0.ipa",
+          "size": 5560696,
+          "sha256": "8afc2b0b46389a3d0dad6c05446de905ec10f33a04aa97e00229eb4fcffad2eb",
           "minOSVersion": "17.0"
         }
       ],
@@ -27,17 +30,20 @@
       }
     },
     {
-      "name": "OpenJK SP",
-      "bundleIdentifier": "org.openjk.ios.sp",
+      "name": "OpenJK MP",
+      "bundleIdentifier": "org.openjk.ios.mp",
       "developerName": "OpenJK contributors",
-      "localizedDescription": "OpenJK single-player client. Requires your own retail game files (assets0-3.pk3). OpenJK is not affiliated with Disney, Lucasfilm or Raven Software. You need your own copy of the game.",
-      "iconURL": "https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/shared/icons/PNG/sp512.png",
+      "category": "games",
+      "localizedDescription": "Play Jedi Academy online on iPhone and iPad. Needs the game files from your own PC copy (Steam, GOG or disc): assets0.pk3 to assets3.pk3. Setup guide: https://github.com/Nodman/OpenJK-iOS/blob/ios/docs/ios.md. Not affiliated with Disney, Lucasfilm or Raven Software.",
+      "iconURL": "https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/shared/icons/PNG/mp512.png",
       "versions": [
         {
           "version": "0.1.0",
-          "date": "2026-10-13T00:00:00Z",
-          "downloadURL": "https://github.com/Nodman/OpenJK-iOS/releases/download/ios-v0.1.0/OpenJK-SP-0.1.0.ipa",
-          "size": 0,
+          "buildVersion": "4845",
+          "date": "2026-10-29T17:49:00+00:00",
+          "downloadURL": "https://github.com/Nodman/OpenJK-iOS/releases/download/ios-v0.1.0/OpenJK-MP-0.1.0.ipa",
+          "size": 6224843,
+          "sha256": "68451d6dae52227102861122cb144017a961838354ff1a0b7a495b92222ec8f0",
           "minOSVersion": "17.0"
         }
       ],
@@ -49,5 +55,14 @@
       }
     }
   ],
-  "news": []
+  "news": [
+    {
+      "title": "OpenJK iOS 0.1.0",
+      "identifier": "org.openjk.ios.release.0.1.0",
+      "caption": "Release notes and setup guide on GitHub.",
+      "date": "2026-10-29T17:49:00+00:00",
+      "url": "https://github.com/Nodman/OpenJK-iOS/releases/tag/ios-v0.1.0",
+      "notify": true
+    }
+  ]
 }
