@@ -14,7 +14,7 @@
 
 ## Install
 
-Apple does not sell this app. You install it with a free tool that signs it with your Apple ID. People call this "sideloading".
+Apple does not sell this app. You "sideload" it with a free tool that signs it with your Apple ID.
 
 Recommended: SideStore. Once set up, it refreshes the apps on its own over Wi-Fi.
 
@@ -35,7 +35,7 @@ Other ways:
 Limits set by Apple, not by the tools:
 
 - With a free Apple ID, apps expire after 7 days and only 3 sideloaded apps can be installed at once. SideStore, OpenJK SP and OpenJK MP use all three.
-- With a paid Apple Developer account (99 dollars a year), apps last a year and there is no 3-app limit.
+- With a paid Apple Developer account (99USD a year), apps last a year and there is no 3-app limit.
 
 ## Copy the game files
 
