@@ -579,7 +579,7 @@ BOOST_AUTO_TEST_SUITE(touch_tablet)
 
 BOOST_AUTO_TEST_CASE(reference_fixed_centers_and_current_console_size) {
 	touchLayoutOverrides_t source;TouchEdit_Parse(touchTabletLayoutFixture,&source);
-	const int fixed[]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK,TB_CONSOLE};
+	const int fixed[]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK,TB_CONSOLE,TB_BOTHATTACK};
 	for(float p:{1.f,1.5f,2.f}) for(float bottom:{0.f,20.f}) {
 		touchRect_t r[TB_COUNT];TouchLayout_Build(1194*p,834*p,0,0,0,bottom*p,p,r,NULL,TOUCH_LAYOUT_TABLET);
 		for(int i:fixed) {

@@ -39,7 +39,7 @@ static cvar_t *SetTouchVar(const char *name,const char *value) {
 	if(var) { *text=value;var->string=const_cast<char *>(text->c_str());var->value=atof(value);var->integer=atoi(value);++var->modificationCount; }
 	return var;
 }
-void SDL_GL_GetDrawableSize(SDL_Window *,int *w,int *h) { *w=testPointWidth*drawableScale;*h=testPointHeight*drawableScale; }
+void Sys_IOS_GetDrawableSize(SDL_Window *,int *w,int *h) { *w=testPointWidth*drawableScale;*h=testPointHeight*drawableScale; }
 void Sys_IOS_GetSafeAreaPixels(SDL_Window *,float *l,float *t,float *r,float *b) { *l=*t=*r=*b=0; }
 void Sys_IOS_GetViewPointSize(SDL_Window *,float *w,float *h) { *w=testPointWidth;*h=testPointHeight; }
 qboolean Sys_IOS_HardwareKeyboardConnected(void) { return qfalse; }
@@ -538,10 +538,10 @@ static void SDLAimCommandRouting(void) {
 	SDLEvent(SDL_FINGERMOTION,50,600,320);CommandFrame();assert(fabsf(cl.viewangles[YAW]+4.2f)<.001f);
 	AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERMOTION,50,520,310);
 	SetTouchVar("in_touchAimCurve","1");CommandFrame();assert(!cl.viewangles[YAW] && !cl.viewangles[PITCH]);
-	AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERDOWN,51,550,300);
-	SDLEvent(SDL_FINGERMOTION,51,570,310);CommandFrame();assert(!cl.viewangles[YAW]);
-	SDLEvent(SDL_FINGERUP,50,500,300);SDLEvent(SDL_FINGERMOTION,51,580,310);CommandFrame();assert(!cl.viewangles[YAW]);
-	SDLEvent(SDL_FINGERUP,51,580,310);
+	AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERDOWN,51,550,200);
+	SDLEvent(SDL_FINGERMOTION,51,570,210);CommandFrame();assert(!cl.viewangles[YAW]);
+	SDLEvent(SDL_FINGERUP,50,500,300);SDLEvent(SDL_FINGERMOTION,51,580,210);CommandFrame();assert(!cl.viewangles[YAW]);
+	SDLEvent(SDL_FINGERUP,51,580,210);Drain();
 	AimFixture();SDLEvent(SDL_FINGERDOWN,50,500,300);SDLEvent(SDL_FINGERMOTION,50,520,310);
 	SDLButton(SDL_FINGERDOWN,52,TB_LOCK);SDLButton(SDL_FINGERUP,52,TB_LOCK);CommandFrame();assert(editState.active && !cl.viewangles[YAW]);
 	IN_TouchEndEdit();Drain();touchWindow=NULL;

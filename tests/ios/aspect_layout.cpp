@@ -296,6 +296,12 @@ BOOST_AUTO_TEST_CASE( cover_rect )
 	BOOST_CHECK_SMALL( cover.y + cover.h / 2 - 240, 1e-9 );
 	BOOST_CHECK_LT( cover.y, 0 );
 
+	const aspectLayout_t tall = AspectLayout_Build( 640, 600, 1, 0, 0, 0, 0, 0 );
+	const aspectRect_t cover2 = AspectLayout_CoverRect( &tall );
+	BOOST_CHECK_SMALL( cover2.h - tall.fullRect.h, 1e-9 );
+	BOOST_CHECK_SMALL( cover2.w - tall.fullRect.h * 4 / 3, 1e-9 );
+	BOOST_CHECK_SMALL( cover2.x + cover2.w / 2 - 320, 1e-9 );
+
 	const aspectLayout_t legacy = AspectLayout_Build( 2868, 1320, 0, 1.5f, 0, 0, 0, 0 );
 	const aspectRect_t same = AspectLayout_CoverRect( &legacy );
 	BOOST_CHECK_EQUAL( same.x, 0 );

@@ -99,6 +99,8 @@ static void Sys_IOS_FrameStatsReset_f( void ) {
 
 static void Sys_IOS_RecordInterval( float ms ) {
 	float memMB, availMB;
+	if ( !ios_frameStats->integer )
+		return;
 	Sys_IOS_SampleMemory( &memMB, &availMB );	// task_info is a few microseconds
 	if ( ms > 250.0f ) {	// stall; counted AND kept in the stats
 		runLoads++;

@@ -8,8 +8,8 @@ Companion to the [player guide](ios.md) and the [ANGLE dependency note](ios-angl
 - Apps: `build-ios/apps/Release-iphoneos/OpenJK-SP.app` and `OpenJK-MP.app`.
 - The script refuses iOS SDK 27 or later (SDL2 needs the UIScene work first). Select an Xcode 26.x install with `DEVELOPER_DIR` if needed.
 - `scripts/ios/check-modules.sh build-ios all` checks module exports, the native GLES boundary and the embedded ANGLE bytes. CI runs it after the build.
-
-- The version shown in the console corner, the `version` cvar and the MP `gamename` is `OpenJK-iOS: v<OPENJK_IOS_VERSION>` (SP: `OpenJK-iOS SP: v...`). Servers see that instead of `vUNKNOWN`.
+- The version in the console corner and the `version` cvar is `OpenJK-iOS: v<OPENJK_IOS_VERSION>` for MP and `OpenJK-iOS SP: v...` for SP. MP servers see it as `gamename`.
+- Release tags `ios-v*` use `docs/ios-release-notes.md` as the GitHub Release body.
 
 ## Host tests
 

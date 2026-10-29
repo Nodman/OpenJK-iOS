@@ -11,7 +11,7 @@ static iosClass_t Sys_IOS_Class( void ) {
 	return IOS_CLASS_A12;
 }
 
-// The 540 px floor is applied by the caller (GLimp_IOS_RenderScale, T0b.3).
+// The 540 px floor is applied by the caller (GLimp_IOS_RenderScale).
 float Sys_IOS_DefaultRenderScale( qboolean highRefresh ) {
 	float s = 1.0f;
 	switch ( Sys_IOS_Class() ) {

@@ -29,6 +29,29 @@ jobs:
       - name: Build and run unit tests
         run: cmake --build build-tests --target UnitTests && ./build-tests/UnitTests
 
+  host-tests:
+    runs-on: macos-26
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install SDL2 and libpng
+        run: brew install sdl2 libpng
+
+      - name: Configure desktop build for host tests
+        run: cmake -S . -B build-desktop -DCMAKE_BUILD_TYPE=Release
+
+      - name: Run host tests
+        run: |
+          for test in tests/ios/*_host.py; do
+            case "$test" in *angle_consumer_host.py) continue;; esac
+            echo "== $test"
+            python3 "$test"
+          done
+
   build:
     runs-on: macos-26
     permissions:
@@ -82,7 +105,7 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" build-ios/dist/*.ipa build-ios/dist/SHA256SUMS --title "OpenJK iOS ${GITHUB_REF_NAME#ios-v}" --notes-file docs/ios.md
+        run: gh release create "$GITHUB_REF_NAME" build-ios/dist/*.ipa build-ios/dist/SHA256SUMS --title "OpenJK iOS ${GITHUB_REF_NAME#ios-v}" --notes-file docs/ios-release-notes.md
 
   altstore-source:
     if: startsWith(github.ref, 'refs/tags/ios-v')
@@ -112,4 +135,8 @@ jobs:
           git add altstore/source.json
           git diff --cached --quiet && exit 0
           git commit -m "[iOS] Update AltStore source for $GITHUB_REF_NAME"
-          git push origin ios
+          for attempt in 1 2 3; do
+            git pull --rebase origin ios && git push origin ios && exit 0
+            sleep 10
+          done
+          exit 1

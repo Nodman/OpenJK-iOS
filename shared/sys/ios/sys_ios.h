@@ -7,16 +7,16 @@
 struct SDL_Window;
 union SDL_Event;
 
-// sys_ios_main.mm (P0b)
+// sys_ios_main.mm
 void Sys_IOS_EarlyInit( void );			// SDL hints; first line of main()
 void Sys_IOS_PreInit( void );			// before Com_Init: lifecycle, documents, assets
 
-// sys_ios_paths.mm (path P0b; rest P2)
+// sys_ios_paths.mm
 const char *Sys_IOS_DocumentsPath( void );	// "<container>/Documents"
 void Sys_IOS_PrepareDocuments( void );
 void Sys_IOS_WaitForAssets( void );
 
-// sys_ios_view.mm (P0b)
+// sys_ios_view.mm
 void Sys_IOS_GetDrawableSize( struct SDL_Window *window, int *width, int *height );
 void Sys_IOS_ConfigureMetalView( struct SDL_Window *window, int drawables );
 float Sys_IOS_GetDrawableScale( struct SDL_Window *window );
@@ -32,7 +32,7 @@ void Sys_IOS_GetSafeAreaPixels( struct SDL_Window *window, float *left, float *t
 qboolean Sys_IOS_HardwareKeyboardConnected( void );
 qboolean Sys_IOS_PointerConnected( void );
 
-// sdl_window.cpp (P0b)
+// sdl_window.cpp
 struct SDL_Window *GLimp_IOS_Window( void );
 void *GLimp_IOS_MetalView( struct SDL_Window *window );
 const char *GLimp_IOS_GLESProvider( void );
@@ -40,19 +40,19 @@ void *GLimp_IOS_GetProcAddress( const char *name );
 qboolean GLimp_IOS_MakeCurrent( void );
 void GLimp_IOS_CheckPresentSize( void );
 
-// sys_ios_device.mm (stubs P0b; filled P0c T0c.0; P3 adds a line)
+// sys_ios_device.mm
 float Sys_IOS_DefaultRenderScale( qboolean highRefresh );
 const char *Sys_IOS_DeviceDefaults( void );
 
-// sys_ios_pacing.mm (P0c; extended P3)
+// sys_ios_pacing.mm
 int Sys_IOS_MaxFramesPerSecond( void );
 void Sys_IOS_StartFrameLoop( void );
 void Sys_IOS_SetFramePaused( qboolean paused );
 
-// sys_ios_lifecycle.mm (stub P0b; filled P6)
+// sys_ios_lifecycle.mm
 void Sys_IOS_InitLifecycle( void );
 
-// ios_touch.cpp (stubs P0b; filled P4)
+// ios_touch.cpp
 void IN_TouchInit( struct SDL_Window *window );
 void IN_TouchRestoreDefaultBinds( void );
 void IN_TouchShutdown( void );
@@ -69,7 +69,7 @@ qboolean IN_TouchIsEditing( void );
 void IN_TouchEndEdit( void );
 void SCR_RegisterTouchMedia( void );
 
-// ios_gamepad.cpp (P4)
+// ios_gamepad.cpp
 void IN_GamepadSetTouchMove( int side, int fwd );
 void IN_GamepadSetTouchLook( int yaw, int pitch );
 qboolean IN_GamepadTouchLookActive( void );

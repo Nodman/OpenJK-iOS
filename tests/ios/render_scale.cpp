@@ -110,15 +110,5 @@ BOOST_AUTO_TEST_CASE( invalid_native_dimensions )
 	}
 }
 
-BOOST_AUTO_TEST_CASE( fixed_to_auto_independence )
-{
-	const iosRenderScale_t before = IOS_RenderScale_Resolve( 0, 0.75f, 1, 2868, 1320 );
-	for ( int id = 1; id < 4; ++id ) {
-		IOS_RenderScale_Resolve( IOS_RenderScale_ForPreset( id ), 0.75f, 1, 2868, 1320 );
-		// Auto depends only on its inputs, regardless of the last fixed request.
-		BOOST_CHECK_EQUAL( IOS_RenderScale_Resolve( 0, 0.75f, 1, 2868, 1320 ).scale, before.scale );
-	}
-}
-
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()

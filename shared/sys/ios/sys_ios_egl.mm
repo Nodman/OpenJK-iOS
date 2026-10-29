@@ -106,7 +106,7 @@ bool Sys_IOS_EGL_Probe( void ) {
 	Com_Printf( "iOS EGL: version=%d.%d vendor=%s version_string=%s APIs=%s config=RGBA8888/D24/S8 samples=0\n",
 		major, minor, p_eglQueryString( display, EGL_VENDOR ), p_eglQueryString( display, EGL_VERSION ),
 		p_eglQueryString( display, EGL_CLIENT_APIS ) );
-	Com_Printf( "iOS EGL extensions: %s\n", p_eglQueryString( display, EGL_EXTENSIONS ) );
+	Com_DPrintf( "iOS EGL extensions: %s\n", p_eglQueryString( display, EGL_EXTENSIONS ) );
 	return true;
 }
 

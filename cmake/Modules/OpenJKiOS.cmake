@@ -7,7 +7,7 @@ endif()
 enable_language(OBJC OBJCXX)
 set(OPENJK_GLES ON)
 include(OpenJKiOSANGLE)
-include(OpenJKiOSDeps)	# T0a.2: SDL2, gl4es, GL4ES_INCLUDE_DIR
+include(OpenJKiOSDeps)	# SDL2, gl4es, GL4ES_INCLUDE_DIR
 
 # All iOS-only files live here; globbed so parallel phases never edit this list.
 file(GLOB OPENJK_IOS_SOURCES CONFIGURE_DEPENDS
@@ -35,9 +35,11 @@ function(openjk_ios_configure_app target flavor)
 	if(NOT build_number)
 		set(build_number 1)
 	endif()
+	# CFBundleShortVersionString allows digits and dots only; dev builds carry a suffix.
+	string(REGEX REPLACE "[-+].*$" "" short_version "${OPENJK_IOS_VERSION}")
 	set_target_properties(${target} PROPERTIES
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/ios/Info.plist.in"
-		MACOSX_BUNDLE_SHORT_VERSION_STRING "${OPENJK_IOS_VERSION}"
+		MACOSX_BUNDLE_SHORT_VERSION_STRING "${short_version}"
 		MACOSX_BUNDLE_BUNDLE_VERSION "${build_number}")
 	set(icons "${CMAKE_SOURCE_DIR}/cmake/ios/AppIcon-${flavor}.xcassets")
 	target_sources(${target} PRIVATE "${icons}")

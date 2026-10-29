@@ -12,7 +12,7 @@
 - iOS / iPadOS 17.0 or later. A12 or newer. Arm64 only.
 - iPhone XR / XS and later, including SE 2 / 3.
 - iPad 8th generation or later, Air 3 or later, mini 5 or later, and iPad Pro models from 2018 or later.
-- A11 and older, including A10 / A10X iPads, are outside the supported device list.
+- A11 and older are not supported. A10 / A10X iPads can install the app but were not tested.
 - ProMotion screens: iPhone 13 Pro through 17 Pro Max, iPhone 17, iPhone Air, and iPad Pro models from 2018 or later. Fresh configs default to 120 fps on these panels and 60 elsewhere; saved choices are kept.
 - On iPhone, EAGL stays near 60 fps. 120 needs the ANGLE opt-in. iPad Pro reaches 120 on EAGL.
 - 3 GB devices were not tested.
@@ -22,7 +22,7 @@
 The IPAs are unsigned. A sideloading tool signs them with your own Apple ID. Pick one:
 
 1. **SideStore** (recommended): set it up once with a computer using [iloader](https://iloader.app/), install the LocalDevVPN app, then refresh on the phone over Wi-Fi with no computer. Add the [OpenJK source](https://raw.githubusercontent.com/Nodman/OpenJK-iOS/ios/altstore/source.json) and install OpenJK SP, OpenJK MP, or both. [SideStore guide](https://docs.sidestore.io/).
-2. **AltStore Classic**: run AltServer on a Mac or PC, install AltStore (iOS 17.4 or later), add the same source, install. AltServer refreshes the apps while the phone is on the same Wi-Fi or USB. [AltStore guide](https://faq.altstore.io/).
+2. **AltStore Classic**: run AltServer on a Mac or PC, install AltStore, add the same source, install. AltServer refreshes the apps while the phone is on the same Wi-Fi or USB. [AltStore guide](https://faq.altstore.io/).
 3. **Sideloadly, Impactor or Xcode**: download the IPA from [GitHub Releases](https://github.com/Nodman/OpenJK-iOS/releases), open it in the tool, sign in with your Apple ID. Re-sign with the computer every 7 days. Use this when SideStore or AltStore cannot sign in.
 
 Limits set by Apple, not by the tools:
@@ -37,7 +37,7 @@ Limits set by Apple, not by the tools:
 - Launch each app once to create its `base` folder.
 - From your Jedi Academy installation's `GameData/base`, copy `assets0.pk3`, `assets1.pk3`, `assets2.pk3`, and `assets3.pk3`.
 - In Files, open **On My iPhone / iPad → OpenJK SP → base** or **OpenJK MP → base**. Put the files directly in `base`.
-- From a computer: connect the device by USB, open it in Finder (macOS) or iTunes (Windows), go to the Files tab, and drag the pk3 files into the app's `base` folder.
+- From a computer: connect the device by USB, open it in Finder (macOS) or the Apple Devices app (Windows), go to the Files tab, and drag the pk3 files into the app's `base` folder.
 - SP and MP each need their own copy. Their app folders are separate.
 - Return to the app and tap **Check again** in the **Game files needed** box.
 - Startup checks for `assets0.pk3` and `default.cfg` for SP or `mpdefault.cfg` for MP. The cfg can be inside a pk3. The retail files supply it; `assets0.pk3` alone is not enough.
@@ -60,12 +60,13 @@ Limits set by Apple, not by the tools:
 - Attack, alternate attack and jump form an arc on the right. Both attacks sits lower-left of alternate attack on iPhone and below it on iPad. It holds attack and alternate attack together, for combos that need two keys on a keyboard or pad. Attack, alternate attack, Both attacks, Force Use, Jump and Crouch press immediately; hold to keep the action. Drag any of them past a small threshold to aim while holding.
 - The first aiming finger keeps aim until it lifts. A deflected physical right stick takes priority over touch aim.
 - Attack shows a swing glyph for sabers and a trigger glyph for guns. Style shows the saber stance color: blue fast, yellow medium, red strong.
-- Use sits at the bottom left. Crouch and Style sit near the bottom right. Previous weapon, Saber and Next weapon run along the top right; Saber selects the saber or toggles its blade. Force Previous / Use / Next sit below them, with four quick slots to their left.
+- Use sits at the bottom left. Crouch and Style sit near the bottom right. Previous weapon, Saber and Next weapon run along the top right; Saber selects the saber or toggles its blade. Force Previous / Use / Next sit below them. Four quick slots sit in a 2×2 grid on the upper left.
+- Console sits at the top left on iPhone and at the top right on iPad. Lock sits on the left edge on iPhone and at the top right on iPad.
 - Menu, MP Chat and Pad sit at the top left. Menu sends Escape. Chat opens global chat and the keyboard (MP only). Pad opens the SP datapad, or holds the MP scoreboard until you lift.
 - Buttons hide when not useful: Saber when unowned, weapon arrows with one weapon, Force arrows when cycling has no effect, Style when no stance change is legal. Positions stay fixed. Death, spectator and intermission keep basic actions and sticks.
 - Tap or drag elsewhere in menus to use the cursor. Tap Console to open the console and keyboard; tap again to close. Hold Console for 500 ms to toggle the soft keyboard for menu fields.
 - Full-screen cinematics and SP in-game videos hide all controls; tap anywhere to skip.
-- SP in-game cutscenes draw no letterbox bars on screens wider than 1.5:1. iPads keep them.
+- SP in-game cutscenes draw no letterbox bars on screens 1.5:1 or wider. iPads keep them.
 
 ### Force selection and quick slots
 
@@ -199,7 +200,7 @@ Enter commands in the console, or put `seta` lines in that app's autoexec (`base
 
 ### Aspect-correct 2D, FOV and safe area
 
-- On screens wider than 1.5:1, the 640×480 menus, HUD and console keep their 4:3 shape, centered with side gutters. The 3D view fills the screen. iPads below 1.5:1 keep the old stretched 2D.
+- On screens 1.5:1 or wider, the 640×480 menus, HUD and console keep their 4:3 shape, centered with side gutters. The 3D view fills the screen. iPads below 1.5:1 keep the old stretched 2D.
 - `r_aspectCorrect 1`: iOS default. `0` restores the old stretched 2D for mods or menus that already compensate.
 - `r_aspectCorrectMinRatio 1.5`: minimum screen ratio for aspect-correct 2D.
 - `r_aspectStretchBackdrops 0`: loading art and menu backgrounds fit 4:3 with black gutters. `1` stretches them.

@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(reference_matches_approved_cleanup_and_keeps_protected_cent
 		BOOST_CHECK_EQUAL(editor.x,phone[i].x);BOOST_CHECK_EQUAL(editor.y,phone[i].y);
 	}
 	touchLayoutOverrides_t source;TouchEdit_Parse(touchPhoneLayoutFixture,&source);
-	const int fixed[7]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK};
+	const int fixed[8]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_USE,TB_LOCK,TB_BOTHATTACK};
 	for(float p:{1.5f,2.25f,3.f}) for(float bottom:{0.f,21.f,34.f}) {
 		TouchLayout_Build(956*p,440*p,44*p,0,44*p,bottom*p,p,phone,NULL,TOUCH_LAYOUT_PHONE);
 		for(int i:fixed) {BOOST_CHECK_SMALL(X(phone[i])/p-source.cx[i]*956,.001f);BOOST_CHECK_SMALL(Y(phone[i])/p-source.cy[i]*440,.001f);}

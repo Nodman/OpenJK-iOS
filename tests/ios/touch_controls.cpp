@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE( missing_bridge_grace_recovery_priority_and_epoch )
 		v = TouchBridge_Step( &bridge, 0, mp, 1, 0, 0, 0, 1050 );
 		BOOST_CHECK( v.fallback && v.logMissing && v.basic && v.sticks && v.pad && v.saber && v.style && v.weapons && v.force && v.forceCycle );
 		BOOST_CHECK_EQUAL( v.chat, mp );
-		BOOST_CHECK_EQUAL( v.menu + v.console + 5 * v.basic + v.saber + v.style + v.force + v.forceCycle + 2 * v.weapons + v.pad + v.chat, mp ? 15 : 14 );
+		BOOST_CHECK_EQUAL( v.menu + v.console + 6 * v.basic + v.saber + v.style + v.force + v.forceCycle + 2 * v.weapons + v.pad + v.chat, mp ? 16 : 15 );
 		BOOST_CHECK_EQUAL( v.styleColor, TOUCH_STYLE_UNKNOWN );
 		BOOST_CHECK_EQUAL( TouchBridge_Step( &bridge, 0, mp, 1, 0, 0, 0, 1051 ).logMissing, 0 );
 		auto facts = Facts();
