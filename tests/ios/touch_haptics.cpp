@@ -43,6 +43,8 @@ BOOST_AUTO_TEST_CASE(panel_clicks_on_first_finger_down_on_a_control)
 
 BOOST_AUTO_TEST_CASE(toggle_clicks_only_when_turned_on)
 {
+	BOOST_CHECK(!TouchHaptics_PanelShouldClick(1,1,1,TOUCH_SETTINGS_HAPTICS_TOGGLE,1));
+	BOOST_CHECK(TouchHaptics_PanelShouldClick(1,1,1,TOUCH_SETTINGS_HAPTICS,1));
 	BOOST_CHECK(TouchHaptics_ToggleShouldClick(1,1));
 	BOOST_CHECK(!TouchHaptics_ToggleShouldClick(0,0));
 	BOOST_CHECK(!TouchHaptics_ToggleShouldClick(1,0));
