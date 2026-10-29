@@ -57,7 +57,7 @@ Limits set by Apple, not by the tools:
 
 - Put a finger on the lower left to move, or on free space on the right to aim. Both zones reach the physical screen edges. The move stick appears where you touch.
 - Aim defaults to Free drag: move a finger to turn, stop moving to stop. The Aim tab also offers Joystick: a small deflection turns slowly, a larger one faster; return to center or lift to stop.
-- Attack, alternate attack and jump form an arc on the right. Both attacks sits beside alternate attack and holds attack and alternate attack together, for combos that need two keys on a keyboard or pad. Attack, alternate attack, Both attacks, Force Use, Jump and Crouch press immediately; hold to keep the action. Drag any of them past a small threshold to aim while holding.
+- Attack, alternate attack and jump form an arc on the right. Both attacks sits below alternate attack and holds attack and alternate attack together, for combos that need two keys on a keyboard or pad. Attack, alternate attack, Both attacks, Force Use, Jump and Crouch press immediately; hold to keep the action. Drag any of them past a small threshold to aim while holding.
 - The first aiming finger keeps aim until it lifts. A deflected physical right stick takes priority over touch aim.
 - Attack shows a swing glyph for sabers and a trigger glyph for guns. Style shows the saber stance color: blue fast, yellow medium, red strong.
 - Use sits at the bottom left. Crouch and Style sit near the bottom right. Previous weapon, Saber and Next weapon run along the top right; Saber selects the saber or toggles its blade. Force Previous / Use / Next sit below them, with four quick slots to their left.

@@ -4,6 +4,8 @@
 
 #include <math.h>
 
+#define W_UNSET 1e9f
+
 const touchButtonDef_t touchButtonDefs[TB_COUNT] = {
 	{ "ATK",   TOUCH_ANCHOR_BR, .413f, .590f, .14f, TG_ATTACK, 16, "+attack" },
 	{ "ALT",   TOUCH_ANCHOR_BR, .510f, .438f, .14f, TG_ALTATTACK, 17, "+altattack" },
@@ -98,8 +100,8 @@ static void TouchLayout_Phone(float W,float H,touchRect_t rects[TB_COUNT],float 
 	// Reference placements use full drawable height; safe insets only affect existing size rules.
 	const float scale=H/440;
 	const int fixed[8]={TB_ATTACK,TB_ALTATTACK,TB_JUMP,TB_CROUCH,TB_STYLE,TB_BOTHATTACK,TB_USE,TB_LOCK};
-	const float offsets[8][2]={{210.583856f,225.467f},{271.331920f,133.626680f},{104.431528f,108.779880f},
-		{58.789220f,38.266800f},{143.294840f,33.866800f},{370.0f,133.626680f},{104.169584f,41.266720f},{34.135892f,143.220880f}};
+	const float offsets[8][2]={{210.583856f,225.467f},{284.998896f,140.959720f},{104.431528f,108.779880f},
+		{58.789220f,38.266800f},{143.294840f,33.866800f},{328.064784f,40.960040f},{104.169584f,41.266720f},{34.135892f,143.220880f}};
 	for(int i=0;i<8;++i) TouchLayout_Center(&rects[fixed[i]],i<6?W-offsets[i][0]*scale:offsets[i][0]*scale,H-offsets[i][1]*scale);
 	const int tools[4]={TB_CONSOLE,TB_MENU,TB_PAD,TB_CHAT};
 	float cursor=45.816424f*scale;
@@ -117,17 +119,29 @@ static void TouchLayout_Phone(float W,float H,touchRect_t rects[TB_COUNT],float 
 	TouchLayout_FitGroup(W,H,rects,fixed,6);TouchLayout_FitGroup(W,H,rects,fixed+6,1);TouchLayout_FitGroup(W,H,rects,fixed+7,1);
 }
 
+// Portrait windows push Use into the combat arc; keep it to the left of the arc.
+static void TouchLayout_KeepLeftOf(touchRect_t *r,const touchRect_t rects[TB_COUNT],const int *ids,int count)
+{
+	float minX=W_UNSET;
+	for(int i=0;i<count;++i) {
+		const touchRect_t *o=&rects[ids[i]];
+		if(r->y<o->y+o->h && o->y<r->y+r->h) minX=fminf(minX,o->x);
+	}
+	const float gap=r->w*.05f;
+	if(minX<W_UNSET && r->x+r->w+gap>minX) r->x=fmaxf(0,minX-gap-r->w);
+}
+
 static void TouchLayout_Tablet(float W,float H,touchRect_t rects[TB_COUNT])
 {
 	const float scale=H/834;
 	const float centers[TB_COUNT][2]={
 		{927.760686f,546.355068f},{891.932328f,667.900560f},{1124.165328f,485.006028f},
-		{1118.783970f,589.648008f},{198.828462f,619.310886f},{1051.720373f,368.314694f},
+		{1118.783970f,589.648008f},{269.316252f,668.319228f},{1051.720373f,368.314694f},
 		{1129.364700f,368.314694f},{1150.761678f,795.568446f},{974.076045f,274.266460f},
 		{1129.364700f,274.266460f},{48.969559f,62.470369f},{1154.501286f,41.258814f},
 		{1051.720373f,274.266460f},{107.335750f,62.470369f},{48.969559f,120.836560f},
 		{1160.990676f,92.486430f},{974.076045f,368.314694f},{81.212597f,288.569004f},
-		{156.728918f,288.569004f},{128.447834f,356.492466f},{203.964155f,356.492466f},{900.0f,778.0f}};
+		{156.728918f,288.569004f},{128.447834f,356.492466f},{203.964155f,356.492466f},{876.790020f,776.710038f}};
 	for(int i=0;i<TB_COUNT;++i) {
 		const int right=i==TB_CONSOLE || i==TB_LOCK || i==TB_ATTACK || i==TB_ALTATTACK || i==TB_BOTHATTACK || i==TB_JUMP || i==TB_CROUCH ||
 			i==TB_STYLE || i==TB_FORCE || i==TB_FORCENEXT || i==TB_FORCEPREV || i==TB_WEAPPREV || i==TB_WEAPNEXT || i==TB_SABER_SELECT;
@@ -143,6 +157,7 @@ static void TouchLayout_Tablet(float W,float H,touchRect_t rects[TB_COUNT])
 	TouchLayout_FitGroup(W,H,rects,tools,3);TouchLayout_FitGroup(W,H,rects,selectors,6);
 	TouchLayout_FitGroup(W,H,rects,slots,4);TouchLayout_FitGroup(W,H,rects,combat,6);
 	for(int i=0;i<3;++i) TouchLayout_FitGroup(W,H,rects,&singles[i],1);
+	TouchLayout_KeepLeftOf(&rects[TB_USE],rects,combat,6);
 }
 
 void TouchLayout_Defaults(float W,float H,float L,float T,float R,float B,float p,touchRect_t out[TB_COUNT],touchLayoutProfile_t profile)

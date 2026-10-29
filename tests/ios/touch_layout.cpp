@@ -648,8 +648,8 @@ BOOST_AUTO_TEST_CASE(compiled_tablet_matrix_matches_groups_and_documented_window
 			touchRect_t editor;TouchEdit_PositionRect(NULL,i,W,H,safe[0]*p,safe[1]*p,safe[2]*p,safe[3]*p,p,&editor,TOUCH_LAYOUT_TABLET);
 			BOOST_CHECK_EQUAL(memcmp(&editor,&r[i],sizeof(editor)),0);
 			for(int j=0;j<i;++j) {
-				const bool known=size[0]==507?(i==TB_USE && j==TB_ALTATTACK):size[0]==320 &&
-					((i==TB_FORCE_SLOT2 && j==TB_WEAPPREV) || (i==TB_FORCE_SLOT3 && j==TB_FORCEPREV) || (i==TB_FORCE_SLOT4 && j==TB_FORCE));
+				const bool known=size[0]==320 &&
+					((i==TB_FORCE_SLOT2 && j==TB_WEAPPREV) || (i==TB_FORCE_SLOT3 && j==TB_FORCEPREV) || (i==TB_FORCE_SLOT4 && j==TB_FORCE) || (i==TB_USE && j==TB_ALTATTACK));
 				BOOST_CHECK_MESSAGE(Disjoint(r[i],r[j])!=known,"pair "<<i<<"/"<<j<<" in "<<size[0]<<"x"<<size[1]<<" render "<<render);
 			}
 		}
