@@ -82,6 +82,7 @@ Button behaviour:
 
 - `in_touchLookScale 1.0` / `in_touchLookScaleY 0.6`: Joystick horizontal / vertical sensitivity. `in_touchDragScale 3.0` / `in_touchDragScaleY 1.8`: Free drag horizontal / vertical sensitivity. Range `.1`–`10`.
 - `in_touchOpacity 1.0`: button opacity, `0`–`1`. `0` hides the drawing but keeps input active.
+- `in_touchHaptics 1`: short tap feel on each button press (iPhone only). `0` turns it off.
 - Example autoexec lines: `seta in_touchControls 2`, `seta in_touchAimMode 1`, `seta in_touchDragScale 1.25`, `seta in_touchOpacity 0.5`.
 
 ## Gamepad, keyboard and mouse
