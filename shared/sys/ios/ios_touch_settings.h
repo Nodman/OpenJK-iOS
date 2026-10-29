@@ -199,7 +199,8 @@ IOS_TOUCH_INLINE void TouchSettings_Build( const touchSettingsState_t *state, fl
 		TouchSettings_Add(out,r,TOUCH_SETTINGS_HAPTICS_TOGGLE,state->haptics!=0,r.h>=24*p?(state->haptics?"Haptics on":"Haptics off"):"");
 	}
 	{
-		const touchRect_t r={out->panel.x+4*p,bottom,out->panel.w-8*p,fminf(44*p,out->panel.y+out->panel.h-bottom)};
+		const float w=fminf(96*p,out->panel.w-8*p),h=fminf(36*p,fmaxf(0,out->panel.y+out->panel.h-4*p-bottom));
+		const touchRect_t r={out->panel.x+out->panel.w-4*p-w,out->panel.y+out->panel.h-4*p-h,w,h};
 		TouchSettings_Add(out,r,TOUCH_SETTINGS_DONE,0,r.h>=24*p?"Done":"");
 	}
 }
