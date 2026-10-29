@@ -8,7 +8,7 @@ void Sys_IOS_MigrateConfig( void ) {
 		{ "cg_fovViewmodel", "0" },
 		{ "cg_gunX", "0" },
 	};
-	if ( Cvar_Get( "ios_configVersion", "0", CVAR_ARCHIVE )->integer >= 1 )
+	if ( Cvar_Get( "ios_configVersion", "0", CVAR_ARCHIVE | CVAR_NORESTART )->integer >= 1 )
 		return;
 	for ( const auto &cvar : moved ) {
 		const unsigned flags = Cvar_Flags( cvar.name );
