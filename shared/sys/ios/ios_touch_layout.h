@@ -94,7 +94,6 @@ IOS_TOUCH_INLINE int TouchLayout_Key( int button, int aux16, int escape, int tab
 	default: return aux16 + key - 16;
 	}
 }
-void TouchLayout_Stick( float ox, float oy, float x, float y, float radius, float *outX, float *outY );
 void TouchLayout_ToVirtual( const aspectLayout_t *layout, float nx, float ny, int *vx, int *vy );
 #ifdef __cplusplus
 touchRect_t TouchLayout_RectToVirtual( const aspectLayout_t *layout, const touchRect_t &rect );

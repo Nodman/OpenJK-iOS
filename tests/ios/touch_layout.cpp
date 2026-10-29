@@ -388,26 +388,6 @@ BOOST_AUTO_TEST_CASE( first_hit_and_ui_filter )
 	BOOST_CHECK_EQUAL( TouchLayout_Hit( rects, 25, 61, ~0u ), -1 );
 }
 
-BOOST_AUTO_TEST_CASE( stick_outside_radius )
-{
-	float x, y;
-	TouchLayout_Stick( 10, 20, 130, 180, 100, &x, &y );
-	BOOST_CHECK_SMALL( sqrtf( x * x + y * y ) - 1.0f, 1e-5f );
-	BOOST_CHECK_SMALL( x - 0.6f, 1e-5f );
-	BOOST_CHECK_SMALL( y - 0.8f, 1e-5f );
-}
-
-BOOST_AUTO_TEST_CASE( stick_inside_radius )
-{
-	float x, y;
-	TouchLayout_Stick( 10, 20, 60, 20, 100, &x, &y );
-	BOOST_CHECK_SMALL( x - 0.5f, 1e-5f );
-	BOOST_CHECK_SMALL( y, 1e-5f );
-	TouchLayout_Stick( 10, 20, 10, -30, 100, &x, &y );
-	BOOST_CHECK_SMALL( x, 1e-5f );
-	BOOST_CHECK_SMALL( y + 0.5f, 1e-5f );
-}
-
 BOOST_AUTO_TEST_CASE( virtual_cursor )
 {
 	const aspectLayout_t layout = AspectLayout_Build( 2388, 1668, 1, 1.5f, 0, 0, 0, 0 );
@@ -582,12 +562,8 @@ BOOST_AUTO_TEST_CASE( equal_size_rotation )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-BOOST_AUTO_TEST_CASE( stick_zero_radius_and_nan_virtual )
+BOOST_AUTO_TEST_CASE( nan_virtual )
 {
-	float sx = 1, sy = 1;
-	TouchLayout_Stick( 0, 0, 5, 5, 0, &sx, &sy );
-	BOOST_CHECK_EQUAL( sx, 0 );
-	BOOST_CHECK_EQUAL( sy, 0 );
 	const aspectLayout_t layout = AspectLayout_Build( 2868, 1320, 1, 1.5f, 0, 0, 0, 0 );
 	int vx, vy;
 	TouchLayout_ToVirtual( &layout, 0.0f / 0.0f, 1e9f, &vx, &vy );

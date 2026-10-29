@@ -62,10 +62,8 @@ typedef struct {
 IOS_TOUCH_INLINE int TouchDraw_WeaponGlyph( int button,int weaponClass )
 {
 	if(button<0 || button>=TB_COUNT) return TG_PLATE;
-	if(button==TB_ATTACK || button==TB_ALTATTACK) {
-		if(weaponClass==TOUCH_WEAPON_GUN) return button==TB_ATTACK?TG_GUN_ATTACK:TG_ALTATTACK;
-		if(weaponClass==TOUCH_WEAPON_MELEE) return button==TB_ATTACK?TG_GUN_ATTACK:TG_ALTATTACK;
-	}
+	if((button==TB_ATTACK || button==TB_ALTATTACK) && (weaponClass==TOUCH_WEAPON_GUN || weaponClass==TOUCH_WEAPON_MELEE))
+		return button==TB_ATTACK?TG_GUN_ATTACK:TG_ALTATTACK;
 	return touchButtonDefs[button].glyph;
 }
 

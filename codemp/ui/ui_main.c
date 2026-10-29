@@ -10651,7 +10651,9 @@ Q_EXPORT uiExport_t* QDECL GetModuleAPI( int apiVersion, uiImport_t *import )
 	uie.ConsoleCommand		= UI_ConsoleCommand;
 	uie.DrawConnectScreen	= UI_DrawConnectScreen;
 	uie.MenuReset			= Menu_Reset;
+#ifdef OPENJK_IOS
 	uie.KeyBindPending		= Display_KeyBindPending;
+#endif
 
 	return &uie;
 }

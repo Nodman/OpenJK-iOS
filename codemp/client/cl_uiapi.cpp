@@ -101,7 +101,8 @@ qboolean UIVM_IsFullscreen( void ) {
 	return uie->IsFullscreen();
 }
 
-// Legacy QVMs and older modules have no such export.
+#ifdef OPENJK_IOS
+// iOS links the UI module statically, so the export is always present; legacy QVMs have none.
 qboolean UIVM_KeyBindPending( void ) {
 	if ( uivm->isLegacy || !uie->KeyBindPending ) {
 		return qfalse;
@@ -110,6 +111,7 @@ qboolean UIVM_KeyBindPending( void ) {
 
 	return uie->KeyBindPending();
 }
+#endif
 
 void UIVM_SetActiveMenu( uiMenuCommand_t menu ) {
 	if ( uivm->isLegacy ) {

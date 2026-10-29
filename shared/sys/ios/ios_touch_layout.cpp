@@ -173,6 +173,35 @@ void TouchLayout_Defaults(float W,float H,float L,float T,float R,float B,float 
 	else TouchLayout_Tablet(W,H,out);
 }
 
+static int TouchLayout_Overlaps(const touchRect_t rects[TB_COUNT],int self)
+{
+	const touchRect_t *r=&rects[self];
+	for(int i=0;i<TB_COUNT;++i) {
+		const touchRect_t *o=&rects[i];
+		if(i==self || o->w<=0) continue;
+		if(r->x<o->x+o->w && o->x<r->x+r->w && r->y<o->y+o->h && o->y<r->y+r->h) return 1;
+	}
+	return 0;
+}
+
+// Slide a button left, then up, until it sits clear of every other button.
+static void TouchLayout_NudgeFree(touchRect_t rects[TB_COUNT],int button)
+{
+	touchRect_t *r=&rects[button];
+	if(r->w<=0 || !TouchLayout_Overlaps(rects,button)) return;
+	const float startX=r->x,startY=r->y,step=r->w*1.1f;
+	for(int row=0;row<4;++row) {
+		r->y=startY-row*step;
+		if(r->y<0) break;
+		for(int col=0;col<8;++col) {
+			r->x=fmaxf(0,startX-col*step);
+			if(!TouchLayout_Overlaps(rects,button)) return;
+			if(r->x<=0) break;
+		}
+	}
+	r->x=startX;r->y=startY;
+}
+
 void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, float safeR, float safeB, float p, touchRect_t out[TB_COUNT], const touchLayoutOverrides_t *overrides, touchLayoutProfile_t profile )
 {
 	touchLayoutOverrides_t positions = {};
@@ -188,6 +217,9 @@ void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, floa
 			out[i].y = fmaxf( 0, fminf( positions.cy[i] * viewH - out[i].h / 2, viewH - out[i].h ) );
 		}
 	}
+	// Layouts saved before Both attacks existed leave it at the default; keep it off edited buttons.
+	if(positions.version==2 && positions.mask && !(positions.mask & (1u<<TB_BOTHATTACK)))
+		TouchLayout_NudgeFree(out,TB_BOTHATTACK);
 }
 
 int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons )
@@ -201,23 +233,6 @@ int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, unsign
 		}
 	}
 	return -1;
-}
-
-void TouchLayout_Stick( float ox, float oy, float x, float y, float radius, float *outX, float *outY )
-{
-	if ( radius <= 0 ) {
-		*outX = *outY = 0;
-		return;
-	}
-	float dx = ( x - ox ) / radius;
-	float dy = ( y - oy ) / radius;
-	float length = sqrtf( dx * dx + dy * dy );
-	if ( length > 1 ) {
-		dx /= length;
-		dy /= length;
-	}
-	*outX = dx;
-	*outY = dy;
 }
 
 void TouchLayout_ToVirtual( const aspectLayout_t *layout, float nx, float ny, int *vx, int *vy )

@@ -94,5 +94,18 @@ BOOST_AUTO_TEST_CASE(saved_v2_centers_survive_profiles_and_partial_lock_does_not
 	const auto bar=TouchSettings_BarRect(2868,1320,132,0,132,102,3);BOOST_CHECK(Disjoint(custom[TB_LOCK],bar));
 }
 
+BOOST_AUTO_TEST_CASE(older_layouts_keep_both_attacks_clear_of_edited_buttons) {
+	touchRect_t defaults[TB_COUNT];TouchLayout_Build(2868,1320,132,0,132,102,3,defaults,NULL,TOUCH_LAYOUT_PHONE);
+	touchLayoutOverrides_t saved={};saved.version=2;saved.mask=1u<<TB_ATTACK;
+	saved.cx[TB_ATTACK]=X(defaults[TB_BOTHATTACK])/2868;saved.cy[TB_ATTACK]=Y(defaults[TB_BOTHATTACK])/1320;
+	touchRect_t r[TB_COUNT];TouchLayout_Build(2868,1320,132,0,132,102,3,r,&saved,TOUCH_LAYOUT_PHONE);
+	BOOST_CHECK_SMALL(X(r[TB_ATTACK])-X(defaults[TB_BOTHATTACK]),.001f);
+	for(int i=0;i<TB_COUNT;++i) if(i!=TB_BOTHATTACK) BOOST_CHECK_MESSAGE(Disjoint(r[TB_BOTHATTACK],r[i]),"both attacks overlaps "<<i);
+	BOOST_CHECK_GE(r[TB_BOTHATTACK].x,0);BOOST_CHECK_GE(r[TB_BOTHATTACK].y,0);
+	saved.mask|=1u<<TB_BOTHATTACK;saved.cx[TB_BOTHATTACK]=saved.cx[TB_ATTACK];saved.cy[TB_BOTHATTACK]=saved.cy[TB_ATTACK];
+	TouchLayout_Build(2868,1320,132,0,132,102,3,r,&saved,TOUCH_LAYOUT_PHONE);
+	BOOST_CHECK(!Disjoint(r[TB_BOTHATTACK],r[TB_ATTACK]));
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()

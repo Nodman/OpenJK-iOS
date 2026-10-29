@@ -499,7 +499,6 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		return;
 	} else {
 		int hit = TouchLayout_Hit( rects, x, y, IN_TouchVisibleButtons() );
-		if (TouchLayout_Hit(rects,x,y,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK) hit=TB_LOCK;
 		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
 		int target = TOUCH_TARGET_IGNORE;
 		if ( hit >= 0 )
@@ -508,12 +507,8 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 			target = TOUCH_TARGET_MOVE;
 		else if ( zone == TOUCH_ZONE_AIM )
 			target = TOUCH_TARGET_AIM;
-		if (hit==TB_LOCK) {
-			f->role=ROLE_EDIT_LOCK; f->cancelled=qfalse;
-		} else {
 		f->role = ROLE_GAMEPLAY;
 		IN_TouchStep( TOUCH_DOWN, tf->fingerId, target, hit, x, y );
-		}
 	}
 	f->id = tf->fingerId;
 	f->ox = f->x = x;

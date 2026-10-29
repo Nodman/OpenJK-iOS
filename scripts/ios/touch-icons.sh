@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
-task_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
-exec python3 - "$task_root" "$@" <<'PY'
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+exec python3 - "$repo_root" "$@" <<'PY'
 import argparse
 import binascii
 import math
