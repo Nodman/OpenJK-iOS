@@ -39,6 +39,7 @@ Button behaviour:
 
 - Attack, alternate attack, Both attacks, Force use, Jump and Crouch press immediately. Hold to keep the action. Drag any of them past a small threshold to aim while holding.
 - The first aiming finger keeps aim until it lifts. A deflected physical right stick takes priority over touch aim.
+- Weapon and Force arrows also take taps a little outside their drawn edge. A tap on a neighbouring button still goes to that button.
 - Attack shows a swing glyph for sabers and a trigger glyph for guns. Style shows the stance colour: blue fast, yellow medium, red strong.
 - Buttons hide when not useful: Saber when unowned, weapon arrows with one weapon, Force arrows when cycling has no effect, Style when no stance change is legal. Death, spectator and intermission keep the basic actions and sticks.
 - Both attacks sits lower-left of Alt attack on iPhone and below it on iPad.

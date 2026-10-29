@@ -498,7 +498,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 	} else if ( lastHidden ) {
 		return;
 	} else {
-		int hit = TouchLayout_Hit( rects, x, y, IN_TouchVisibleButtons() );
+		int hit = TouchLayout_GameplayHit( rects, x, y, IN_TouchVisibleButtons() );
 		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
 		int target = TOUCH_TARGET_IGNORE;
 		if ( hit >= 0 )

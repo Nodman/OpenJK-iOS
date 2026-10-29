@@ -241,6 +241,26 @@ int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, unsign
 	return -1;
 }
 
+// Exact hits win; then the small prev/next arrows get a padded rect.
+int TouchLayout_GameplayHit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons )
+{
+	const int exact=TouchLayout_Hit(rects,x,y,visibleButtons);
+	if(exact>=0 || !IOS_TouchFinite(x) || !IOS_TouchFinite(y)) return exact;
+	const int arrows[4]={TB_WEAPPREV,TB_WEAPNEXT,TB_FORCEPREV,TB_FORCENEXT};
+	int best=-1;
+	float bestDistance=0;
+	for(int i=0;i<4;++i) {
+		const touchRect_t *r=&rects[arrows[i]];
+		if(!(visibleButtons & (1u<<arrows[i])) || r->w<=0 || r->h<=0) continue;
+		const float pad=IOS_TOUCH_ARROW_HIT_PAD*r->w;
+		const float dx=fmaxf(0,fmaxf(r->x-x,x-r->x-r->w)),dy=fmaxf(0,fmaxf(r->y-y,y-r->y-r->h));
+		if(!(dx<=pad && dy<=pad)) continue;
+		const float distance=dx*dx+dy*dy;
+		if(best<0 || distance<bestDistance) {best=arrows[i];bestDistance=distance;}
+	}
+	return best;
+}
+
 void TouchLayout_ToVirtual( const aspectLayout_t *layout, float nx, float ny, int *vx, int *vy )
 {
 	if ( layout->branch == ASPECT_LEGACY ) {

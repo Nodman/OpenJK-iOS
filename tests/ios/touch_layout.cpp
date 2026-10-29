@@ -563,6 +563,42 @@ BOOST_AUTO_TEST_CASE( equal_size_rotation )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_CASE( arrow_hit_padding )
+{
+	for ( auto profile : { TOUCH_LAYOUT_PHONE, TOUCH_LAYOUT_TABLET } ) {
+		touchRect_t r[TB_COUNT];
+		TouchLayout_Build( 2868, 1320, 132, 0, 132, 102, 3, r, NULL, profile );
+		for ( int arrow : { TB_WEAPPREV, TB_WEAPNEXT, TB_FORCEPREV, TB_FORCENEXT } ) {
+			const touchRect_t &a = r[arrow];
+			const float pad = IOS_TOUCH_ARROW_HIT_PAD * a.w, cy = a.y + a.h / 2;
+			const float outside[][2] = { { a.x + a.w + pad * .8f, cy }, { a.x - pad * .8f, cy },
+				{ a.x + a.w / 2, a.y - pad * .8f }, { a.x + a.w / 2, a.y + a.h + pad * .8f } };
+			int padded = 0;
+			for ( const auto &p : outside ) {
+				// Tablet Force use touches the force arrows; its exact hit must win.
+				const int neighbour = TouchLayout_Hit( r, p[0], p[1], ~0u );
+				BOOST_CHECK_NE( neighbour, arrow );
+				BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, p[0], p[1], ~0u ), neighbour >= 0 ? neighbour : arrow );
+				BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, p[0], p[1], ~0u & ~( 1u << arrow ) ), neighbour );
+				padded += neighbour < 0;
+			}
+			BOOST_CHECK_GE( padded, 3 );
+			BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, a.x + a.w / 2, a.y - pad * 1.2f, ~0u ), TouchLayout_Hit( r, a.x + a.w / 2, a.y - pad * 1.2f, ~0u ) );
+		}
+		BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, r[TB_SABER_SELECT].x + 1, r[TB_SABER_SELECT].y + r[TB_SABER_SELECT].h / 2, ~0u ), TB_SABER_SELECT );
+		BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 1434, 660, ~0u ), -1 );
+		BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 0.0f / 0.0f, 0.0f / 0.0f, ~0u ), -1 );
+	}
+	// A padded arrow never steals a tap that lands exactly on a neighbour.
+	touchRect_t r[TB_COUNT] = {};
+	r[TB_WEAPNEXT] = { 100, 100, 20, 20 };
+	r[TB_SABER_SELECT] = { 124, 100, 20, 20 };
+	BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 125, 110, ~0u ), TB_SABER_SELECT );
+	BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 123, 110, ~0u ), TB_WEAPNEXT );
+	BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 125, 110, ~0u & ~( 1u << TB_SABER_SELECT ) ), TB_WEAPNEXT );
+	BOOST_CHECK_EQUAL( TouchLayout_GameplayHit( r, 300, 300, ~0u ), -1 );
+}
+
 BOOST_AUTO_TEST_CASE( nan_virtual )
 {
 	const aspectLayout_t layout = AspectLayout_Build( 2868, 1320, 1, 1.5f, 0, 0, 0, 0 );
