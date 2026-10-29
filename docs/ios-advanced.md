@@ -145,6 +145,11 @@ Button behaviour:
 - `cg_fovAspectAdjust 1`: keeps the 4:3 vertical field of view on wide screens. `0` restores the old crop. `cg_fov` stays `80`.
 - Console text, chat and default touch positions keep clear of the camera cutout and home indicator. Edited buttons may reach the physical edges.
 
+### Camera and weapon view
+
+- iPhone only: `cg_thirdPersonRange 130`, `cg_fovViewmodel 100`, `cg_gunX 5`. iPad keeps the engine values `80`, `0`, `0`.
+- `reset <name>` returns to the device default. A saved value from older console testing wins until then, for example `reset cg_thirdPersonRange`.
+
 ## Other behaviour
 
 - Backgrounding pauses frames and sound, releases held input and saves the config. MP disconnects from a remote server if the time away exceeds `cl_timeout`.

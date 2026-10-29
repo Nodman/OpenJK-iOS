@@ -75,9 +75,11 @@ static void ReadSetas(std::istream &input) {
 // process-memory query is real; GPU classification and panel maximum are inputs.
 #import <Foundation/Foundation.h>
 static int hostPanelFPS = 60, hostGPUClass = 0;
+static bool hostPhone = false;
 enum { IOS_CLASS_A12, IOS_CLASS_A14, IOS_CLASS_A17 };
 static int Sys_IOS_Class() { return hostGPUClass; }
 int Sys_IOS_MaxFramesPerSecond() { return hostPanelFPS; }
+qboolean Sys_IOS_IsPhone() { return hostPhone ? qtrue : qfalse; }
 #include "device_defaults.inc"
 
 // Config storage and token transport are bounded stubs. Startup/capture/order,
@@ -146,6 +148,33 @@ static void RatePlatformDefaults() {
 		printf("PASS: actual device/startup defaults panel=%d GPU=%d fresh%s, saved60/120, archive/reload, reset/restart, autoexec120, command-line120\n",panel,gpu,fresh);
 	}
 	while(cvar_vars) Cvar_Unset(cvar_vars);
+}
+
+static void CameraPlatformDefaults() {
+	const char *names[]={"cg_thirdPersonRange","cg_fovViewmodel","cg_gunX"};
+	const char *engine[]={"80","0","0"}, *phone[]={"130","100","5"};
+	auto startup=[&](const std::string &saved) {
+		while(cvar_vars) Cvar_Unset(cvar_vars);
+		cvar_cheats=Cvar_Get("host_cheats","1",0);
+		hostSaved=saved; hostAutoexec=""; com_numConsoleLines=0;
+		Com_ExecuteCfg();
+		for(int i=0;i<3;++i) Cvar_Get(names[i],engine[i],CVAR_ARCHIVE); // cgame registration
+	};
+	for(bool isPhone : {true,false}) {
+		hostPhone=isPhone; hostPanelFPS=60; hostGPUClass=IOS_CLASS_A17;
+		const char **want=isPhone ? phone : engine;
+		startup("");
+		for(int i=0;i<3;++i) Expect(names[i],want[i],want[i]);
+		Cvar_Restart(qfalse);
+		for(int i=0;i<3;++i) Expect(names[i],want[i],want[i]);
+		startup("seta cg_thirdPersonRange 100\n");
+		Expect("cg_thirdPersonRange","100",want[0]);
+		Cvar_Reset("cg_thirdPersonRange");
+		Expect("cg_thirdPersonRange",want[0],want[0]);
+	}
+	hostPhone=false;
+	while(cvar_vars) Cvar_Unset(cvar_vars);
+	puts("PASS: camera defaults phone 130/100/5, tablet engine 80/0/0, cvar_restart, saved 100 then reset");
 }
 
 #endif
@@ -391,6 +420,7 @@ int main() {
 	TouchPlatformDefaults();
 	#ifdef __APPLE__
 	RatePlatformDefaults();
+	CameraPlatformDefaults();
 	#endif
 	ConsoleFlagRegressions();
 	printf( "%s: command-driven ROM archive regressions (%d failures)\n", archiveFailures ? "FAIL" : "PASS", archiveFailures );
