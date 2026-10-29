@@ -561,7 +561,11 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 	IN_TouchSettingsForce();
 	TouchSettings_Build(&settingsState,IN_TouchGetOpacity(),(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);
 	const int panelEvent=event==TOUCH_EDIT_DOWN?TOUCH_SETTINGS_DOWN:event==TOUCH_EDIT_MOVE?TOUCH_SETTINGS_MOVE:TOUCH_SETTINGS_UP;
+	int primary=1;
+	for(int i=0;i<IOS_TOUCH_SETTINGS_FINGERS;++i) if(settingsState.capture[i]) primary=0;
 	const touchSettingsAction_t action=TouchSettings_Step(&settingsState,&panel,panelEvent,tf->fingerId,tf->x*viewW,tf->y*viewH);
+	if(TouchHaptics_PanelShouldClick(event==TOUCH_EDIT_DOWN,action.consumed,primary,TouchSettings_Hit(&panel,tf->x*viewW,tf->y*viewH),
+		in_touchHaptics?in_touchHaptics->integer:0)) Sys_IOS_HapticClick();
 	if(action.cancelDrag) { editState.dragging=0; editState.button=-1; }
 	if(action.assign) {
 		IN_TouchCancelForceFingers();
@@ -580,6 +584,7 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 	if(action.setHaptics) {
 		Cvar_Set("in_touchHaptics",action.haptics?"1":"0");
 		settingsState.haptics=action.haptics;
+		if(TouchHaptics_ToggleShouldClick(action.haptics,in_touchHaptics?in_touchHaptics->integer:0)) Sys_IOS_HapticClick();
 	}
 	if(action.savePanel) {
 		char text[32];

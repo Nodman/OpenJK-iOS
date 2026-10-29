@@ -30,5 +30,23 @@ BOOST_AUTO_TEST_CASE(only_button_ids_click)
 	BOOST_CHECK(TouchHaptics_ShouldClick(TB_CONSOLE,1,1));
 }
 
+BOOST_AUTO_TEST_CASE(panel_clicks_on_first_finger_down_on_a_control)
+{
+	BOOST_CHECK(TouchHaptics_PanelShouldClick(1,1,1,1,1));
+	BOOST_CHECK(TouchHaptics_PanelShouldClick(1,1,1,75,1));
+	BOOST_CHECK(!TouchHaptics_PanelShouldClick(1,1,1,0,1));
+	BOOST_CHECK(!TouchHaptics_PanelShouldClick(0,1,1,1,1));
+	BOOST_CHECK(!TouchHaptics_PanelShouldClick(1,0,1,1,1));
+	BOOST_CHECK(!TouchHaptics_PanelShouldClick(1,1,0,1,1));
+	BOOST_CHECK(!TouchHaptics_PanelShouldClick(1,1,1,1,0));
+}
+
+BOOST_AUTO_TEST_CASE(toggle_clicks_only_when_turned_on)
+{
+	BOOST_CHECK(TouchHaptics_ToggleShouldClick(1,1));
+	BOOST_CHECK(!TouchHaptics_ToggleShouldClick(0,0));
+	BOOST_CHECK(!TouchHaptics_ToggleShouldClick(1,0));
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()
