@@ -44,6 +44,10 @@ void GLimp_IOS_CheckPresentSize( void );
 float Sys_IOS_DefaultRenderScale( qboolean highRefresh );
 const char *Sys_IOS_DeviceDefaults( void );
 
+// sys_ios_haptics.mm
+void Sys_IOS_HapticInit( void );
+void Sys_IOS_HapticClick( void );
+
 // sys_ios_pacing.mm
 int Sys_IOS_MaxFramesPerSecond( void );
 void Sys_IOS_StartFrameLoop( void );

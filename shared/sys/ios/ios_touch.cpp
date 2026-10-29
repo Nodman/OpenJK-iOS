@@ -2,6 +2,7 @@
 #include "ios_touch_layout.h"
 #include "ios_touch_layout_edit.h"
 #include "ios_touch_edit_state.h"
+#include "ios_touch_haptics.h"
 #include "ios_touch_state.h"
 #include "ios_touch_visibility.h"
 #include "qcommon/qcommon.h"
@@ -40,7 +41,7 @@ static qboolean layoutReady;
 static qboolean lastUIMode, lastHidden, lastCinematic;
 static int softKeyboardTarget;
 static qboolean lastHwKeyboard, lastTextDemand;
-static cvar_t *in_touchControls, *in_touchOpacity, *ui_touchState, *in_touchLayout;
+static cvar_t *in_touchControls, *in_touchOpacity, *in_touchHaptics, *ui_touchState, *in_touchLayout;
 static touchBridgeState_t bridgeState;
 static touchVisibility_t visibility;
 static touchForceBridge_t forceBridge;
@@ -139,6 +140,11 @@ static void IN_TouchUpdateLayout( void ) {
 	layoutReady = touchUnit > 0 ? qtrue : qfalse;
 }
 
+static void IN_TouchHaptic( int button, int down=1 ) {
+	if ( TouchHaptics_ShouldClick( button, down, in_touchHaptics ? in_touchHaptics->integer : 0 ) )
+		Sys_IOS_HapticClick();
+}
+
 static int IN_TouchButtonKey( int button ) {
 	return TouchLayout_Key( button, A_AUX16, A_ESCAPE, A_TAB );
 }
@@ -205,6 +211,7 @@ static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, fl
 	if(reserved && !TouchGesture_HoldsButton(&gestures,id,button)) CL_TouchForceCancel();
 	for ( int i = 0; i < actions.keyCount; ++i ) {
 		const int pressed=actions.keys[i].button,down=actions.keys[i].down;
+		IN_TouchHaptic(pressed,down);
 		if(pressed==TB_FORCE || (pressed>=TB_FORCE_SLOT1 && pressed<=TB_FORCE_SLOT4)) {
 			if(!down && event!=TOUCH_UP) CL_TouchForceCancel();else CL_TouchForceQueue(down);
 		} else {
@@ -400,6 +407,8 @@ void IN_TouchInit( SDL_Window *window ) {
 	Cmd_AddCommand( "touchLayoutReset", IN_TouchLayoutReset );
 	in_touchControls = Cvar_Get( "in_touchControls", "1", CVAR_ARCHIVE );
 	in_touchOpacity = Cvar_Get( "in_touchOpacity", "1.0", CVAR_ARCHIVE );
+	in_touchHaptics = Cvar_Get( "in_touchHaptics", "1", CVAR_ARCHIVE );
+	Sys_IOS_HapticInit();
 	ui_touchState = Cvar_Get( "ui_touchState", "0", CVAR_ROM );
 	IN_TouchReleaseAll();	// in_restart calls IN_Init without IN_Shutdown
 	touchWindow = window;
@@ -480,6 +489,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		f->cancelled = qfalse;
 	} else if ( TouchLayout_Hit(rects,x,y,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK ) {
 		f->role=ROLE_EDIT_LOCK; f->cancelled=qfalse;
+		IN_TouchHaptic(TB_LOCK);
 	} else if ( IN_TouchOnConsole( x, y ) ) {
 		if ( IN_TouchHasRole( ROLE_CONSOLE ) )
 			return;
@@ -487,6 +497,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		f->button = TB_CONSOLE;
 		f->downTime = tf->timestamp;
 		f->cancelled = f->longPressed = qfalse;
+		IN_TouchHaptic( TB_CONSOLE );
 	} else if ( CL_TouchUIMode() ) {
 		if ( IN_TouchHasRole( ROLE_UITAP ) )
 			return;
@@ -582,7 +593,9 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 	if(input.button>=0) {
 		const touchRect_t *r=&rects[input.button]; input.cx=r->x+r->w/2; input.cy=r->y+r->h/2;
 	}
+	const int wasDragging=editState.dragging;
 	const touchEditOutput_t out=TouchEdit_State(&editState,input);
+	if(event==TOUCH_EDIT_DOWN && !wasDragging && editState.dragging) IN_TouchHaptic(editState.button);
 	if(out.tap) {
 		settingsState.tab=TOUCH_SETTINGS_FORCE;settingsState.picker=out.button-TB_FORCE_SLOT1+1;
 		settingsState.dropdown=0;settingsState.scroll=0;
