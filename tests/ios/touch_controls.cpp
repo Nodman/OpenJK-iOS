@@ -2,6 +2,7 @@
 #include "sys/ios/ios_touch_state.h"
 #include "sys/ios/ios_touch_visibility.h"
 #include "sys/ios/ios_touch_layout.h"
+#include "sys/ios/ios_touch_edit_state.h"
 
 #include <boost/test/unit_test.hpp>
 #include <limits>
@@ -468,7 +469,7 @@ BOOST_AUTO_TEST_CASE( decoded_button_mask_and_selective_capability_loss )
 	facts.legalStyleCount = facts.selectableForceCount = facts.ownedWeaponCount = 2;
 	facts.chatAvailable = 1;
 	const auto full = TouchCaps_Visible( TouchCaps_Pack( &facts, 1 ), 1 );
-	BOOST_CHECK_EQUAL( TouchCaps_ButtonMask( &full ), IOS_TOUCH_ALL_BUTTONS & ~((1u<<TB_LOCK)|(15u<<TB_FORCE_SLOT1)) );
+	BOOST_CHECK_EQUAL( TouchCaps_ButtonMask( &full ), IOS_TOUCH_ALL_BUTTONS & ~((1u<<TB_LOCK)|(1u<<TB_CAMERA)|(15u<<TB_FORCE_SLOT1)) );
 	touchGestureState_t state;
 	TouchGesture_Reset( &state );
 	TouchGesture_Step( &state, Input( TOUCH_DOWN, 1, TOUCH_TARGET_BUTTON, TB_FORCE ) );
@@ -476,7 +477,7 @@ BOOST_AUTO_TEST_CASE( decoded_button_mask_and_selective_capability_loss )
 	TouchGesture_Step( &state, Input( TOUCH_MOTION, 2, TOUCH_TARGET_AIM, 0, 100 ) );
 	facts.equipmentAllowed = 0;
 	const auto dead = TouchCaps_Visible( TouchCaps_Pack( &facts, 1 ), 1 );
-	const unsigned int basic = ( 1u << TB_ATTACK ) | ( 1u << TB_ALTATTACK ) | ( 1u << TB_BOTHATTACK ) | ( 1u << TB_JUMP ) | ( 1u << TB_CROUCH ) | ( 1u << TB_USE ) | ( 1u << TB_CAMERA );
+	const unsigned int basic = ( 1u << TB_ATTACK ) | ( 1u << TB_ALTATTACK ) | ( 1u << TB_BOTHATTACK ) | ( 1u << TB_JUMP ) | ( 1u << TB_CROUCH ) | ( 1u << TB_USE );
 	BOOST_CHECK_EQUAL( TouchCaps_ButtonMask( &dead ), basic | ( 1u << TB_MENU ) | ( 1u << TB_CONSOLE ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) );
 	auto in = Input( TOUCH_REFRESH );
 	in.visibleButtons = TouchCaps_ButtonMask( &dead );
@@ -504,7 +505,7 @@ BOOST_AUTO_TEST_CASE( missing_bridge_grace_recovery_priority_and_epoch )
 		v = TouchBridge_Step( &bridge, 0, mp, 1, 0, 0, 0, 1050 );
 		BOOST_CHECK( v.fallback && v.logMissing && v.basic && v.sticks && v.pad && v.saber && v.style && v.weapons && v.force && v.forceCycle );
 		BOOST_CHECK_EQUAL( v.chat, mp );
-		BOOST_CHECK_EQUAL( v.menu + v.console + 7 * v.basic + v.saber + v.style + v.force + v.forceCycle + 2 * v.weapons + v.pad + v.chat, mp ? 17 : 16 );
+		BOOST_CHECK_EQUAL( v.menu + v.console + 6 * v.basic + v.saber + v.style + v.force + v.forceCycle + 2 * v.weapons + v.pad + v.chat, mp ? 16 : 15 );
 		BOOST_CHECK_EQUAL( v.styleColor, TOUCH_STYLE_UNKNOWN );
 		BOOST_CHECK_EQUAL( TouchBridge_Step( &bridge, 0, mp, 1, 0, 0, 0, 1051 ).logMissing, 0 );
 		auto facts = Facts();
@@ -579,6 +580,20 @@ BOOST_AUTO_TEST_CASE( invalid_geometry_and_clock_wrap )
 	TouchBridge_Step( &bridge, 0, 1, 1, 0, 0, 0, ~0u - 499 );
 	BOOST_CHECK( !TouchBridge_Step( &bridge, 0, 1, 1, 0, 0, 0, 499 ).fallback );
 	BOOST_CHECK( TouchBridge_Step( &bridge, 0, 1, 1, 0, 0, 0, 500 ).fallback );
+}
+
+BOOST_AUTO_TEST_CASE( camera_shows_and_hides_with_lock )
+{
+	const unsigned int both = ( 1u << TB_LOCK ) | ( 1u << TB_CAMERA );
+	BOOST_CHECK_EQUAL( TouchEdit_LockButtons( 1, 0, 0, 0 ), both );
+	BOOST_CHECK_EQUAL( TouchEdit_LockButtons( 1, 0, 1, 0 ), 0u );
+	BOOST_CHECK_EQUAL( TouchEdit_LockButtons( 1, 0, 0, 1 ), 0u );
+	BOOST_CHECK_EQUAL( TouchEdit_LockButtons( 1, 1, 0, 0 ), 0u );
+	BOOST_CHECK_EQUAL( TouchEdit_LockButtons( 0, 0, 0, 0 ), 0u );
+	for ( int ui = 0; ui < 2; ++ui ) for ( int cinematic = 0; cinematic < 2; ++cinematic ) {
+		const unsigned int mask = TouchEdit_LockButtons( 1, 0, ui, cinematic );
+		BOOST_CHECK_EQUAL( ( mask >> TB_LOCK ) & 1u, ( mask >> TB_CAMERA ) & 1u );
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()

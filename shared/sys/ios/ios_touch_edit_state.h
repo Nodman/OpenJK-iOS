@@ -6,6 +6,11 @@ IOS_TOUCH_INLINE int TouchEdit_LockVisible( int active, int hidden, int ui, int 
 	return active && !hidden && !ui && !cinematic;
 }
 
+IOS_TOUCH_INLINE unsigned int TouchEdit_LockButtons( int active, int hidden, int ui, int cinematic )
+{
+	return TouchEdit_LockVisible( active, hidden, ui, cinematic ) ? ( 1u << TB_LOCK ) | ( 1u << TB_CAMERA ) : 0u;
+}
+
 typedef enum { TOUCH_EDIT_ENTER, TOUCH_EDIT_EXIT, TOUCH_EDIT_DOWN, TOUCH_EDIT_MOVE, TOUCH_EDIT_UP } touchEditEvent_t;
 typedef struct {
 	int active, dragging, button, moved;

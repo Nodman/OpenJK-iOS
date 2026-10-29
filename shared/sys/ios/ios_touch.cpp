@@ -176,7 +176,7 @@ static unsigned int IN_TouchVisibleButtons( void ) {
 	const touchForceReport_t report=IN_TouchGetForceReport();
 	if(cls.state==CA_ACTIVE && report.equipment && !lastHidden && !CL_TouchUIMode() && !CL_TouchCinematic())
 		for(int i=0;i<4;++i) if(TouchForceSlots_Visible(&forceSlots,i,report.learned)) mask|=1u<<(TB_FORCE_SLOT1+i);
-	if ( TouchEdit_LockVisible(cls.state==CA_ACTIVE,lastHidden,CL_TouchUIMode(),CL_TouchCinematic()) ) mask |= 1u << TB_LOCK;
+	mask |= TouchEdit_LockButtons(cls.state==CA_ACTIVE,lastHidden,CL_TouchUIMode(),CL_TouchCinematic());
 	return mask;
 }
 
