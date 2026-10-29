@@ -11,14 +11,14 @@ BOOST_AUTO_TEST_SUITE( touch_atlas )
 BOOST_AUTO_TEST_CASE( immutable_cells_and_inner_texel_centres )
 {
 	const int glyphs[] = { TG_MENU, TG_CHAT, TG_PAD, TG_WEAPPREV, TG_SABER_SELECT, TG_WEAPNEXT,
-		TG_RING, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE_BLUE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_STYLE_RED, TG_RECT_PLATE };
-	for ( int i = 0; i < 20; ++i ) {
+		TG_RING, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE_BLUE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_STYLE_RED, TG_RECT_PLATE, TG_BOTH_ATTACK };
+	for ( int i = 0; i < 21; ++i ) {
 		BOOST_CHECK_EQUAL( glyphs[i], i );
 		const touchAtlasUV_t uv = TouchAtlas_UV( i );
 		BOOST_CHECK_EQUAL( uv.s1 * 1024, ( i % 4 ) * 256 + 8.5f );
-		BOOST_CHECK_EQUAL( uv.t1 * 1280, ( i / 4 ) * 256 + 8.5f );
+		BOOST_CHECK_EQUAL( uv.t1 * IOS_TOUCH_ATLAS_HEIGHT, ( i / 4 ) * 256 + 8.5f );
 		BOOST_CHECK_EQUAL( uv.s2 * 1024, ( i % 4 + 1 ) * 256 - 8.5f );
-		BOOST_CHECK_EQUAL( uv.t2 * 1280, ( i / 4 + 1 ) * 256 - 8.5f );
+		BOOST_CHECK_EQUAL( uv.t2 * IOS_TOUCH_ATLAS_HEIGHT, ( i / 4 + 1 ) * 256 - 8.5f );
 		BOOST_CHECK_LT( uv.s1, uv.s2 );
 		BOOST_CHECK_LT( uv.t1, uv.t2 );
 		BOOST_CHECK_GE( uv.s1, 0 );
@@ -27,7 +27,8 @@ BOOST_AUTO_TEST_CASE( immutable_cells_and_inner_texel_centres )
 		BOOST_CHECK_LE( uv.t2, 1 );
 	}
 	BOOST_CHECK_EQUAL( TouchAtlas_UV( -1 ).s2, 0 );
-	BOOST_CHECK_EQUAL( TouchAtlas_UV( 20 ).t2, 0 );
+	BOOST_CHECK_EQUAL( TouchAtlas_UV( 21 ).t2, 0 );
+	BOOST_CHECK_EQUAL( IOS_TOUCH_ATLAS_HEIGHT, 1536 );
 	BOOST_CHECK_EQUAL( IOS_TOUCH_ATLAS_NAME, "*ios_touch_v2" );
 }
 
@@ -304,7 +305,7 @@ BOOST_AUTO_TEST_CASE( style_canvas_mapping_keeps_physical_axes_on_both_aspect_pa
 				const double angle=degrees[style]*3.141592653589793/180;
 				const auto uv=TouchAtlas_UV(item.glyph);
 				const double u=((item.glyph%4)*256+128+60*cos(angle))/1024;
-				const double v=((item.glyph/4)*256+128+60*sin(angle))/1280;
+				const double v=((item.glyph/4)*256+128+60*sin(angle))/IOS_TOUCH_ATLAS_HEIGHT;
 				const auto center=AspectLayout_ToPixels(&layout,item.x+item.w/2,item.y+item.h/2);
 				const auto edge=AspectLayout_ToPixels(&layout,item.x+(u-uv.s1)/(uv.s2-uv.s1)*item.w,item.y+(v-uv.t1)/(uv.t2-uv.t1)*item.h);
 				const double radius=rects[TB_STYLE].w*60/239;

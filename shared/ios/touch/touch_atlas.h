@@ -5,7 +5,7 @@
 
 #define IOS_TOUCH_ATLAS_NAME "*ios_touch_v2"
 #define IOS_TOUCH_ATLAS_WIDTH 1024
-#define IOS_TOUCH_ATLAS_HEIGHT 1280
+#define IOS_TOUCH_ATLAS_HEIGHT 1536
 #define IOS_TOUCH_ATLAS_CELL 256
 #define IOS_TOUCH_ATLAS_INSET 8
 
@@ -14,7 +14,7 @@ typedef struct { float s1, t1, s2, t2; } touchAtlasUV_t;
 IOS_TOUCH_INLINE touchAtlasUV_t TouchAtlas_UV( int glyph )
 {
 	touchAtlasUV_t uv = { 0, 0, 0, 0 };
-	if ( glyph < 0 || glyph >= 20 )
+	if ( glyph < 0 || glyph > TG_BOTH_ATTACK )
 		return uv;
 	uv.s1 = ( ( glyph % 4 ) * 256 + 8.5f ) / 1024;
 	uv.t1 = ( ( glyph / 4 ) * 256 + 8.5f ) / IOS_TOUCH_ATLAS_HEIGHT;

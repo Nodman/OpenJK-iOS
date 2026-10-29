@@ -20,7 +20,7 @@ args = parser.parse_args(sys.argv[2:])
 source = root / 'shared/ios/touch'
 names = ('menu', 'chat', 'pad', 'prev', 'saber', 'next', 'ring', 'force-use',
          'console', 'alt-attack', 'attack', 'jump', 'crouch', 'style-blue', 'use', 'plate',
-         'lock', 'gun-attack', 'style-red', 'rect-plate')
+         'lock', 'gun-attack', 'style-red', 'rect-plate', 'both-attack')
 # Fits use the source alpha bounds, the 8.5..247.5 UV crop, and a one-texel edge margin.
 transforms = {4: (0.776416612, 0), 7: (0.945172502, 0), 10: (0.755092724, 0), 11: (0.900929398, 0),
               13: (0.776416612, -35), 17: (0.858732719, 0), 18: (0.776416612, 45)}
@@ -29,7 +29,7 @@ if not ((source / '04-saber.svg').read_bytes() == (source / '13-style-blue.svg')
     raise SystemExit('Saber variants must retain identical unmodified source SVG bytes')
 namespace = 'http://www.w3.org/2000/svg'
 ET.register_namespace('', namespace)
-atlas = ET.Element(f'{{{namespace}}}svg', width='1024', height='1280', viewBox='0 0 1024 1280')
+atlas = ET.Element(f'{{{namespace}}}svg', width='1024', height='1536', viewBox='0 0 1024 1536')
 for cell, name in enumerate(names):
     glyph = ET.parse(source / f'{cell:02d}-{name}.svg').getroot()
     if glyph.get('viewBox') != '0 0 256 256':
@@ -80,14 +80,14 @@ def validate(blob):
                 raise ValueError('Bad PNG end')
             ended = True
         offset = end
-    if ihdr != (1024, 1280, 8, 6, 0, 0, 0) or not ended:
-        raise ValueError(f'Expected 1024x1280 RGBA8, non-interlaced; got {ihdr}')
+    if ihdr != (1024, 1536, 8, 6, 0, 0, 0) or not ended:
+        raise ValueError(f'Expected 1024x1536 RGBA8, non-interlaced; got {ihdr}')
     raw = zlib.decompress(compressed)
     stride = 1024 * 4
-    if len(raw) != (stride + 1) * 1280:
+    if len(raw) != (stride + 1) * 1536:
         raise ValueError('Bad decoded PNG length')
-    pixels = bytearray(stride * 1280)
-    for y in range(1280):
+    pixels = bytearray(stride * 1536)
+    for y in range(1536):
         row = bytearray(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)])
         mode = raw[y * (stride + 1)]
         if mode > 4:
@@ -110,7 +110,7 @@ def validate(blob):
                 predictor = 0
             row[x] = (row[x] + predictor) & 255
         pixels[y * stride:(y + 1) * stride] = row
-    print('PNG: 1024x1280, colour type 6, depth 8, straight RGBA, CRCs valid')
+    print('PNG: 1024x1536, colour type 6, depth 8, straight RGBA, CRCs valid')
     for cell, name in enumerate(names):
         occupied, partial, bounds, radius = 0, 0, [256, 256, -1, -1], 0.0
         for y in range(256):
@@ -126,7 +126,7 @@ def validate(blob):
                     bounds = [min(bounds[0], x), min(bounds[1], y), max(bounds[2], x), max(bounds[3], y)]
         if not occupied or not partial or min(bounds[:2]) < 8 or max(bounds[2:]) > 247:
             raise ValueError(f'Cell {cell} fails content/inset/antialias check: {bounds}')
-        if cell in (3, 4, 5, 7, 9, 10, 11, 12, 13, 14, 17, 18) and radius > 119.5:
+        if cell in (3, 4, 5, 7, 9, 10, 11, 12, 13, 14, 17, 18, 20) and radius > 119.5:
             raise ValueError(f'Round glyph {cell} exceeds circular footprint: {radius}')
         print(f'Cell {cell:02d} {name}: pixels={occupied}, partial-alpha={partial}, bounds={bounds}, radius={radius:.4f}')
     def alpha(x, y):
@@ -145,7 +145,7 @@ with tempfile.TemporaryDirectory(prefix='openjk-touch-', dir='/private/tmp') as 
     png = work / 'touch-v2.png'
     command = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
                '--headless=new', '--disable-gpu', '--hide-scrollbars',
-               '--default-background-color=00000000', '--window-size=1024,1280',
+               '--default-background-color=00000000', '--window-size=1024,1536',
                '--force-device-scale-factor=1', '--no-first-run', '--no-default-browser-check',
                '--disable-background-networking', '--disable-extensions',
                f'--screenshot={png}', f'--user-data-dir={work / "profile"}', svg.as_uri()]

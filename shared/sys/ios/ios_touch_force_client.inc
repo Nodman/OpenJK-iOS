@@ -153,7 +153,7 @@ void CL_TouchClearPulses(void) {
 
 void CL_TouchCancelAllSources(void) {
 	CL_TouchForceCancel();
-	for(int i=0;i<12;++i) CL_TouchCancelSource(A_AUX16+i);
+	for(int i=0;i<13;++i) CL_TouchCancelSource(A_AUX16+i);
 	for(int i=0;i<4;++i) CL_TouchCancelSource(IOS_TOUCH_FORCE_SOURCE_BASE+i);
 	CL_TouchFence(1);
 }

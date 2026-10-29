@@ -2,7 +2,7 @@
 #include <string.h>
 
 #define IOS_TOUCH_FORCE_SOURCE_BASE 65536
-#define TOUCH_FORCE_SOURCE_COUNT 16
+#define TOUCH_FORCE_SOURCE_COUNT 17
 
 typedef struct {
 	unsigned int next, generation;
@@ -12,8 +12,8 @@ typedef struct {
 typedef struct { unsigned int touch; int other; } touchForcePulse_t;
 
 static inline int TouchForce_SourceIndex(int source,int aux16) {
-	if(source>=aux16 && source<aux16+12) return source-aux16;
-	if(source>=IOS_TOUCH_FORCE_SOURCE_BASE && source<IOS_TOUCH_FORCE_SOURCE_BASE+4) return 12+source-IOS_TOUCH_FORCE_SOURCE_BASE;
+	if(source>=aux16 && source<aux16+13) return source-aux16;
+	if(source>=IOS_TOUCH_FORCE_SOURCE_BASE && source<IOS_TOUCH_FORCE_SOURCE_BASE+4) return 13+source-IOS_TOUCH_FORCE_SOURCE_BASE;
 	return -1;
 }
 static inline unsigned int TouchForce_Reserve(touchForceDispatch_t *s,int power,int source,int central,unsigned int time,int pending) {

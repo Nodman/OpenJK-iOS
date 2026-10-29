@@ -87,7 +87,7 @@ static void Decode( const byte *input, size_t length, bool expected ) {
 	Require( ( success != 0 ) == expected );
 	Require( fsCalls == 0 );
 	if ( expected ) {
-		Require( width == 1024 && height == 1280 );
+		Require( width == 1024 && height == 1536 );
 		Require( pixels != NULL && live.size() == 1 );
 		Require( pixels[3] == 0 );
 		Require( pixels[(1152 * 1024 + 896) * 4 + 3] == 255 );

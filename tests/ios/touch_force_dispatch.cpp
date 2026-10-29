@@ -14,7 +14,7 @@ BOOST_AUTO_TEST_CASE(reservation_and_packet_barriers) {
 BOOST_AUTO_TEST_CASE(pulse_provenance) {
 	touchForcePulse_t pulse={};TouchForce_PulseDown(&pulse,0);TouchForce_PulseDown(&pulse,-1);
 	BOOST_CHECK(TouchForce_PulseCancel(&pulse,0));BOOST_CHECK(pulse.other);BOOST_CHECK(!pulse.touch);
-	BOOST_CHECK_EQUAL(TouchForce_SourceIndex(IOS_TOUCH_FORCE_SOURCE_BASE+3,300),15);
+	BOOST_CHECK_EQUAL(TouchForce_SourceIndex(IOS_TOUCH_FORCE_SOURCE_BASE+3,300),16);
 	BOOST_CHECK_EQUAL(TouchForce_SourceIndex(299,300),-1);
 }
 BOOST_AUTO_TEST_SUITE_END()

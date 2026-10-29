@@ -43,7 +43,8 @@ BOOST_AUTO_TEST_CASE( button_definitions )
 		{ "1", TOUCH_ANCHOR_TR, 1.04f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL },
 		{ "2", TOUCH_ANCHOR_TR, .96f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL },
 		{ "3", TOUCH_ANCHOR_TR, .88f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL },
-		{ "4", TOUCH_ANCHOR_TR, .80f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL }
+		{ "4", TOUCH_ANCHOR_TR, .80f, .26f, .12f, -1, TOUCH_KEY_NONE, NULL },
+		{ "BOTH", TOUCH_ANCHOR_BR, .68f, .25f, .14f, TG_BOTH_ATTACK, 28, NULL }
 	};
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		BOOST_CHECK_EQUAL( touchButtonDefs[i].anchor, expected[i].anchor );
@@ -218,7 +219,7 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 				else
 					TouchLayout_AnchorRect( f[0], f[1], f[2], f[3], f[4], f[5], f[6], d.anchor,
 						d.cx, d.cy, d.size, &old.x, &old.y, &old.w, &old.h );
-				const float scale = small & ( 1u << button ) ? .5f : button==TB_STYLE || button==TB_SABER_SELECT || button>=TB_FORCE_SLOT1?.75f:1;
+				const float scale = small & ( 1u << button ) ? .5f : button==TB_STYLE || button==TB_SABER_SELECT || (button>=TB_FORCE_SLOT1 && button<=TB_FORCE_SLOT4)?.75f:1;
 				float expected=old.w*scale;
 				if(button==TB_FORCE) {
 					touchRect_t combat;TouchLayout_AnchorRect(f[0],f[1],f[2],f[3],f[4],f[5],f[6],d.anchor,d.cx,d.cy,.14f,&combat.x,&combat.y,&combat.w,&combat.h);
@@ -265,11 +266,11 @@ BOOST_AUTO_TEST_CASE( compact_controls_halve_old_clamped_rectangles_only )
 BOOST_AUTO_TEST_CASE( explicit_key_map_and_paired_pad_chat_trace )
 {
 	const int expected[TB_COUNT] = { A_AUX16, A_AUX17, A_AUX18, A_AUX19, A_AUX20, A_AUX21, A_AUX22,
-		A_AUX23, A_AUX24, A_AUX25, A_ESCAPE, 0, A_AUX26, 'y', A_TAB, 0, A_AUX27, 0, 0, 0, 0 };
+		A_AUX23, A_AUX24, A_AUX25, A_ESCAPE, 0, A_AUX26, 'y', A_TAB, 0, A_AUX27, 0, 0, 0, 0, A_AUX28 };
 	const int expectedMP[TB_COUNT] = { mp_touch_keys::A_AUX16, mp_touch_keys::A_AUX17, mp_touch_keys::A_AUX18,
 		mp_touch_keys::A_AUX19, mp_touch_keys::A_AUX20, mp_touch_keys::A_AUX21, mp_touch_keys::A_AUX22,
 		mp_touch_keys::A_AUX23, mp_touch_keys::A_AUX24, mp_touch_keys::A_AUX25, mp_touch_keys::A_ESCAPE,
-		0, mp_touch_keys::A_AUX26, 'y', mp_touch_keys::A_TAB, 0, mp_touch_keys::A_AUX27, 0, 0, 0, 0 };
+		0, mp_touch_keys::A_AUX26, 'y', mp_touch_keys::A_TAB, 0, mp_touch_keys::A_AUX27, 0, 0, 0, 0, mp_touch_keys::A_AUX28 };
 	for ( int i = 0; i < TB_COUNT; ++i ) {
 		BOOST_CHECK_EQUAL( TouchLayout_Key( i, A_AUX16, A_ESCAPE, A_TAB ), expected[i] );
 		BOOST_CHECK_EQUAL( TouchLayout_Key( i, mp_touch_keys::A_AUX16, mp_touch_keys::A_ESCAPE, mp_touch_keys::A_TAB ), expectedMP[i] );
@@ -296,7 +297,7 @@ BOOST_AUTO_TEST_CASE( explicit_key_map_and_paired_pad_chat_trace )
 BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
 {
 	const char *commands[] = { "+attack", "+altattack", "+moveup", "+movedown", "+use", "+useforce",
-		"forcenext", "saberAttackCycle", "weapprev", "weapnext", "weapon 1", "forceprev" };
+		"forcenext", "saberAttackCycle", "weapprev", "weapnext", "weapon 1", "forceprev", "+attack;+altattack" };
 	const char *bindings[TB_COUNT] = {};
 	const auto restore = [&]() {
 		int count = 0;
@@ -309,10 +310,10 @@ BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
 		}
 		return count;
 	};
-	BOOST_CHECK_EQUAL( restore(), 12 );
+	BOOST_CHECK_EQUAL( restore(), 13 );
 	for ( int button = 0; button < TB_COUNT; ++button ) {
 		const int key = touchButtonDefs[button].key;
-		if ( key >= 16 && key <= 27 ) {
+		if ( key >= 16 && key <= 28 ) {
 			BOOST_REQUIRE( bindings[button] );
 			BOOST_CHECK_EQUAL( bindings[button], commands[key - 16] );
 			BOOST_CHECK( TouchLayout_DefaultBind( button, "custom action" ) == NULL );
@@ -339,7 +340,7 @@ BOOST_AUTO_TEST_CASE( default_binds_restore_empty_aux_keys_after_configs )
 	BOOST_CHECK_EQUAL( bindings[TB_PAD], "" );
 	BOOST_CHECK_EQUAL( bindings[TB_CHAT], "" );
 	for ( int button = 0; button < TB_COUNT; ++button ) bindings[button] = "";
-	BOOST_CHECK_EQUAL( restore(), 12 );
+	BOOST_CHECK_EQUAL( restore(), 13 );
 	BOOST_CHECK( TouchLayout_DefaultBind( -1, NULL ) == NULL );
 	BOOST_CHECK( TouchLayout_DefaultBind( TB_COUNT, NULL ) == NULL );
 }

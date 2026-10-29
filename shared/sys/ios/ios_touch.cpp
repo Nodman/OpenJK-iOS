@@ -503,7 +503,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
 		int target = TOUCH_TARGET_IGNORE;
 		if ( hit >= 0 )
-			target = hit == TB_ATTACK || hit == TB_ALTATTACK || hit == TB_FORCE || hit == TB_CROUCH || hit == TB_JUMP ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
+			target = hit == TB_ATTACK || hit == TB_ALTATTACK || hit == TB_BOTHATTACK || hit == TB_FORCE || hit == TB_CROUCH || hit == TB_JUMP ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
 		else if ( zone == TOUCH_ZONE_MOVE )
 			target = TOUCH_TARGET_MOVE;
 		else if ( zone == TOUCH_ZONE_AIM )
