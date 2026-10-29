@@ -594,6 +594,12 @@ static touchRect_t SDLPanelRect(int control) {
 static void SDLPanelHapticClicks(void) {
 	SDLFixture();editState.active=1;
 	SDLPanelTap(TOUCH_SETTINGS_APPEARANCE,60);assert(hapticClicks==1);
+	{
+		touchSettingsLayout_t layout;TouchSettings_Build(&settingsState,1,viewW,viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&layout);
+		const float x=layout.bar.x+layout.bar.w/2,y=layout.bar.y+2;
+		SDLEvent(SDL_FINGERDOWN,59,x,y);SDLEvent(SDL_FINGERUP,59,x,y);
+		assert(hapticClicks==1 && settingsState.tab==TOUCH_SETTINGS_APPEARANCE && !settingsState.panelPlaced && editState.active);
+	}
 	const touchRect_t back=SDLPanelRect(TOUCH_SETTINGS_NONE);
 	SDLEvent(SDL_FINGERDOWN,61,back.x+1,back.y+1);SDLEvent(SDL_FINGERMOTION,61,back.x+1,back.y+40);SDLEvent(SDL_FINGERUP,61,back.x+1,back.y+40);
 	assert(hapticClicks==1);
@@ -617,7 +623,7 @@ static void SDLPanelHapticClicks(void) {
 	const touchRect_t restored=SDLPanelRect(TOUCH_SETTINGS_HAPTICS);assert(fabsf(restored.x-moved.x)<.5f && fabsf(restored.y-moved.y)<.5f);
 	SDLPanelTap(TOUCH_SETTINGS_DONE,72);Drain();
 	SetTouchVar("in_touchSettingsPos","bad");SDLButton(SDL_FINGERDOWN,73,TB_LOCK);SDLButton(SDL_FINGERUP,73,TB_LOCK);
-	assert(editState.active && !settingsState.panelPlaced && SDLPanelRect(TOUCH_SETTINGS_HAPTICS).y==0);
+	assert(editState.active && !settingsState.panelPlaced && SDLPanelRect(TOUCH_SETTINGS_HAPTICS).y==safeT+20*pixelsPerPoint);
 	IN_TouchEndEdit();Drain();touchWindow=NULL;
 }
 static void SDLAimSettingsRouting(void) {
@@ -849,7 +855,7 @@ static void SDLResetLayoutRouting(void) {
 	testPointWidth=932;testPointHeight=430;drawableScale=3;IN_TouchFrame();Drain();AssertResetDefaults();
 	testPointWidth=844;testPointHeight=390;drawableScale=1;IN_TouchFrame();Drain();AssertResetDefaults();
 
-	ResetLayoutFixture();testPointWidth=400;testPointHeight=120;IN_TouchFrame();Drain();
+	ResetLayoutFixture();testPointWidth=400;testPointHeight=150;IN_TouchFrame();Drain();
 	editState.active=1;settingsState.tab=TOUCH_SETTINGS_APPEARANCE;touchSettingsLayout_t panel;
 	TouchSettings_Build(&settingsState,IN_TouchGetOpacity(),viewW,viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);assert(panel.maxScroll>0);
 	SDLEvent(SDL_FINGERDOWN,226,panel.panel.x+1,panel.panel.y+panel.panel.h-2);

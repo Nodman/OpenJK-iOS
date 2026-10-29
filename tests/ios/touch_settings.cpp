@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE( group_starts_top_centre_and_done_remains_safe_when_expande
 			BOOST_CHECK_LE(layout.panel.y+layout.panel.h,f.y-30);
 			const auto done=Control(layout,TOUCH_SETTINGS_DONE);
 			BOOST_CHECK_GT(done.w,0); BOOST_CHECK_GT(done.h,0);
-			BOOST_CHECK_EQUAL(layout.bar.y,10);
+			BOOST_CHECK_EQUAL(layout.bar.y,10+8*f.w);
 			if(f.x>500) BOOST_CHECK_SMALL(layout.bar.x+layout.bar.w/2-f.x/2,.001f);
 		}
 	}
@@ -120,8 +120,8 @@ BOOST_AUTO_TEST_CASE( small_panel_scrolls_without_selecting_and_keeps_done )
 	const auto scrolled=Build(state,400,180,1);
 	bool lastVisible=false;
 	for(int i=0;i<scrolled.count;++i) {
-		BOOST_CHECK_GE(scrolled.items[i].rect.y,10);
-		BOOST_CHECK_LE(scrolled.items[i].rect.y+scrolled.items[i].rect.h,150);
+		BOOST_CHECK_GE(scrolled.items[i].rect.y,18);
+		BOOST_CHECK_LE(scrolled.items[i].rect.y+scrolled.items[i].rect.h,142);
 		if(scrolled.items[i].control==TOUCH_SETTINGS_POWER+12) lastVisible=true;
 	}
 	BOOST_CHECK(lastVisible);
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE( short_joystick_panel_scrolls_four_rows_and_curve_choices )
 	const auto scrolled=Build(state,400,180,1);
 	BOOST_CHECK_GT(Control(scrolled,TOUCH_SETTINGS_CURVE_CHOICE+5).h,0);
 	BOOST_CHECK_GT(Control(scrolled,TOUCH_SETTINGS_DONE).h,0);
-	for(int i=0;i<scrolled.count;++i) {BOOST_CHECK_GE(scrolled.items[i].rect.y,10);BOOST_CHECK_LE(scrolled.items[i].rect.y+scrolled.items[i].rect.h,150);}
+	for(int i=0;i<scrolled.count;++i) {BOOST_CHECK_GE(scrolled.items[i].rect.y,18);BOOST_CHECK_LE(scrolled.items[i].rect.y+scrolled.items[i].rect.h,142);}
 }
 
 BOOST_AUTO_TEST_CASE( sideways_drag_cancels_tap_and_secondary_never_promotes )
@@ -173,20 +173,29 @@ BOOST_AUTO_TEST_CASE( done_row_sits_below_content_and_never_scrolls )
 		const auto done=Control(layout,TOUCH_SETTINGS_DONE);
 		BOOST_CHECK_EQUAL(layout.items[layout.count-1].control,TOUCH_SETTINGS_DONE);
 		BOOST_CHECK_EQUAL(layout.items[layout.count-1].label,"Done");BOOST_CHECK(!layout.items[layout.count-1].selected);
-		BOOST_CHECK_SMALL(done.x-layout.panel.x-4*p,.001f);BOOST_CHECK_SMALL(done.w-layout.panel.w+8*p,.001f);
-		BOOST_CHECK_SMALL(done.h-44*p,.001f);BOOST_CHECK_SMALL(layout.panel.y+layout.panel.h-done.y-done.h-4*p,.001f);
+		BOOST_CHECK_SMALL(layout.panel.x+layout.panel.w-done.x-done.w-4*p,.001f);BOOST_CHECK_SMALL(done.w-96*p,.001f);
+		BOOST_CHECK_SMALL(done.h-36*p,.001f);BOOST_CHECK_SMALL(layout.panel.y+layout.panel.h-done.y-done.h-4*p,.001f);
+		BOOST_CHECK_EQUAL(TouchSettings_Hit(&layout,layout.panel.x+10*p,done.y+done.h/2),0);
+		BOOST_CHECK_EQUAL(TouchSettings_Hit(&layout,done.x-1,done.y+done.h/2),0);
 		for(int i=0;i<layout.count-1;++i) if(layout.items[i].control) {
 			const auto &r=layout.items[i].rect;
 			BOOST_CHECK(r.y+r.h<=done.y+.001f || r.y>=done.y+done.h || layout.items[i].control<=TOUCH_SETTINGS_HAPTICS);
 		}
 	}
 	state.tab=TOUCH_SETTINGS_APPEARANCE;layout=Build(state);
-	BOOST_CHECK_SMALL(Control(layout,TOUCH_SETTINGS_DONE).y-Control(layout,TOUCH_SETTINGS_RESET_LAYOUT).y-48*p,.001f);
+	BOOST_CHECK_SMALL(Control(layout,TOUCH_SETTINGS_DONE).y-Control(layout,TOUCH_SETTINGS_RESET_LAYOUT).y-56*p,.001f);
 	BOOST_CHECK(Tap(state,TOUCH_SETTINGS_DONE).done);
+	{
+		const auto done=Control(layout,TOUCH_SETTINGS_DONE);
+		const float x=layout.panel.x+20*p,y=done.y+done.h/2;
+		TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,5,x,y);
+		const auto action=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,5,x,y);
+		BOOST_CHECK(action.consumed && !action.done && !action.resetLayout);BOOST_CHECK_EQUAL(state.tab,TOUCH_SETTINGS_APPEARANCE);
+	}
 	touchSettingsState_t small={};small.tab=TOUCH_SETTINGS_FORCE;small.picker=1;small.learned=0x1ffe;
 	auto tiny=Build(small,400,180,1);const auto before=Control(tiny,TOUCH_SETTINGS_DONE);
 	small.scroll=tiny.maxScroll;tiny=Build(small,400,180,1);const auto after=Control(tiny,TOUCH_SETTINGS_DONE);
-	BOOST_CHECK_EQUAL(before.y,after.y);BOOST_CHECK_EQUAL(after.h,44);
+	BOOST_CHECK_EQUAL(before.y,after.y);BOOST_CHECK_EQUAL(after.h,36);
 	for(int i=0;i<tiny.count;++i) if(tiny.items[i].control>=TOUCH_SETTINGS_SLOT && tiny.items[i].control!=TOUCH_SETTINGS_DONE)
 		BOOST_CHECK_LE(tiny.items[i].rect.y+tiny.items[i].rect.h,after.y+.001f);
 }
@@ -258,18 +267,18 @@ BOOST_AUTO_TEST_CASE( bar_drag_clamps_inside_safe_area )
 			BOOST_CHECK(state.panelPlaced);
 			BOOST_CHECK(state.panelX>=0 && state.panelX<=1 && state.panelY>=0 && state.panelY<=1);
 			layout=Build(state);
-			BOOST_CHECK_GE(layout.bar.x,20-.01f);BOOST_CHECK_GE(layout.bar.y,10-.01f);
-			BOOST_CHECK_LE(layout.bar.x+layout.bar.w,2048-40+.01f);
-			BOOST_CHECK_LE(layout.panel.y+layout.panel.h,1536-30+.01f);
-			if(end[0]<0) BOOST_CHECK_SMALL(layout.bar.x-20,.01f); else BOOST_CHECK_SMALL(layout.bar.x+layout.bar.w-(2048-40),.01f);
-			if(end[1]<0) BOOST_CHECK_SMALL(layout.bar.y-10,.01f);
-			else BOOST_CHECK_SMALL(layout.panel.y+layout.panel.h-(1536-30),.01f);
+			BOOST_CHECK_GE(layout.bar.x,20+16-.01f);BOOST_CHECK_GE(layout.bar.y,10+16-.01f);
+			BOOST_CHECK_LE(layout.bar.x+layout.bar.w,2048-40-16+.01f);
+			BOOST_CHECK_LE(layout.panel.y+layout.panel.h,1536-30-16+.01f);
+			if(end[0]<0) BOOST_CHECK_SMALL(layout.bar.x-(20+16),.01f); else BOOST_CHECK_SMALL(layout.bar.x+layout.bar.w-(2048-40-16),.01f);
+			if(end[1]<0) BOOST_CHECK_SMALL(layout.bar.y-(10+16),.01f);
+			else BOOST_CHECK_SMALL(layout.panel.y+layout.panel.h-(1536-30-16),.01f);
 		}
 	}
 	touchSettingsState_t tall={};tall.tab=TOUCH_SETTINGS_FORCE;tall.picker=1;tall.learned=0x1ffe;tall.panelPlaced=1;tall.panelX=.5f;tall.panelY=1;
 	const auto layout=Build(tall,400,180,1);
-	BOOST_CHECK_EQUAL(layout.bar.y,10);BOOST_CHECK_GT(layout.maxScroll,0);
-	BOOST_CHECK_LE(layout.panel.y+layout.panel.h,150);
+	BOOST_CHECK_EQUAL(layout.bar.y,18);BOOST_CHECK_GT(layout.maxScroll,0);
+	BOOST_CHECK_LE(layout.panel.y+layout.panel.h,142);
 }
 
 BOOST_AUTO_TEST_CASE( panel_body_drag_scrolls_and_does_not_move )
@@ -297,6 +306,43 @@ BOOST_AUTO_TEST_CASE( saved_position_parse_rejects_bad_values )
 	BOOST_CHECK_EQUAL(text,"0.1235,1.0000");
 }
 
+BOOST_AUTO_TEST_CASE( grabber_strip_sits_above_tabs_and_tap_does_nothing )
+{
+	const float p=2;
+	touchSettingsState_t state={};state.tab=TOUCH_SETTINGS_AIM;state.dropdown=1;
+	auto layout=Build(state);
+	BOOST_CHECK_SMALL(layout.bar.h-44*p,.001f);BOOST_CHECK_SMALL(layout.bar.w-288*p,.001f);
+	for(int i=0;i<4;++i) {
+		const auto tab=Control(layout,i+1);
+		BOOST_CHECK_SMALL(tab.y-layout.bar.y-12*p,.001f);BOOST_CHECK_SMALL(tab.h-32*p,.001f);
+		BOOST_CHECK_SMALL(tab.x-layout.bar.x-i*72*p,.001f);BOOST_CHECK_SMALL(tab.w-72*p,.001f);
+	}
+	int grabbers=0;
+	for(int i=0;i<layout.count;++i) {
+		const auto &item=layout.items[i];
+		if(item.control || !item.selected) continue;
+		++grabbers;BOOST_CHECK_EQUAL(item.label,"");
+		BOOST_CHECK_SMALL(item.rect.w-36*p,.001f);BOOST_CHECK_SMALL(item.rect.h-4*p,.001f);
+		BOOST_CHECK_SMALL(item.rect.x+item.rect.w/2-layout.bar.x-layout.bar.w/2,.001f);
+		BOOST_CHECK_SMALL(item.rect.y+item.rect.h/2-layout.bar.y-6*p,.001f);
+	}
+	BOOST_CHECK_EQUAL(grabbers,1);
+	for(float x:{layout.bar.x+1,layout.bar.x+layout.bar.w/2,layout.bar.x+layout.bar.w-1}) for(float y:{layout.bar.y+1,layout.bar.y+6*p,layout.bar.y+12*p-1}) {
+		BOOST_CHECK_EQUAL(TouchSettings_Hit(&layout,x,y),0);
+		BOOST_CHECK(TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,1,x,y).consumed);
+		const auto action=TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,1,x,y);
+		BOOST_CHECK(action.consumed && !action.done && !action.movePanel && !action.savePanel && !action.aimSetting);
+		BOOST_CHECK_EQUAL(state.tab,TOUCH_SETTINGS_AIM);BOOST_CHECK_EQUAL(state.dropdown,1);BOOST_CHECK(!state.panelPlaced);
+	}
+	const float x=layout.bar.x+10,y=layout.bar.y+2,barX=layout.bar.x,barY=layout.bar.y;
+	TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_DOWN,2,x,y);
+	BOOST_CHECK(TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_MOVE,2,x+100,y+100).movePanel);
+	BOOST_CHECK(TouchSettings_Step(&state,&layout,TOUCH_SETTINGS_UP,2,x+100,y+100).savePanel);
+	layout=Build(state);
+	BOOST_CHECK_SMALL(layout.bar.x-barX-100,.01f);BOOST_CHECK_SMALL(layout.bar.y-barY-100,.01f);
+	BOOST_CHECK_EQUAL(state.tab,TOUCH_SETTINGS_AIM);
+}
+
 BOOST_AUTO_TEST_CASE( default_group_clears_lock_and_camera )
 {
 	touchLayoutOverrides_t phoneSaved,tabletSaved;
@@ -315,7 +361,7 @@ BOOST_AUTO_TEST_CASE( default_group_clears_lock_and_camera )
 			TouchSettings_Build(&state,1,s.W*p,s.H*p,s.L*p,s.T*p,s.R*p,s.B*p,p,&layout);
 			touchRect_t group=layout.bar;
 			if(layout.panel.h>0) group.h=layout.panel.y+layout.panel.h-group.y;
-			BOOST_CHECK_SMALL(layout.bar.y-s.T*p,.001f);
+			BOOST_CHECK_SMALL(layout.bar.y-(s.T+8)*p,.001f);
 			for(int button:{TB_LOCK,TB_CAMERA}) {
 				const touchRect_t &r=rects[button];
 				const bool overlap=r.x<group.x+group.w && group.x<r.x+r.w && r.y<group.y+group.h && group.y<r.y+r.h;
