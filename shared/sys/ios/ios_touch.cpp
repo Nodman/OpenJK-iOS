@@ -2,6 +2,7 @@
 #include "ios_touch_layout.h"
 #include "ios_touch_layout_edit.h"
 #include "ios_touch_edit_state.h"
+#include "ios_touch_haptics.h"
 #include "ios_touch_state.h"
 #include "ios_touch_visibility.h"
 #include "qcommon/qcommon.h"
@@ -9,7 +10,8 @@
 #include "client/client.h"
 #include <SDL.h>
 
-enum { ROLE_NONE, ROLE_GAMEPLAY, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP, ROLE_EDIT_LOCK };
+// ROLE_ARROW_PENDING: down in an arrow's padding band; a lift taps the arrow, a drag becomes ROLE_GAMEPLAY.
+enum { ROLE_NONE, ROLE_GAMEPLAY, ROLE_UITAP, ROLE_CONSOLE, ROLE_CINEMATIC_TAP, ROLE_EDIT_LOCK, ROLE_ARROW_PENDING };
 #define MAX_TOUCH_FINGERS 10
 #define CONSOLE_HOLD_MS 500
 
@@ -40,7 +42,7 @@ static qboolean layoutReady;
 static qboolean lastUIMode, lastHidden, lastCinematic;
 static int softKeyboardTarget;
 static qboolean lastHwKeyboard, lastTextDemand;
-static cvar_t *in_touchControls, *in_touchOpacity, *ui_touchState, *in_touchLayout;
+static cvar_t *in_touchControls, *in_touchOpacity, *in_touchHaptics, *ui_touchState, *in_touchLayout, *in_touchSettingsPos;
 static touchBridgeState_t bridgeState;
 static touchVisibility_t visibility;
 static touchForceBridge_t forceBridge;
@@ -139,6 +141,11 @@ static void IN_TouchUpdateLayout( void ) {
 	layoutReady = touchUnit > 0 ? qtrue : qfalse;
 }
 
+static void IN_TouchHaptic( int button, int down=1 ) {
+	if ( TouchHaptics_ShouldClick( button, down, in_touchHaptics ? in_touchHaptics->integer : 0 ) )
+		Sys_IOS_HapticClick();
+}
+
 static int IN_TouchButtonKey( int button ) {
 	return TouchLayout_Key( button, A_AUX16, A_ESCAPE, A_TAB );
 }
@@ -160,6 +167,7 @@ static void IN_TouchSettingsForce(void) {
 	settingsState.dragScale=TouchAim_Sensitivity(touchDragScale?touchDragScale->value:3);
 	settingsState.lookScaleY=TouchAim_Sensitivity(touchLookScaleY?touchLookScaleY->value:.6f);
 	settingsState.dragScaleY=TouchAim_Sensitivity(touchDragScaleY?touchDragScaleY->value:1.8f);
+	settingsState.haptics=in_touchHaptics?in_touchHaptics->integer!=0:1;
 	IN_TouchSyncForceSlots();
 	settingsState.learned=IN_TouchGetForceReport().learned;
 	for(int i=0;i<4;++i) settingsState.slots[i]=TouchForceSlots_Visible(&forceSlots,i,settingsState.learned);
@@ -170,8 +178,12 @@ static unsigned int IN_TouchVisibleButtons( void ) {
 	const touchForceReport_t report=IN_TouchGetForceReport();
 	if(cls.state==CA_ACTIVE && report.equipment && !lastHidden && !CL_TouchUIMode() && !CL_TouchCinematic())
 		for(int i=0;i<4;++i) if(TouchForceSlots_Visible(&forceSlots,i,report.learned)) mask|=1u<<(TB_FORCE_SLOT1+i);
-	if ( TouchEdit_LockVisible(cls.state==CA_ACTIVE,lastHidden,CL_TouchUIMode(),CL_TouchCinematic()) ) mask |= 1u << TB_LOCK;
+	mask |= TouchEdit_LockButtons(cls.state==CA_ACTIVE,lastHidden,CL_TouchUIMode(),CL_TouchCinematic());
 	return mask;
+}
+
+static int IN_TouchArrowBlocked( int button ) {
+	return (button==TB_FORCEPREV || button==TB_FORCENEXT) && CL_TouchForceBusy();
 }
 
 static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, float x, float y ) {
@@ -192,7 +204,7 @@ static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, fl
 	const int force=button==TB_FORCE || (button>=TB_FORCE_SLOT1 && button<=TB_FORCE_SLOT4);
 	int reserved=0;
 	if(event==TOUCH_DOWN && (input.target==TOUCH_TARGET_BUTTON || input.target==TOUCH_TARGET_FIRE)) {
-		if((button==TB_FORCEPREV || button==TB_FORCENEXT) && CL_TouchForceBusy()) input.target=TOUCH_TARGET_IGNORE;
+		if(IN_TouchArrowBlocked(button)) input.target=TOUCH_TARGET_IGNORE;
 		if(force) {
 			const int slot=button==TB_FORCE?-1:button-TB_FORCE_SLOT1;
 			const touchForceReport_t report=IN_TouchGetForceReport();
@@ -205,6 +217,7 @@ static void IN_TouchStep( int event, SDL_FingerID id, int target, int button, fl
 	if(reserved && !TouchGesture_HoldsButton(&gestures,id,button)) CL_TouchForceCancel();
 	for ( int i = 0; i < actions.keyCount; ++i ) {
 		const int pressed=actions.keys[i].button,down=actions.keys[i].down;
+		IN_TouchHaptic(pressed,down);
 		if(pressed==TB_FORCE || (pressed>=TB_FORCE_SLOT1 && pressed<=TB_FORCE_SLOT4)) {
 			if(!down && event!=TOUCH_UP) CL_TouchForceCancel();else CL_TouchForceQueue(down);
 		} else {
@@ -375,6 +388,8 @@ static void IN_TouchResetPositions( void ) {
 	layoutOverrides.version=2;
 	Cvar_Set( "in_touchLayout", "" );
 	layoutModification=in_touchLayout->modificationCount;
+	Cvar_Set( "in_touchSettingsPos", "" );
+	settingsState.panelPlaced=0;
 	if(layoutReady) TouchLayout_Build((float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,rects,&layoutOverrides,layoutProfile);
 }
 
@@ -396,10 +411,13 @@ void IN_TouchInit( SDL_Window *window ) {
 	touchDragScaleY=Cvar_Get("in_touchDragScaleY","1.8",CVAR_ARCHIVE);
 	IN_TouchSyncAim();
 	in_touchLayout = Cvar_Get( "in_touchLayout", "", CVAR_ARCHIVE );
+	in_touchSettingsPos = Cvar_Get( "in_touchSettingsPos", "", CVAR_ARCHIVE );
 	Cmd_RemoveCommand( "touchLayoutReset" );
 	Cmd_AddCommand( "touchLayoutReset", IN_TouchLayoutReset );
 	in_touchControls = Cvar_Get( "in_touchControls", "1", CVAR_ARCHIVE );
 	in_touchOpacity = Cvar_Get( "in_touchOpacity", "1.0", CVAR_ARCHIVE );
+	in_touchHaptics = Cvar_Get( "in_touchHaptics", "1", CVAR_ARCHIVE );
+	Sys_IOS_HapticInit();
 	ui_touchState = Cvar_Get( "ui_touchState", "0", CVAR_ROM );
 	IN_TouchReleaseAll();	// in_restart calls IN_Init without IN_Shutdown
 	touchWindow = window;
@@ -454,6 +472,30 @@ static void IN_TouchKeyboardAction( void ) {
 	IN_TouchTextInput();
 }
 
+static int IN_TouchTarget( int hit, float x, float y ) {
+	if ( hit >= 0 )
+		return hit == TB_ATTACK || hit == TB_ALTATTACK || hit == TB_BOTHATTACK || hit == TB_FORCE || hit == TB_CROUCH || hit == TB_JUMP ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
+	const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
+	return zone == TOUCH_ZONE_MOVE ? TOUCH_TARGET_MOVE : zone == TOUCH_ZONE_AIM ? TOUCH_TARGET_AIM : TOUCH_TARGET_IGNORE;
+}
+
+static int IN_TouchInSlop( const touchFinger_t *f, float x, float y ) {
+	const float dx = x - f->ox, dy = y - f->oy, slop = TouchLayout_FireSlop( touchUnit, pixelsPerPoint );
+	return dx * dx + dy * dy <= slop * slop;
+}
+
+static void IN_TouchArrowTap( const touchFinger_t *f, float x, float y ) {
+	if ( !IN_TouchInSlop( f, x, y ) || !( IN_TouchVisibleButtons() & ( 1u << f->button ) ) || IN_TouchArrowBlocked( f->button ) )
+		return;
+	for ( int i = 0; i < MAX_TOUCH_FINGERS; ++i )
+		if ( fingers[i].role == ROLE_GAMEPLAY && TouchGesture_HoldsButton( &gestures, fingers[i].id, f->button ) )
+			return;
+	const int key = IN_TouchButtonKey( f->button );
+	IN_TouchHaptic( f->button );
+	Sys_QueEvent( 0, SE_KEY, key, qtrue, 0, NULL );
+	Sys_QueEvent( 0, SE_KEY, key, qfalse, 0, NULL );
+}
+
 static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 	if ( !layoutReady )
 		return;
@@ -480,6 +522,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		f->cancelled = qfalse;
 	} else if ( TouchLayout_Hit(rects,x,y,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK ) {
 		f->role=ROLE_EDIT_LOCK; f->cancelled=qfalse;
+		IN_TouchHaptic(TB_LOCK);
 	} else if ( IN_TouchOnConsole( x, y ) ) {
 		if ( IN_TouchHasRole( ROLE_CONSOLE ) )
 			return;
@@ -487,6 +530,7 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 		f->button = TB_CONSOLE;
 		f->downTime = tf->timestamp;
 		f->cancelled = f->longPressed = qfalse;
+		IN_TouchHaptic( TB_CONSOLE );
 	} else if ( CL_TouchUIMode() ) {
 		if ( IN_TouchHasRole( ROLE_UITAP ) )
 			return;
@@ -498,17 +542,16 @@ static void IN_TouchFingerDown( const SDL_TouchFingerEvent *tf ) {
 	} else if ( lastHidden ) {
 		return;
 	} else {
-		int hit = TouchLayout_Hit( rects, x, y, IN_TouchVisibleButtons() );
-		const int zone = TouchLayout_Zone( (float)viewW, (float)viewH, safeL, safeT, safeR, safeB, x, y );
-		int target = TOUCH_TARGET_IGNORE;
-		if ( hit >= 0 )
-			target = hit == TB_ATTACK || hit == TB_ALTATTACK || hit == TB_BOTHATTACK || hit == TB_FORCE || hit == TB_CROUCH || hit == TB_JUMP ? TOUCH_TARGET_FIRE : TOUCH_TARGET_BUTTON;
-		else if ( zone == TOUCH_ZONE_MOVE )
-			target = TOUCH_TARGET_MOVE;
-		else if ( zone == TOUCH_ZONE_AIM )
-			target = TOUCH_TARGET_AIM;
-		f->role = ROLE_GAMEPLAY;
-		IN_TouchStep( TOUCH_DOWN, tf->fingerId, target, hit, x, y );
+		const unsigned int visible = IN_TouchVisibleButtons();
+		const int hit = TouchLayout_Hit( rects, x, y, visible );
+		const int padded = hit < 0 ? TouchLayout_PaddedHit( rects, x, y, visible ) : -1;
+		if ( padded >= 0 && !IN_TouchArrowBlocked( padded ) ) {
+			f->role = ROLE_ARROW_PENDING;
+			f->button = padded;
+		} else {
+			f->role = ROLE_GAMEPLAY;
+			IN_TouchStep( TOUCH_DOWN, tf->fingerId, IN_TouchTarget( hit, x, y ), hit, x, y );
+		}
 	}
 	f->id = tf->fingerId;
 	f->ox = f->x = x;
@@ -536,6 +579,12 @@ static void IN_TouchFingerMotion( const SDL_TouchFingerEvent *tf ) {
 		int vx, vy;
 		TouchLayout_ToVirtual( &touchLayout, tf->x, tf->y, &vx, &vy );
 		Sys_QueEvent( 0, SE_MOUSE_ABS, vx, vy, 0, NULL );
+	} else if ( f->role == ROLE_ARROW_PENDING ) {
+		if ( !IN_TouchInSlop( f, f->x, f->y ) ) {
+			f->role = ROLE_GAMEPLAY;
+			IN_TouchStep( TOUCH_DOWN, f->id, IN_TouchTarget( -1, f->ox, f->oy ), -1, f->ox, f->oy );
+			IN_TouchStep( TOUCH_MOTION, f->id, TOUCH_TARGET_IGNORE, 0, f->x, f->y );
+		}
 	} else if ( f->role == ROLE_GAMEPLAY ) {
 		IN_TouchStep( TOUCH_MOTION, f->id, TOUCH_TARGET_IGNORE, 0, f->x, f->y );
 	}
@@ -546,7 +595,11 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 	IN_TouchSettingsForce();
 	TouchSettings_Build(&settingsState,IN_TouchGetOpacity(),(float)viewW,(float)viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);
 	const int panelEvent=event==TOUCH_EDIT_DOWN?TOUCH_SETTINGS_DOWN:event==TOUCH_EDIT_MOVE?TOUCH_SETTINGS_MOVE:TOUCH_SETTINGS_UP;
+	int primary=1;
+	for(int i=0;i<IOS_TOUCH_SETTINGS_FINGERS;++i) if(settingsState.capture[i]) primary=0;
 	const touchSettingsAction_t action=TouchSettings_Step(&settingsState,&panel,panelEvent,tf->fingerId,tf->x*viewW,tf->y*viewH);
+	if(TouchHaptics_PanelShouldClick(event==TOUCH_EDIT_DOWN,action.consumed,primary,TouchSettings_Hit(&panel,tf->x*viewW,tf->y*viewH),
+		in_touchHaptics?in_touchHaptics->integer:0)) Sys_IOS_HapticClick();
 	if(action.cancelDrag) { editState.dragging=0; editState.button=-1; }
 	if(action.assign) {
 		IN_TouchCancelForceFingers();
@@ -562,6 +615,16 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 		IN_TouchSyncAim();
 	}
 	if(action.setOpacity) Cvar_SetValue("in_touchOpacity",action.opacity);
+	if(action.setHaptics) {
+		Cvar_Set("in_touchHaptics",action.haptics?"1":"0");
+		settingsState.haptics=action.haptics;
+		if(TouchHaptics_ToggleShouldClick(action.haptics,in_touchHaptics?in_touchHaptics->integer:0)) Sys_IOS_HapticClick();
+	}
+	if(action.savePanel) {
+		char text[32];
+		TouchSettings_FormatPos(&settingsState,text,sizeof(text));
+		Cvar_Set("in_touchSettingsPos",text);
+	}
 	if(action.resetLayout) {
 		editState.dragging=0;editState.button=-1;
 		CL_TouchCancelAllSources();
@@ -582,7 +645,9 @@ static void IN_TouchEditEvent( const SDL_TouchFingerEvent *tf, int event ) {
 	if(input.button>=0) {
 		const touchRect_t *r=&rects[input.button]; input.cx=r->x+r->w/2; input.cy=r->y+r->h/2;
 	}
+	const int wasDragging=editState.dragging;
 	const touchEditOutput_t out=TouchEdit_State(&editState,input);
+	if(event==TOUCH_EDIT_DOWN && !wasDragging && editState.dragging) IN_TouchHaptic(editState.button);
 	if(out.tap) {
 		settingsState.tab=TOUCH_SETTINGS_FORCE;settingsState.picker=out.button-TB_FORCE_SLOT1+1;
 		settingsState.dropdown=0;settingsState.scroll=0;
@@ -620,11 +685,14 @@ void IN_TouchHandleEvent( const SDL_Event *e ) {
 	case SDL_FINGERUP: {
 		touchFinger_t *f = IN_TouchFind( e->tfinger.fingerId );
 		if ( f ) {
+			if ( f->role == ROLE_ARROW_PENDING )
+				IN_TouchArrowTap( f, e->tfinger.x * viewW, e->tfinger.y * viewH );
 			if ( f->role==ROLE_EDIT_LOCK && !f->cancelled &&
 				TouchLayout_Hit(rects,e->tfinger.x*viewW,e->tfinger.y*viewH,IN_TouchVisibleButtons() & (1u<<TB_LOCK))==TB_LOCK ) {
 				IN_TouchReleaseAll(); IN_GamepadZeroTouchAxes();
 				touchEditInput_t input = {}; input.event=TOUCH_EDIT_ENTER;
 				TouchEdit_State(&editState,input);
+				settingsState.panelPlaced=TouchSettings_ParsePos(in_touchSettingsPos?in_touchSettingsPos->string:"",&settingsState.panelX,&settingsState.panelY);
 			}
 			if ( f->role == ROLE_CINEMATIC_TAP && !f->cancelled && e->tfinger.timestamp - f->downTime < CONSOLE_HOLD_MS ) {
 				float dx = e->tfinger.x * viewW - f->ox, dy = e->tfinger.y * viewH - f->oy;

@@ -5,13 +5,13 @@
 
 typedef enum {
 	TB_ATTACK, TB_ALTATTACK, TB_JUMP, TB_CROUCH, TB_USE, TB_FORCE, TB_FORCENEXT,
-	TB_STYLE, TB_WEAPPREV, TB_WEAPNEXT, TB_MENU, TB_CONSOLE, TB_SABER_SELECT, TB_CHAT, TB_PAD, TB_LOCK, TB_FORCEPREV, TB_FORCE_SLOT1, TB_FORCE_SLOT2, TB_FORCE_SLOT3, TB_FORCE_SLOT4, TB_BOTHATTACK, TB_COUNT
+	TB_STYLE, TB_WEAPPREV, TB_WEAPNEXT, TB_MENU, TB_CONSOLE, TB_SABER_SELECT, TB_CHAT, TB_PAD, TB_LOCK, TB_FORCEPREV, TB_FORCE_SLOT1, TB_FORCE_SLOT2, TB_FORCE_SLOT3, TB_FORCE_SLOT4, TB_BOTHATTACK, TB_CAMERA, TB_COUNT
 } touchButton_t;
 
 typedef enum {
 	TG_MENU, TG_CHAT, TG_PAD, TG_WEAPPREV, TG_SABER_SELECT, TG_WEAPNEXT, TG_RING, TG_FORCE,
 	TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE_BLUE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_STYLE_RED, TG_RECT_PLATE,
-	TG_BOTH_ATTACK
+	TG_BOTH_ATTACK, TG_CAMERA
 } touchGlyph_t;
 
 typedef enum {
@@ -31,7 +31,7 @@ IOS_TOUCH_INLINE float TouchLayout_ButtonScale( int button )
 		return .75f;
 	case TB_FORCENEXT: case TB_WEAPPREV: case TB_WEAPNEXT:
 	case TB_MENU: case TB_CONSOLE: case TB_CHAT: case TB_PAD: case TB_LOCK:
-	case TB_FORCEPREV:
+	case TB_FORCEPREV: case TB_CAMERA:
 		return .5f;
 	default:
 		return 1;
@@ -80,6 +80,10 @@ void TouchLayout_Build( float viewW, float viewH, float safeL, float safeT, floa
 #endif
  );
 int TouchLayout_Hit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons );
+#define IOS_TOUCH_ARROW_HIT_PAD .3f	// per side, as a fraction of the arrow width
+int TouchLayout_GameplayHit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons );
+// Arrow hit only in the padding band; -1 on an exact hit or a miss.
+int TouchLayout_PaddedHit( const touchRect_t rects[TB_COUNT], float x, float y, unsigned int visibleButtons );
 IOS_TOUCH_INLINE int TouchLayout_Key( int button, int aux16, int escape, int tab )
 {
 	int key;

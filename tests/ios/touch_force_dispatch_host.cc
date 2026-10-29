@@ -22,19 +22,21 @@
 #include "../../shared/sys/ios/ios_gamepad.cpp"
 #undef lastUIMode
 
-static cvar_t testLayoutVar,testSlotsVar,testControlsVar,testOpacityVar,testCapsVar;
+static cvar_t testLayoutVar,testSlotsVar,testControlsVar,testOpacityVar,testCapsVar,testHapticsVar,testPanelPosVar;
 static cvar_t aimVars[6];static std::string aimTexts[6];
 static const char *aimNames[6]={"in_touchAimMode","in_touchAimCurve","in_touchLookScale","in_touchDragScale","in_touchLookScaleY","in_touchDragScaleY"};
 static float drawableScale=1;
 static int testPointWidth=844,testPointHeight=390;
 static touchLayoutProfile_t testProfile=TOUCH_LAYOUT_TABLET;
 touchLayoutProfile_t Sys_IOS_TouchLayoutProfile(SDL_Window *) {return testProfile;}
-static std::string testLayoutText,testSlotsText,testOpacityText;
+static std::string testLayoutText,testSlotsText,testOpacityText,testHapticsText,testPanelPosText;
 static cvar_t *SetTouchVar(const char *name,const char *value) {
 	cvar_t *var=NULL;std::string *text=NULL;
 	if(!strcmp(name,"in_touchOpacity")) {var=&testOpacityVar;text=&testOpacityText;}
 	if(!strcmp(name,"in_touchLayout")) { var=&testLayoutVar;text=&testLayoutText; }
 	if(!strcmp(name,"in_touchForceSlots")) { var=&testSlotsVar;text=&testSlotsText; }
+	if(!strcmp(name,"in_touchHaptics")) { var=&testHapticsVar;text=&testHapticsText; }
+	if(!strcmp(name,"in_touchSettingsPos")) { var=&testPanelPosVar;text=&testPanelPosText; }
 	for(int i=0;i<6;++i) if(!strcmp(name,aimNames[i])) {var=&aimVars[i];text=&aimTexts[i];}
 	if(var) { *text=value;var->string=const_cast<char *>(text->c_str());var->value=atof(value);var->integer=atoi(value);++var->modificationCount; }
 	return var;
@@ -44,6 +46,9 @@ void Sys_IOS_GetSafeAreaPixels(SDL_Window *,float *l,float *t,float *r,float *b)
 void Sys_IOS_GetViewPointSize(SDL_Window *,float *w,float *h) { *w=testPointWidth;*h=testPointHeight; }
 qboolean Sys_IOS_HardwareKeyboardConnected(void) { return qfalse; }
 qboolean Sys_IOS_PointerConnected(void) { return qfalse; }
+static int hapticClicks;
+void Sys_IOS_HapticInit(void) {}
+void Sys_IOS_HapticClick(void) { ++hapticClicks; }
 void SDL_StopTextInput(void) {}
 void SDL_StartTextInput(void) {}
 SDL_bool SDL_IsTextInputActive(void) { return SDL_FALSE; }
@@ -397,8 +402,10 @@ static void SDLFixture(void) {
 	SetTouchVar("in_touchLayout","");SetTouchVar("in_touchForceSlots","v1:1,2,3,4");
 	testControlsVar.integer=2;testOpacityVar.value=1;
 	testCapsVar.integer=TOUCH_CAP_VALID|TOUCH_CAP_EQUIPMENT|TOUCH_CAP_FORCE|TOUCH_CAP_FORCE_CYCLE;
-	in_touchControls=&testControlsVar;in_touchOpacity=&testOpacityVar;ui_touchState=&testCapsVar;
+	testHapticsVar.integer=1;hapticClicks=0;
+	in_touchControls=&testControlsVar;in_touchOpacity=&testOpacityVar;in_touchHaptics=&testHapticsVar;ui_touchState=&testCapsVar;
 	in_touchLayout=&testLayoutVar;in_touchForceSlots=&testSlotsVar;
+	SetTouchVar("in_touchSettingsPos","");in_touchSettingsPos=&testPanelPosVar;
 	TouchForceSlots_Default(&forceSlots);forceSlotsModification=testSlotsVar.modificationCount;
 	memset(fingers,0,sizeof(fingers));TouchGesture_Reset(&gestures);memset(&editState,0,sizeof(editState));memset(&settingsState,0,sizeof(settingsState));
 	memset(&layoutOverrides,0,sizeof(layoutOverrides));TouchBridge_Reset(&bridgeState);
@@ -440,6 +447,30 @@ static void SDLNormalLiftAndCancellation(void) {
 	SDLButton(SDL_FINGERDOWN,7,TB_FORCE);SDLButton(SDL_FINGERUP,7,TB_FORCE);Drain();
 	const unsigned int buttons=Buttons();assert(!(buttons & BUTTON_FORCEPOWER) && (buttons & BUTTON_USE_HOLDABLE));testNoForce=qfalse;
 #endif
+}
+static void SDLHapticClicks(void) {
+	SDLFixture();const touchRect_t attack=rects[TB_ATTACK];
+	SDLButton(SDL_FINGERDOWN,30,TB_ATTACK);assert(hapticClicks==1);
+	SDLEvent(SDL_FINGERMOTION,30,attack.x+attack.w/2+60,attack.y+attack.h/2+40);SDLButton(SDL_FINGERUP,30,TB_ATTACK);assert(hapticClicks==1);
+	SDLButton(SDL_FINGERDOWN,31,TB_FORCE);SDLButton(SDL_FINGERUP,31,TB_FORCE);assert(hapticClicks==2);
+	SDLButton(SDL_FINGERDOWN,32,TB_JUMP);SDLButton(SDL_FINGERDOWN,33,TB_JUMP);assert(hapticClicks==3);
+	SDLButton(SDL_FINGERUP,32,TB_JUMP);SDLButton(SDL_FINGERUP,33,TB_JUMP);
+	SDLButton(SDL_FINGERDOWN,34,TB_CONSOLE);SDLEvent(SDL_FINGERMOTION,34,422,195);SDLEvent(SDL_FINGERUP,34,422,195);assert(hapticClicks==4);
+	for(int zone=TOUCH_ZONE_MOVE;zone<=TOUCH_ZONE_AIM;++zone) {
+		float x=-1,y=-1;
+		for(float py=380;py>10 && x<0;py-=10) for(float px=10;px<834 && x<0;px+=10)
+			if(TouchLayout_Hit(rects,px,py,IOS_TOUCH_ALL_BUTTONS)<0 && TouchLayout_Zone(844,390,0,0,0,0,px,py)==zone) {x=px;y=py;}
+		assert(x>=0);
+		SDLEvent(SDL_FINGERDOWN,35+zone,x,y);SDLEvent(SDL_FINGERMOTION,35+zone,x+30,y-30);SDLEvent(SDL_FINGERUP,35+zone,x+30,y-30);
+	}
+	assert(hapticClicks==4);
+	testHapticsVar.integer=0;SDLButton(SDL_FINGERDOWN,39,TB_ATTACK);SDLButton(SDL_FINGERUP,39,TB_ATTACK);assert(hapticClicks==4);
+	testHapticsVar.integer=1;Drain();
+	SDLFixture();editState.active=1;const touchRect_t jump=rects[TB_JUMP];
+	SDLButton(SDL_FINGERDOWN,40,TB_JUMP);assert(hapticClicks==1);
+	SDLEvent(SDL_FINGERMOTION,40,jump.x+jump.w/2+20,jump.y+jump.h/2+20);SDLEvent(SDL_FINGERMOTION,40,jump.x+jump.w/2+30,jump.y+jump.h/2+20);
+	SDLEvent(SDL_FINGERUP,40,jump.x+jump.w/2+30,jump.y+jump.h/2+20);assert(hapticClicks==1);
+	IN_TouchReleaseAll();Drain();touchWindow=NULL;
 }
 static void SDLEditorSlotRouting(void) {
 	SDLFixture();editState.active=1;
@@ -553,6 +584,47 @@ static void SDLPanelTap(int control,long long id=80) {
 		const auto r=layout.items[i].rect;SDLEvent(SDL_FINGERDOWN,id,r.x+r.w/2,r.y+r.h/2);SDLEvent(SDL_FINGERUP,id,r.x+r.w/2,r.y+r.h/2);return;
 	}
 	assert(false);
+}
+static touchRect_t SDLPanelRect(int control) {
+	IN_TouchSettingsForce();touchSettingsLayout_t layout;
+	TouchSettings_Build(&settingsState,1,viewW,viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&layout);
+	for(int i=0;i<layout.count;++i) if(layout.items[i].control==control) return layout.items[i].rect;
+	assert(false);return touchRect_t{};
+}
+static void SDLPanelHapticClicks(void) {
+	SDLFixture();editState.active=1;
+	SDLPanelTap(TOUCH_SETTINGS_APPEARANCE,60);assert(hapticClicks==1);
+	{
+		touchSettingsLayout_t layout;TouchSettings_Build(&settingsState,1,viewW,viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&layout);
+		const float x=layout.bar.x+layout.bar.w/2,y=layout.bar.y+2;
+		SDLEvent(SDL_FINGERDOWN,59,x,y);SDLEvent(SDL_FINGERUP,59,x,y);
+		assert(hapticClicks==1 && settingsState.tab==TOUCH_SETTINGS_APPEARANCE && !settingsState.panelPlaced && editState.active);
+	}
+	const touchRect_t back=SDLPanelRect(TOUCH_SETTINGS_NONE);
+	SDLEvent(SDL_FINGERDOWN,61,back.x+1,back.y+1);SDLEvent(SDL_FINGERMOTION,61,back.x+1,back.y+40);SDLEvent(SDL_FINGERUP,61,back.x+1,back.y+40);
+	assert(hapticClicks==1);
+	const touchRect_t opacity=SDLPanelRect(TOUCH_SETTINGS_OPACITY),reset=SDLPanelRect(TOUCH_SETTINGS_RESET_LAYOUT);
+	SDLEvent(SDL_FINGERDOWN,62,opacity.x+opacity.w/2,opacity.y+opacity.h/2);assert(hapticClicks==2);
+	SDLEvent(SDL_FINGERDOWN,63,reset.x+reset.w/2,reset.y+reset.h/2);
+	SDLEvent(SDL_FINGERMOTION,62,opacity.x+opacity.w,opacity.y);SDLEvent(SDL_FINGERUP,62,opacity.x+opacity.w,opacity.y);
+	SDLEvent(SDL_FINGERUP,63,reset.x+reset.w/2,reset.y+reset.h/2);assert(hapticClicks==2);
+	SDLPanelTap(TOUCH_SETTINGS_HAPTICS,64);assert(hapticClicks==3 && settingsState.haptics);
+	SDLPanelTap(TOUCH_SETTINGS_HAPTICS_TOGGLE,65);assert(hapticClicks==3 && testHapticsText=="0" && !settingsState.haptics);
+	SDLPanelTap(TOUCH_SETTINGS_AIM,66);SDLPanelTap(TOUCH_SETTINGS_HAPTICS,67);assert(hapticClicks==3);
+	SDLPanelTap(TOUCH_SETTINGS_HAPTICS_TOGGLE,68);assert(hapticClicks==4 && testHapticsText=="1" && settingsState.haptics);
+	const touchRect_t tab=SDLPanelRect(TOUCH_SETTINGS_HAPTICS);const float x=tab.x+tab.w/2,y=tab.y+tab.h/2;
+	SDLEvent(SDL_FINGERDOWN,69,x,y);SDLEvent(SDL_FINGERMOTION,69,x-20,y+60);SDLEvent(SDL_FINGERMOTION,69,x-40,y+80);
+	assert(hapticClicks==5 && settingsState.panelPlaced && testPanelPosText.empty());
+	SDLEvent(SDL_FINGERUP,69,x-40,y+80);assert(hapticClicks==5 && settingsState.tab==TOUCH_SETTINGS_HAPTICS && !testPanelPosText.empty());
+	const touchRect_t moved=SDLPanelRect(TOUCH_SETTINGS_HAPTICS);assert(fabsf(moved.x-tab.x+40)<.5f && fabsf(moved.y-tab.y-80)<.5f);
+	SDLPanelTap(TOUCH_SETTINGS_DONE,70);Drain();assert(hapticClicks==6 && !editState.active);
+	SDLButton(SDL_FINGERDOWN,71,TB_LOCK);SDLButton(SDL_FINGERUP,71,TB_LOCK);
+	assert(editState.active && settingsState.panelPlaced && !settingsState.tab);
+	const touchRect_t restored=SDLPanelRect(TOUCH_SETTINGS_HAPTICS);assert(fabsf(restored.x-moved.x)<.5f && fabsf(restored.y-moved.y)<.5f);
+	SDLPanelTap(TOUCH_SETTINGS_DONE,72);Drain();
+	SetTouchVar("in_touchSettingsPos","bad");SDLButton(SDL_FINGERDOWN,73,TB_LOCK);SDLButton(SDL_FINGERUP,73,TB_LOCK);
+	assert(editState.active && !settingsState.panelPlaced && SDLPanelRect(TOUCH_SETTINGS_HAPTICS).y==safeT+20*pixelsPerPoint);
+	IN_TouchEndEdit();Drain();touchWindow=NULL;
 }
 static void SDLAimSettingsRouting(void) {
 	AimFixture();editState.active=1;axesState.pad[0]=64;axesState.pad[2]=127;
@@ -673,6 +745,62 @@ static void SDLHeldActionAim(void) {
 	CommandFrame();assert(!in_buttons[centralButton].active && gestures.lookOwner<0 && !dragX);
 	IN_TouchReleaseAll();Drain();touchWindow=NULL;
 }
+static int KeyEvents(int key,int down) {
+	int count=0;
+	for(const auto &e:events) if(e.evType==SE_KEY && e.evValue==key && !!e.evValue2==!!down) ++count;
+	return count;
+}
+static bool PaddedPoint(int arrow,int zone,float *x,float *y) {
+	const touchRect_t a=rects[arrow];const float pad=IOS_TOUCH_ARROW_HIT_PAD*a.w,cx=a.x+a.w/2,cy=a.y+a.h/2;
+	const float points[][2]={{a.x+a.w+pad*.5f,cy},{a.x-pad*.5f,cy},{cx,a.y-pad*.5f},{cx,a.y+a.h+pad*.5f}};
+	const unsigned int visible=IN_TouchVisibleButtons();
+	for(const auto &p:points)
+		if(TouchLayout_Hit(rects,p[0],p[1],visible)<0 && TouchLayout_PaddedHit(rects,p[0],p[1],visible)==arrow &&
+			(zone<0 || TouchLayout_Zone(viewW,viewH,0,0,0,0,p[0],p[1])==zone)) {*x=p[0];*y=p[1];return true;}
+	return false;
+}
+static void SDLArrowPadding(void) {
+	const struct {touchLayoutProfile_t profile;int w,h;} screens[]={{TOUCH_LAYOUT_PHONE,956,440},{TOUCH_LAYOUT_TABLET,1194,834}};
+	for(const auto &screen:screens) {
+		const auto setup=[&]{
+			AimFixture();testCapsVar.integer|=TOUCH_CAP_WEAPONS;IN_TouchSyncVisibility();testProfile=screen.profile;testPointWidth=screen.w;testPointHeight=screen.h;IN_TouchUpdateLayout();Drain();
+			assert(layoutProfile==screen.profile && viewW==screen.w);hapticClicks=0;
+		};
+		const int weapnext=IN_TouchButtonKey(TB_WEAPNEXT);float x,y;
+		setup();assert(PaddedPoint(TB_WEAPNEXT,TOUCH_ZONE_AIM,&x,&y));
+		SDLEvent(SDL_FINGERDOWN,130,x,y);SDLEvent(SDL_FINGERMOTION,130,x-3,y);
+		assert(IN_TouchFind(130)->role==ROLE_ARROW_PENDING && gestures.lookOwner<0 && events.empty());
+		for(int i=1;i<=4;++i) SDLEvent(SDL_FINGERMOTION,130,x-25*i,y);
+		assert(IN_TouchFind(130)->role==ROLE_GAMEPLAY && gestures.lookOwner>=0 && dragX<0);
+		assert(!KeyEvents(weapnext,1) && !KeyEvents(weapnext,0) && !hapticClicks);
+		SDLEvent(SDL_FINGERUP,130,x-100,y);CommandFrame();assert(cl.viewangles[YAW]>0 && gestures.lookOwner<0 && !hapticClicks);
+		for(int moved:{0,1}) {
+			setup();assert(PaddedPoint(TB_WEAPNEXT,-1,&x,&y));
+			SDLEvent(SDL_FINGERDOWN,131,x,y);if(moved) SDLEvent(SDL_FINGERMOTION,131,x+2,y-2);
+			assert(events.empty() && !hapticClicks);
+			SDLEvent(SDL_FINGERUP,131,x+2*moved,y-2*moved);
+			assert(KeyEvents(weapnext,1)==1 && KeyEvents(weapnext,0)==1 && events.size()==2 && hapticClicks==1);
+			assert(events.front().evValue2 && !IN_TouchFind(131));Drain();
+		}
+		setup();SDLButton(SDL_FINGERDOWN,132,TB_WEAPNEXT);assert(KeyEvents(weapnext,1)==1 && !KeyEvents(weapnext,0) && hapticClicks==1);
+		SDLButton(SDL_FINGERUP,132,TB_WEAPNEXT);assert(KeyEvents(weapnext,0)==1 && hapticClicks==1);Drain();
+		setup();assert(PaddedPoint(TB_WEAPNEXT,-1,&x,&y));SDLEvent(SDL_FINGERDOWN,133,x,y);IN_TouchReleaseAll();
+		SDLEvent(SDL_FINGERUP,133,x,y);assert(!KeyEvents(weapnext,1) && !KeyEvents(weapnext,0) && !hapticClicks);Drain();
+		for(int arrow:{TB_FORCEPREV,TB_FORCENEXT}) for(int busyAtDown:{0,1}) {
+			setup();assert(IN_TouchVisibleButtons() & (1u<<arrow));assert(PaddedPoint(arrow,-1,&x,&y));
+			if(busyAtDown) assert(CL_TouchForceReserve(1,0) && CL_TouchForceBusy());
+			SDLEvent(SDL_FINGERDOWN,134,x,y);
+			if(!busyAtDown) assert(CL_TouchForceReserve(1,0) && CL_TouchForceBusy());
+			SDLEvent(SDL_FINGERUP,134,x,y);
+			assert(!KeyEvents(IN_TouchButtonKey(arrow),1) && !KeyEvents(IN_TouchButtonKey(arrow),0) && !hapticClicks);
+			CL_TouchForceCancel();Drain();assert(!CL_TouchForceBusy());
+			SDLEvent(SDL_FINGERDOWN,135,x,y);SDLEvent(SDL_FINGERUP,135,x,y);
+			assert(KeyEvents(IN_TouchButtonKey(arrow),1)==1 && hapticClicks==1);Drain();
+		}
+		IN_TouchReleaseAll();Drain();
+	}
+	touchWindow=NULL;
+}
 static void SDLPhoneProfileDefaults(void) {
 	SDLFixture();const touchRect_t oldConsole=rects[TB_CONSOLE];
 	const int revision=testLayoutVar.modificationCount;
@@ -783,7 +911,7 @@ static void SDLResetLayoutRouting(void) {
 	testPointWidth=932;testPointHeight=430;drawableScale=3;IN_TouchFrame();Drain();AssertResetDefaults();
 	testPointWidth=844;testPointHeight=390;drawableScale=1;IN_TouchFrame();Drain();AssertResetDefaults();
 
-	ResetLayoutFixture();testPointWidth=400;testPointHeight=120;IN_TouchFrame();Drain();
+	ResetLayoutFixture();testPointWidth=400;testPointHeight=150;IN_TouchFrame();Drain();
 	editState.active=1;settingsState.tab=TOUCH_SETTINGS_APPEARANCE;touchSettingsLayout_t panel;
 	TouchSettings_Build(&settingsState,IN_TouchGetOpacity(),viewW,viewH,safeL,safeT,safeR,safeB,pixelsPerPoint,&panel);assert(panel.maxScroll>0);
 	SDLEvent(SDL_FINGERDOWN,226,panel.panel.x+1,panel.panel.y+panel.panel.h-2);
@@ -945,6 +1073,6 @@ int main(int argc,char **argv) {
 #ifdef TEST_MP
 	DemoForceRecovery();PacketTiming();
 #endif
-	SDLNormalLiftAndCancellation();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();SDLHeldActionAim();SDLPhoneProfileDefaults();SDLResetLayoutRouting();SDLTabletProfileDefaults();SDLPerAxisAim();SDLPerAxisSettings();
-	puts("PASS: zoom 1/.25, bounded 256-event fence recovery, demo reserve/dispatch and custom-bind limits; actual phone/tablet SP/MP per-axis drag/joystick/timing/scales/fire and captured mode/axis settings; tablet current Console draw/hit/drag/native migration/saved center/reset; actual Appearance Reset layout and held-finger cancellation; native profile cache/Console/editor/saved v2; late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
+	SDLNormalLiftAndCancellation();SDLHapticClicks();SDLPanelHapticClicks();SDLEditorSlotRouting();SDLAimCommandRouting();SDLAimSettingsRouting();LateCbufAimSettings();SDLHeldActionAim();SDLPhoneProfileDefaults();SDLArrowPadding();SDLResetLayoutRouting();SDLTabletProfileDefaults();SDLPerAxisAim();SDLPerAxisSettings();
+	puts("PASS: zoom 1/.25, bounded 256-event fence recovery, demo reserve/dispatch and custom-bind limits; actual phone/tablet SP/MP per-axis drag/joystick/timing/scales/fire and captured mode/axis settings; tablet current Console draw/hit/drag/native migration/saved center/reset; actual Appearance Reset layout and held-finger cancellation; native profile cache/Console/editor/saved v2; late Cbuf settings before command with touch/hardware/pad; actual SDL aim→gamepad merge→CL_CreateCmd, drag/rate/scales/pad/cancel; SDL normal lift/cancel, haptic clicks and editor slot routing; actual cl_input, CL_KeyEvent/CL_ParseBinding and Cbuf; deferred taps, pulses, custom binds, reset/fence and packet timing");
 }

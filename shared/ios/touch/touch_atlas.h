@@ -14,7 +14,7 @@ typedef struct { float s1, t1, s2, t2; } touchAtlasUV_t;
 IOS_TOUCH_INLINE touchAtlasUV_t TouchAtlas_UV( int glyph )
 {
 	touchAtlasUV_t uv = { 0, 0, 0, 0 };
-	if ( glyph < 0 || glyph > TG_BOTH_ATTACK )
+	if ( glyph < 0 || glyph > TG_CAMERA )
 		return uv;
 	uv.s1 = ( ( glyph % 4 ) * 256 + 8.5f ) / 1024;
 	uv.t1 = ( ( glyph / 4 ) * 256 + 8.5f ) / IOS_TOUCH_ATLAS_HEIGHT;
@@ -42,7 +42,7 @@ typedef struct {
 IOS_TOUCH_INLINE int TouchDraw_ButtonPlate( int button )
 {
 	switch ( button ) {
-	case TB_MENU: case TB_CHAT: case TB_PAD: case TB_CONSOLE: case TB_LOCK:
+	case TB_MENU: case TB_CHAT: case TB_PAD: case TB_CONSOLE: case TB_LOCK: case TB_CAMERA:
 		return TG_RECT_PLATE;
 	default:
 		return TG_PLATE;

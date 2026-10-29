@@ -15,7 +15,7 @@ static bool Disjoint( const touchRect_t &a,const touchRect_t &b )
 BOOST_AUTO_TEST_CASE( versioned_parse_bounds_unknown_ids_and_round_trip )
 {
 	touchLayoutOverrides_t o;
-	TouchEdit_Parse("v2;0:.4,.6;11:1,0;20:0,1;22:.2,.3;1:nan,0;2:1.1,0;3:0,0junk;4:-1,0;",&o);
+	TouchEdit_Parse("v2;0:.4,.6;11:1,0;20:0,1;23:.2,.3;1:nan,0;2:1.1,0;3:0,0junk;4:-1,0;",&o);
 	BOOST_CHECK_EQUAL(o.version,2);
 	BOOST_CHECK_EQUAL(o.mask,(1u<<TB_ATTACK)|(1u<<TB_CONSOLE)|(1u<<TB_FORCE_SLOT4));
 	char text[IOS_TOUCH_LAYOUT_TEXT];

@@ -2,7 +2,7 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
-version="${OPENJK_IOS_VERSION:-0.1.0}"
+version="${OPENJK_IOS_VERSION:-0.2.0}"
 sdk_major="$(xcrun --sdk iphoneos --show-sdk-version | cut -d. -f1)"
 if [ "$sdk_major" -ge 27 ]; then
 	echo "error: iOS SDK $sdk_major found. SDL2 needs the UIScene patch (plan P8) for SDK 27+."

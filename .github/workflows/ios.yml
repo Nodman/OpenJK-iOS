@@ -71,7 +71,7 @@ jobs:
           if [ "$GITHUB_REF_TYPE" = tag ]; then
             echo "OPENJK_IOS_VERSION=${GITHUB_REF_NAME#ios-v}" >> "$GITHUB_ENV"
           else
-            echo "OPENJK_IOS_VERSION=0.1.0-dev.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+            echo "OPENJK_IOS_VERSION=0.2.0-dev.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           fi
 
       - name: Build IPAs

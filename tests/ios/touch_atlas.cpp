@@ -11,8 +11,8 @@ BOOST_AUTO_TEST_SUITE( touch_atlas )
 BOOST_AUTO_TEST_CASE( immutable_cells_and_inner_texel_centres )
 {
 	const int glyphs[] = { TG_MENU, TG_CHAT, TG_PAD, TG_WEAPPREV, TG_SABER_SELECT, TG_WEAPNEXT,
-		TG_RING, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE_BLUE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_STYLE_RED, TG_RECT_PLATE, TG_BOTH_ATTACK };
-	for ( int i = 0; i < 21; ++i ) {
+		TG_RING, TG_FORCE, TG_CONSOLE, TG_ALTATTACK, TG_ATTACK, TG_JUMP, TG_CROUCH, TG_STYLE_BLUE, TG_USE, TG_PLATE, TG_LOCK, TG_GUN_ATTACK, TG_STYLE_RED, TG_RECT_PLATE, TG_BOTH_ATTACK, TG_CAMERA };
+	for ( int i = 0; i < 22; ++i ) {
 		BOOST_CHECK_EQUAL( glyphs[i], i );
 		const touchAtlasUV_t uv = TouchAtlas_UV( i );
 		BOOST_CHECK_EQUAL( uv.s1 * 1024, ( i % 4 ) * 256 + 8.5f );
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE( immutable_cells_and_inner_texel_centres )
 		BOOST_CHECK_LE( uv.t2, 1 );
 	}
 	BOOST_CHECK_EQUAL( TouchAtlas_UV( -1 ).s2, 0 );
-	BOOST_CHECK_EQUAL( TouchAtlas_UV( 21 ).t2, 0 );
+	BOOST_CHECK_EQUAL( TouchAtlas_UV( 22 ).t2, 0 );
 	BOOST_CHECK_EQUAL( IOS_TOUCH_ATLAS_HEIGHT, 1536 );
 	BOOST_CHECK_EQUAL( IOS_TOUCH_ATLAS_NAME, "*ios_touch_v2" );
 }
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE( full_twenty_records_and_raw_knobs_round_trip )
 			BOOST_CHECK_EQUAL( items[i].kind, TOUCH_DRAW_BUTTON );
 			BOOST_CHECK_EQUAL( items[i].glyph, i==TB_STYLE?TG_STYLE_BLUE:touchButtonDefs[i].glyph );
 			const unsigned int rectangular = ( 1u << TB_MENU ) | ( 1u << TB_CHAT ) | ( 1u << TB_PAD ) |
-				( 1u << TB_CONSOLE ) | ( 1u << TB_LOCK );
+				( 1u << TB_CONSOLE ) | ( 1u << TB_LOCK ) | ( 1u << TB_CAMERA );
 			BOOST_CHECK_EQUAL( items[i].plate, rectangular & ( 1u << i ) ? TG_RECT_PLATE : TG_PLATE );
 			const auto virtualRect = TouchLayout_RectToVirtual( &layout, rects[i] );
 			BOOST_CHECK_EQUAL( items[i].x, virtualRect.x );
