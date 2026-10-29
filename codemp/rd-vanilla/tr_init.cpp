@@ -854,7 +854,7 @@ static void InitOpenGL( void )
 
 		window = ri.WIN_Init(&windowDesc, &glConfig);
 #ifdef OPENJK_GLES
-		r_glesProviderActive = ri.Cvar_Get( "r_glesProviderActive", "eagl", CVAR_ROM, "Active native GLES provider" );
+		r_glesProviderActive = ri.Cvar_Get( "r_glesProviderActive", "", CVAR_ROM, "Active native GLES provider" );
 		R_GLES_ANGLE = !strcmp( r_glesProviderActive->string, "angle" ) ? qtrue : qfalse;
 		GLint sdlFbo = 0;
 		if ( !R_GLES_ANGLE ) {
